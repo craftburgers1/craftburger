@@ -129,7 +129,7 @@
             </div>
         </section>
 
-        <!-- Live Ledger History List (Always Displayed Below) -->
+        <!-- Live Ledger History List -->
         <section class="glass-card space-y-3">
             <div class="flex justify-between items-center border-b border-slate-700/80 pb-2.5">
                 <h3 class="text-xs font-bold text-white flex items-center gap-1.5">
@@ -214,9 +214,8 @@
         const defaultFixed = ['가게세(임대료)', '상가관리비', '전기요금', '수도요금', '가스요금', '인건비(박동찬 등)', '인터넷/포스/통신비', '세무사수수료', '기타고정비'];
         const defaultVariable = ['고기', '빵/번', '채소/신선', '소스/시즈닝', '음료/주류/맥주', '코스트코', '기타 식자재', '배민 수수료', '쿠팡이츠 수수료', '요기요 수수료', '포장 용기/소모품', '카드 수수료', '기타 변동비'];
 
-        // Load Custom Categories from Local Storage
-        let fixedCategories = JSON.parse(localStorage.getItem('cb_fixed_cats')) || defaultFixed;
-        let variableCategories = JSON.parse(localStorage.getItem('cb_var_cats')) || defaultVariable;
+        let fixedCategories = [...defaultFixed];
+        let variableCategories = [...defaultVariable];
 
         let dbData = [];
         let currentTab = 'sales';
@@ -232,10 +231,31 @@
 
             switchTab('sales');
             initRealtimeSync();
-            updateOcrCategorySelect();
+            initCategorySync();
         };
 
-        // Realtime Listener
+        // Realtime Category Firestore Sync
+        function initCategorySync() {
+            db.collection("craftburger_config").doc("categories").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.fixed) fixedCategories = data.fixed;
+                    if (data.variable) variableCategories = data.variable;
+                } else {
+                    // Save default settings if doc does not exist
+                    db.collection("craftburger_config").doc("categories").set({
+                        fixed: defaultFixed,
+                        variable: defaultVariable
+                    });
+                }
+                if (currentTab === 'fixed' || currentTab === 'variable') {
+                    switchTab(currentTab);
+                }
+                updateOcrCategorySelect();
+            });
+        }
+
+        // Realtime Ledger Firestore Sync
         function initRealtimeSync() {
             db.collection("craftburger_ledger").onSnapshot((snapshot) => {
                 dbData = [];
@@ -299,7 +319,7 @@
             `;
         }
 
-        // Render Expense Form with Custom Category Management
+        // Render Expense Form with Realtime Categories
         function renderExpenseForm(container, type, categories) {
             const options = categories.map(c => `<option value="${c}">${c}</option>`).join('');
             const typeName = type === 'fixed' ? '고정비' : '식자재/변동비';
@@ -349,7 +369,7 @@
             `;
         }
 
-        // Add Category
+        // Add Category to Cloud
         function addCategoryPrompt(type) {
             const name = prompt('새로 추가할 지출 항목명을 입력하세요:');
             if (!name || !name.trim()) return;
@@ -357,28 +377,30 @@
             const targetName = name.trim();
             if (type === 'fixed') {
                 if (!fixedCategories.includes(targetName)) fixedCategories.push(targetName);
-                localStorage.setItem('cb_fixed_cats', JSON.stringify(fixedCategories));
             } else {
                 if (!variableCategories.includes(targetName)) variableCategories.push(targetName);
-                localStorage.setItem('cb_var_cats', JSON.stringify(variableCategories));
             }
-            updateOcrCategorySelect();
-            switchTab(type);
+
+            db.collection("craftburger_config").doc("categories").set({
+                fixed: fixedCategories,
+                variable: variableCategories
+            }).then(() => alert('새 지출 항목이 모든 기기에 연동되었습니다.'));
         }
 
-        // Delete Category
+        // Delete Category from Cloud
         function deleteCategory(type, catName) {
-            if (!confirm(`'${catName}' 항목을 목록에서 삭제하시겠습니까?`)) return;
+            if (!confirm(`'${catName}' 항목을 연동 목록에서 삭제하시겠습니까?`)) return;
 
             if (type === 'fixed') {
                 fixedCategories = fixedCategories.filter(c => c !== catName);
-                localStorage.setItem('cb_fixed_cats', JSON.stringify(fixedCategories));
             } else {
                 variableCategories = variableCategories.filter(c => c !== catName);
-                localStorage.setItem('cb_var_cats', JSON.stringify(variableCategories));
             }
-            updateOcrCategorySelect();
-            switchTab(type);
+
+            db.collection("craftburger_config").doc("categories").set({
+                fixed: fixedCategories,
+                variable: variableCategories
+            });
         }
 
         // Update OCR Modal Categories Select
@@ -411,7 +433,7 @@
             }).catch(err => alert('저장 실패: ' + err.message));
         }
 
-        // Render History Section (Always Visible)
+        // Render History Section
         function renderHistorySection() {
             const container = document.getElementById('history-container');
             const countEl = document.getElementById('historyCount');
