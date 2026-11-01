@@ -26,7 +26,7 @@
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding-bottom: 80px; }
         .glass-card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 16px; }
-        .tab-btn { padding: 8px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; color: #94a3b8; background: transparent; transition: all 0.2s; }
+        .tab-btn { padding: 8px 14px; border-radius: 12px; font-size: 13px; font-weight: 600; color: #94a3b8; background: transparent; transition: all 0.2s; whitespace-nowrap: nowrap; }
         .tab-btn.active { background-color: #2563eb; color: #ffffff; font-weight: 700; }
         input, select { background-color: #0f172a !important; color: #ffffff !important; border: 1px solid #334155 !important; }
         input:focus, select:focus { outline: none; border-color: #3b82f6 !important; }
@@ -109,9 +109,8 @@
         <section class="glass-card">
             <div class="flex border-b border-slate-700/80 pb-3 gap-1 overflow-x-auto">
                 <button onclick="switchTab('sales')" id="tab-sales" class="tab-btn active">매출 입력</button>
-                <button onclick="switchTab('fixed')" id="tab-fixed" class="tab-btn">고정비 (9개)</button>
-                <button onclick="switchTab('variable')" id="tab-variable" class="tab-btn">식자재/변동비 (13개)</button>
-                <button onclick="switchTab('history')" id="tab-history" class="tab-btn">전체 내역 조회</button>
+                <button onclick="switchTab('fixed')" id="tab-fixed" class="tab-btn">고정비 입력</button>
+                <button onclick="switchTab('variable')" id="tab-variable" class="tab-btn">식자재/변동비 입력</button>
             </div>
 
             <!-- Main Input Form Area -->
@@ -125,8 +124,21 @@
             <h3 id="chartTitle" class="text-xs font-bold text-white flex items-center gap-1.5">
                 <i class="fa-solid fa-chart-pie text-blue-400"></i> 지출 항목별 분석
             </h3>
-            <div class="h-56 relative">
+            <div class="h-52 relative">
                 <canvas id="expenseChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Live Ledger History List (Always Displayed Below) -->
+        <section class="glass-card space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-700/80 pb-2.5">
+                <h3 class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <i class="fa-solid fa-list-check text-blue-400"></i> 매출 및 지출 상세 내역
+                </h3>
+                <span id="historyCount" class="text-[11px] text-slate-400">0건</span>
+            </div>
+            <div id="history-container">
+                <!-- Live Table Rendered Here -->
             </div>
         </section>
 
@@ -171,16 +183,7 @@
                 </div>
                 <div>
                     <label class="text-[11px] text-slate-400">분류 항목</label>
-                    <select id="ocrCategory" class="w-full text-xs rounded-lg p-2">
-                        <option value="고기">🥩 고기 (패티 식자재)</option>
-                        <option value="빵/번">🍞 빵/번</option>
-                        <option value="코스트코">🛒 코스트코</option>
-                        <option value="채소/신선">🥬 채소/신선식재료</option>
-                        <option value="소스/시즈닝">🧂 소스/시즈닝</option>
-                        <option value="음료/주류/맥주">🍺 음료/주류/수제맥주</option>
-                        <option value="포장 용기/소모품">📦 포장 용기/소모품</option>
-                        <option value="기타 식자재">🛒 기타 식자재</option>
-                    </select>
+                    <select id="ocrCategory" class="w-full text-xs rounded-lg p-2"></select>
                 </div>
                 <button onclick="saveOcrEntry()" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-500">
                     장부에 저장하기
@@ -207,9 +210,13 @@
         }
         const db = firebase.firestore();
 
-        // Categories
-        const fixedCategories = ['가게세(임대료)', '상가관리비', '전기요금', '수도요금', '가스요금', '인건비(박동찬 등)', '인터넷/포스/통신비', '세무사수수료', '기타고정비'];
-        const variableCategories = ['고기', '빵/번', '채소/신선', '소스/시즈닝', '음료/주류/맥주', '코스트코', '기타 식자재', '배민 수수료', '쿠팡이츠 수수료', '요기요 수수료', '포장 용기/소모품', '카드 수수료', '기타 변동비'];
+        // Default Categories
+        const defaultFixed = ['가게세(임대료)', '상가관리비', '전기요금', '수도요금', '가스요금', '인건비(박동찬 등)', '인터넷/포스/통신비', '세무사수수료', '기타고정비'];
+        const defaultVariable = ['고기', '빵/번', '채소/신선', '소스/시즈닝', '음료/주류/맥주', '코스트코', '기타 식자재', '배민 수수료', '쿠팡이츠 수수료', '요기요 수수료', '포장 용기/소모품', '카드 수수료', '기타 변동비'];
+
+        // Load Custom Categories from Local Storage
+        let fixedCategories = JSON.parse(localStorage.getItem('cb_fixed_cats')) || defaultFixed;
+        let variableCategories = JSON.parse(localStorage.getItem('cb_var_cats')) || defaultVariable;
 
         let dbData = [];
         let currentTab = 'sales';
@@ -217,7 +224,7 @@
 
         const getTodayStr = () => new Date().toISOString().split('T')[0];
 
-        // Init Setup
+        // Init App
         window.onload = function() {
             const now = new Date();
             document.getElementById('yearSelect').value = now.getFullYear().toString();
@@ -225,9 +232,10 @@
 
             switchTab('sales');
             initRealtimeSync();
+            updateOcrCategorySelect();
         };
 
-        // Realtime Firestore Listener
+        // Realtime Listener
         function initRealtimeSync() {
             db.collection("craftburger_ledger").onSnapshot((snapshot) => {
                 dbData = [];
@@ -235,7 +243,7 @@
                     dbData.push({ id: doc.id, ...doc.data() });
                 });
                 renderDashboard();
-                if (currentTab === 'history') renderHistoryTab();
+                renderHistorySection();
             }, (error) => {
                 console.error("Sync error: ", error);
                 const statusEl = document.getElementById('syncStatus');
@@ -244,12 +252,10 @@
             });
         }
 
-        // Tab Switching Logic
+        // Tab Switching
         function switchTab(tab) {
             currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
             const activeBtn = document.getElementById(`tab-${tab}`);
             if (activeBtn) activeBtn.classList.add('active');
@@ -258,7 +264,6 @@
             if (tab === 'sales') renderSalesForm(container);
             else if (tab === 'fixed') renderExpenseForm(container, 'fixed', fixedCategories);
             else if (tab === 'variable') renderExpenseForm(container, 'variable', variableCategories);
-            else if (tab === 'history') renderHistoryTab(container);
         }
 
         // Render Sales Form
@@ -294,9 +299,11 @@
             `;
         }
 
-        // Render Expense Form
+        // Render Expense Form with Custom Category Management
         function renderExpenseForm(container, type, categories) {
             const options = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            const typeName = type === 'fixed' ? '고정비' : '식자재/변동비';
+
             container.innerHTML = `
                 <form onsubmit="handleSaveEntry(event, '${type}')" class="space-y-3">
                     <div class="grid grid-cols-2 gap-2">
@@ -305,7 +312,10 @@
                             <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full text-xs rounded-xl p-2.5">
                         </div>
                         <div>
-                            <label class="text-[11px] text-slate-400">지출 항목</label>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[11px] text-slate-400">지출 항목</label>
+                                <button type="button" onclick="addCategoryPrompt('${type}')" class="text-[10px] text-blue-400 hover:underline">+ 항목 추가</button>
+                            </div>
                             <select id="inputCategory" class="w-full text-xs rounded-xl p-2.5">
                                 ${options}
                             </select>
@@ -323,7 +333,60 @@
                         <i class="fa-solid fa-minus mr-1"></i> 지출 내역 저장
                     </button>
                 </form>
+
+                <!-- Category Delete Management List -->
+                <div class="mt-4 pt-3 border-t border-slate-800">
+                    <p class="text-[11px] text-slate-400 mb-2">등록된 ${typeName} 항목 목록 (삭제하려면 클릭)</p>
+                    <div class="flex flex-wrap gap-1.5">
+                        ${categories.map(c => `
+                            <span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] bg-slate-800 text-slate-300 border border-slate-700">
+                                ${c}
+                                <button type="button" onclick="deleteCategory('${type}', '${c}')" class="ml-1 text-slate-500 hover:text-rose-400">✕</button>
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
             `;
+        }
+
+        // Add Category
+        function addCategoryPrompt(type) {
+            const name = prompt('새로 추가할 지출 항목명을 입력하세요:');
+            if (!name || !name.trim()) return;
+
+            const targetName = name.trim();
+            if (type === 'fixed') {
+                if (!fixedCategories.includes(targetName)) fixedCategories.push(targetName);
+                localStorage.setItem('cb_fixed_cats', JSON.stringify(fixedCategories));
+            } else {
+                if (!variableCategories.includes(targetName)) variableCategories.push(targetName);
+                localStorage.setItem('cb_var_cats', JSON.stringify(variableCategories));
+            }
+            updateOcrCategorySelect();
+            switchTab(type);
+        }
+
+        // Delete Category
+        function deleteCategory(type, catName) {
+            if (!confirm(`'${catName}' 항목을 목록에서 삭제하시겠습니까?`)) return;
+
+            if (type === 'fixed') {
+                fixedCategories = fixedCategories.filter(c => c !== catName);
+                localStorage.setItem('cb_fixed_cats', JSON.stringify(fixedCategories));
+            } else {
+                variableCategories = variableCategories.filter(c => c !== catName);
+                localStorage.setItem('cb_var_cats', JSON.stringify(variableCategories));
+            }
+            updateOcrCategorySelect();
+            switchTab(type);
+        }
+
+        // Update OCR Modal Categories Select
+        function updateOcrCategorySelect() {
+            const el = document.getElementById('ocrCategory');
+            if (!el) return;
+            const allVar = [...variableCategories, ...fixedCategories];
+            el.innerHTML = allVar.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         // Save Entry
@@ -348,11 +411,16 @@
             }).catch(err => alert('저장 실패: ' + err.message));
         }
 
-        // Render History
-        function renderHistoryTab(container = document.getElementById('form-container')) {
+        // Render History Section (Always Visible)
+        function renderHistorySection() {
+            const container = document.getElementById('history-container');
+            const countEl = document.getElementById('historyCount');
             const filtered = getFilteredData();
+
+            countEl.innerText = `${filtered.length}건`;
+
             if (filtered.length === 0) {
-                container.innerHTML = `<p class="text-center text-xs text-slate-500 py-6">등록된 내역이 없습니다.</p>`;
+                container.innerHTML = `<p class="text-center text-xs text-slate-500 py-6">선택한 기간에 등록된 내역이 없습니다.</p>`;
                 return;
             }
 
@@ -377,11 +445,11 @@
                 const isSales = item.type === 'sales';
                 html += `
                     <tr>
-                        <td class="py-2.5 text-slate-300">${item.date}</td>
+                        <td class="py-2.5 text-slate-300 font-medium">${item.date}</td>
                         <td class="py-2.5"><span class="px-1.5 py-0.5 rounded text-[10px] ${isSales ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${isSales ? '매출' : '지출'}</span></td>
                         <td class="py-2.5 text-white">${item.category} <span class="text-[10px] text-slate-500">${item.memo ? '('+item.memo+')' : ''}</span></td>
                         <td class="py-2.5 text-right font-bold ${isSales ? 'text-emerald-400' : 'text-rose-400'}">${item.amount.toLocaleString()}원</td>
-                        <td class="py-2.5 text-center"><button onclick="deleteEntry('${item.id}')" class="text-slate-500 hover:text-rose-400 px-2 py-1"><i class="fa-solid fa-trash"></i></button></td>
+                        <td class="py-2.5 text-center"><button onclick="deleteEntry('${item.id}')" class="text-slate-500 hover:text-rose-400 px-2 py-1"><i class="fa-solid fa-trash-can"></i></button></td>
                     </tr>
                 `;
             });
@@ -430,6 +498,7 @@
             document.getElementById('profitMargin').innerText = margin + '%';
 
             renderChart(categories);
+            renderHistorySection();
         }
 
         // Render Chart
@@ -467,11 +536,10 @@
             });
         }
 
-        // OCR Modal Open/Close
+        // OCR Handlers
         function openOcrModal() { document.getElementById('ocrModal').classList.remove('hidden'); }
         function closeOcrModal() { document.getElementById('ocrModal').classList.add('hidden'); }
 
-        // OCR Receipt Process
         function processReceipt(e) {
             const file = e.target.files[0];
             if (!file) return;
