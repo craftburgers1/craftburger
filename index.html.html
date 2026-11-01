@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Web App & iOS Fullscreen Settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="더크래프트버거">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    
+    <!-- Home Screen Web App Icon -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/emoji/192/hamburger-emoji.png">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/emoji/192/hamburger-emoji.png">
+
+    <title>더크래프트버거 세종도담점 - 매출 & 지출 스마트 관리</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Noto Sans KR Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Mobile Smooth Scroll & Touch active states */
+        .btn-active:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+        /* Custom Scrollbar for tables */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-16">
+
+    <!-- Header / Navbar -->
+    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-500 text-slate-900 w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl shadow-inner">
+                    🍔
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg leading-tight">더크래프트버거</h1>
+                    <p class="text-xs text-amber-400 font-medium">세종도담점 장부 & 경영지표</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <!-- Cloud Sync Badge -->
+                <div id="cloud-sync-status" class="hidden sm:flex items-center text-[11px] bg-slate-800 text-emerald-400 px-2.5 py-1 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-cloud-arrow-up mr-1.5 animate-pulse"></i>
+                    <span>클라우드 동기화됨</span>
+                </div>
+                <!-- Month Selector -->
+                <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2 py-1">
+                    <i class="fa-regular fa-calendar-check text-amber-400 mr-2 text-sm"></i>
+                    <input type="month" id="current-month-select" class="bg-transparent text-white text-xs sm:text-sm font-semibold focus:outline-none cursor-pointer">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-5xl mx-auto px-3 sm:px-4 pt-4 space-y-4">
+
+        <!-- KPI Executive Summary Cards -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+            <!-- Monthly Revenue -->
+            <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                    <span>이번 달 총 매출</span>
+                    <span class="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-wallet"></i></span>
+                </div>
+                <div class="mt-2">
+                    <div id="dash-total-income" class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">0원</div>
+                    <p id="dash-income-count" class="text-[11px] text-slate-400 mt-0.5">입력 0건</p>
+                </div>
+            </div>
+
+            <!-- Total Expenses -->
+            <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                    <span>이번 달 총 지출</span>
+                    <span class="w-7 h-7 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-xs"><i class="fa-solid fa-receipt"></i></span>
+                </div>
+                <div class="mt-2">
+                    <div id="dash-total-expense" class="text-lg sm:text-2xl font-black text-rose-600 tracking-tight">0원</div>
+                    <div class="flex justify-between items-center text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
+                        <span>고정: <span id="dash-fixed-expense">0원</span></span>
+                        <span>변동: <span id="dash-variable-expense">0원</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Net Profit (Remaining Money) -->
+            <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-3.5 sm:p-4 rounded-2xl shadow-md flex flex-col justify-between col-span-1">
+                <div class="flex items-center justify-between text-xs font-semibold text-amber-100">
+                    <span>남은 돈 (순이익)</span>
+                    <span class="w-7 h-7 rounded-full bg-white/20 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-piggy-bank"></i></span>
+                </div>
+                <div class="mt-2">
+                    <div id="dash-net-profit" class="text-lg sm:text-2xl font-black tracking-tight">0원</div>
+                    <p class="text-[11px] text-amber-100/90 mt-0.5">매출 - (고정비+변동비)</p>
+                </div>
+            </div>
+
+            <!-- Operating Profit Margin -->
+            <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between col-span-1">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                    <span>영업 이익률</span>
+                    <span class="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-chart-line"></i></span>
+                </div>
+                <div class="mt-2">
+                    <div id="dash-profit-margin" class="text-lg sm:text-2xl font-black text-blue-600 tracking-tight">0.0 %</div>
+                    <p id="margin-status-text" class="text-[11px] font-semibold mt-0.5 text-slate-400">매출을 입력해주세요</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Receipt Scanner Banner & Entry Selector -->
+        <section class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden">
+            <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="space-y-1">
+                    <div class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-900">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Gemini AI 스마트 파싱
+                    </div>
+                    <h2 class="text-base sm:text-lg font-bold">영수증 사진 한 장으로 지출 자동 등록</h2>
+                    <p class="text-xs text-slate-300">종이 영수증을 촬영하면 AI가 매장명, 날짜, 금액, 카테고리를 자동으로 추출해 줍니다.</p>
+                </div>
+                <div class="w-full sm:w-auto flex items-center gap-2">
+                    <label for="ai-receipt-input" class="w-full sm:w-auto px-4 py-2.5 bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-bold text-xs sm:text-sm rounded-xl cursor-pointer text-center shadow-lg transition flex items-center justify-center space-x-2 btn-active">
+                        <i class="fa-solid fa-camera text-base"></i>
+                        <span>영수증 촬영 / 업로드</span>
+                    </label>
+                    <input type="file" id="ai-receipt-input" accept="image/*,image/heic,image/heif" capture="environment" class="hidden" onchange="handleReceiptUpload(event)">
+                </div>
+            </div>
+        </section>
+
+        <!-- Input Form Section -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
+                <i class="fa-solid fa-pen-to-square text-amber-500 mr-2"></i> 거래 내역 직접 등록
+            </h3>
+            <form id="transaction-form" onsubmit="handleAddTransaction(event)" class="space-y-3">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <!-- Date Input -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">날짜</label>
+                        <input type="date" id="input-date" required class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                    <!-- Type Input -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">구분</label>
+                        <select id="input-type" onchange="updateCategoryDropdown()" class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium">
+                            <option value="INCOME">💰 수입 (매출)</option>
+                            <option value="FIXED">📌 고정비</option>
+                            <option value="VARIABLE">🛒 식자재/변동비</option>
+                        </select>
+                    </div>
+                    <!-- Category Input (Updated Dynamic) -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">세부 항목</label>
+                        <select id="input-category" required class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <!-- Amount Input -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">금액 (원)</label>
+                        <input type="number" id="input-amount" required placeholder="0" min="0" step="10" class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-semibold">
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
+                    <input type="text" id="input-memo" placeholder="메모 (예: 코스트코 장보기, 부릉 배달대행료 등)" class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    <button type="submit" class="w-full sm:w-36 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow transition btn-active flex items-center justify-center space-x-1 shrink-0">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>기록 추가</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Chart & Breakdown Section -->
+        <section class="grid md:grid-cols-2 gap-4">
+            <!-- Expense Category Doughnut Chart -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <h3 class="font-bold text-slate-800 text-sm mb-2 flex items-center justify-between">
+                    <span><i class="fa-solid fa-chart-pie text-indigo-500 mr-2"></i> 지출 카테고리별 비중</span>
+                    <span id="chart-month-label" class="text-xs text-slate-400 font-normal">선택 월 기준</span>
+                </h3>
+                <div class="relative w-full h-48 sm:h-56 flex items-center justify-center">
+                    <canvas id="expenseCategoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Expense Ranking Table -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                <h3 class="font-bold text-slate-800 text-sm mb-3 flex items-center justify-between">
+                    <span><i class="fa-solid fa-list-ol text-emerald-500 mr-2"></i> 지출 TOP 항목 순위</span>
+                    <span class="text-xs text-slate-400 font-normal">합계 순</span>
+                </h3>
+                <div class="overflow-y-auto max-h-48 sm:max-h-56">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 text-[11px] font-semibold text-slate-500 sticky top-0">
+                            <tr>
+                                <th class="p-2 rounded-l-lg">구분</th>
+                                <th class="p-2">항목</th>
+                                <th class="p-2 text-right">금액</th>
+                                <th class="p-2 text-right rounded-r-lg">비중</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-expenses-tbody" class="divide-y divide-slate-100 text-xs">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Ledger History List -->
+        <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <h3 class="font-bold text-slate-800 text-base flex items-center">
+                    <i class="fa-solid fa-clock-rotate-left text-amber-500 mr-2"></i> 이번 달 전체 수입/지출 내역
+                </h3>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="search-keyword" oninput="renderTransactionList()" placeholder="항목/메모 검색..." class="text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    <button onclick="exportToCSV()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg shadow-sm transition flex items-center space-x-1 shrink-0">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>엑셀 다운로드</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Transaction Table / Cards for Mobile -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-100 text-xs font-semibold text-slate-600">
+                        <tr>
+                            <th class="p-2.5 rounded-l-lg">날짜</th>
+                            <th class="p-2.5">구분</th>
+                            <th class="p-2.5">항목</th>
+                            <th class="p-2.5">메모</th>
+                            <th class="p-2.5 text-right">금액</th>
+                            <th class="p-2.5 text-center rounded-r-lg">삭제</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Category Settings Section -->
+        <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center">
+                    <i class="fa-solid fa-sliders text-indigo-500 mr-2"></i> 커스텀 항목(카테고리) 설정
+                </h3>
+                <span class="text-xs text-slate-400">필요 시 항목 추가/삭제</span>
+            </div>
+            
+            <div class="grid sm:grid-cols-2 gap-4">
+                <!-- Fixed Cost Manager -->
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <h4 class="font-bold text-xs text-rose-600 mb-2 flex items-center justify-between">
+                        <span>📌 고정비 항목 목록</span>
+                    </h4>
+                    <div id="fixed-categories-tags" class="flex flex-wrap gap-1.5 mb-2.5">
+                        <!-- Tags inserted dynamically -->
+                    </div>
+                    <div class="flex gap-1.5">
+                        <input type="text" id="new-fixed-cat" placeholder="신규 고정비 항목명" class="text-xs p-2 bg-white border border-slate-200 rounded-lg w-full focus:outline-none">
+                        <button onclick="addCategory('FIXED')" class="bg-slate-800 text-white font-bold text-xs px-3 py-2 rounded-lg shrink-0">추가</button>
+                    </div>
+                </div>
+
+                <!-- Variable Cost Manager -->
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <h4 class="font-bold text-xs text-emerald-600 mb-2 flex items-center justify-between">
+                        <span>🛒 식자재 및 변동비 항목 목록</span>
+                    </h4>
+                    <div id="variable-categories-tags" class="flex flex-wrap gap-1.5 mb-2.5">
+                        <!-- Tags inserted dynamically -->
+                    </div>
+                    <div class="flex gap-1.5">
+                        <input type="text" id="new-variable-cat" placeholder="신규 변동비 항목명" class="text-xs p-2 bg-white border border-slate-200 rounded-lg w-full focus:outline-none">
+                        <button onclick="addCategory('VARIABLE')" class="bg-slate-800 text-white font-bold text-xs px-3 py-2 rounded-lg shrink-0">추가</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Modal Layer -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
+            <h3 id="modal-title" class="font-bold text-slate-900 text-base">알림</h3>
+            <p id="modal-body" class="text-xs sm:text-sm text-slate-600 leading-relaxed">내용</p>
+            <div class="flex justify-end pt-2">
+                <button onclick="closeModal()" class="bg-amber-500 text-slate-950 font-bold text-xs sm:text-sm px-4 py-2 rounded-xl">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Loading Spinner Overlay -->
+    <div id="ai-loading-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center p-4 text-white">
+        <div class="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <h4 class="font-bold text-base mb-1">Gemini AI가 영수증을 분석 중입니다...</h4>
+        <p class="text-xs text-slate-300">날짜, 결제 금액, 품목 및 지출 항목을 분류하고 있습니다.</p>
+    </div>
+
+    <!-- Firebase SDK Modules Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration & Setup
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'craftburger-sejong-dodam';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "dummy-key",
+            authDomain: "dummy-app.firebaseapp.com",
+            projectId: "dummy-project"
+        };
+
+        let app, db, auth, currentUser = null;
+
+        // Default Master Categories
+        const defaultCategories = {
+            FIXED: ['가게세', '관리비', '부가세', '가스비', '인터넷', '티오더', '인건비', '부릉배달비', '기장비'],
+            VARIABLE: ['고기', '빵', '맥주', '감자', '베이컨', '토마토', '코스트코', '베스트코', '오케이마트', '음료(콜라사이다)', '잡자재(종이봉투,비닐,스티커 등)', '배민수수료', '쿠팡수수료']
+        };
+
+        window.categories = JSON.parse(localStorage.getItem('craftburger_categories')) || defaultCategories;
+        window.transactions = JSON.parse(localStorage.getItem('craftburger_transactions')) || [];
+        let expenseChart = null;
+
+        // Cloud Initialization & Authentication Rule
+        async function initCloudStorage() {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const userCredential = await signInWithCustomToken(auth, __initial_auth_token);
+                    currentUser = userCredential.user;
+                } else {
+                    const userCredential = await signInAnonymously(auth);
+                    currentUser = userCredential.user;
+                }
+
+                if (currentUser) {
+                    listenToCloudData();
+                }
+            } catch (error) {
+                console.warn("Cloud Storage init failed or running offline mode:", error);
+            }
+        }
+
+        // Real-time Cloud Firestore Listener (RULE 1 & 2 standard compliant)
+        function listenToCloudData() {
+            if (!currentUser) return;
+
+            // Public Collection Path according to mandatory rules
+            const txCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'transactions_store');
+            const catDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'categories_store', 'main_categories');
+
+            // Listen to Transactions
+            onSnapshot(txCollectionRef, (snapshot) => {
+                const cloudTxs = [];
+                snapshot.forEach((docSnap) => {
+                    cloudTxs.push(docSnap.data());
+                });
+                if (cloudTxs.length > 0) {
+                    // Sort descending by date & created time
+                    cloudTxs.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    window.transactions = cloudTxs;
+                    localStorage.setItem('craftburger_transactions', JSON.stringify(window.transactions));
+                    refreshAllViews();
+                }
+            }, (error) => {
+                console.error("Firestore Transaction Listener Error:", error);
+            });
+
+            // Listen to Custom Categories
+            onSnapshot(catDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data && data.FIXED && data.VARIABLE) {
+                        window.categories = { FIXED: data.FIXED, VARIABLE: data.VARIABLE };
+                        localStorage.setItem('craftburger_categories', JSON.stringify(window.categories));
+                        renderCategorySettings();
+                        updateCategoryDropdown();
+                    }
+                }
+            }, (error) => {
+                console.error("Firestore Categories Listener Error:", error);
+            });
+        }
+
+        // Save Data both Locally & to Cloud
+        async function syncSaveToCloud() {
+            localStorage.setItem('craftburger_categories', JSON.stringify(window.categories));
+            localStorage.setItem('craftburger_transactions', JSON.stringify(window.transactions));
+
+            if (!currentUser || !db) return;
+
+            try {
+                // Save Categories Doc
+                const catDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'categories_store', 'main_categories');
+                await setDoc(catDocRef, window.categories);
+
+                // Save All Transactions (upsert)
+                for (const tx of window.transactions) {
+                    const txDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'transactions_store', tx.id);
+                    await setDoc(txDocRef, tx);
+                }
+            } catch (err) {
+                console.error("Cloud Sync Error:", err);
+            }
+        }
+
+        window.syncSaveToCloud = syncSaveToCloud;
+
+        // Utilities
+        function getTodayYMD() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getCurrentYM() {
+            return getTodayYMD().substring(0, 7);
+        }
+
+        function formatKRW(amt) {
+            return new Intl.NumberFormat('ko-KR').format(amt) + '원';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function showModal(title, message) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerText = message;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+
+        window.closeModal = closeModal;
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            const monthSelect = document.getElementById('current-month-select');
+            monthSelect.value = getCurrentYM();
+            monthSelect.addEventListener('change', () => {
+                refreshAllViews();
+            });
+
+            document.getElementById('input-date').value = getTodayYMD();
+
+            updateCategoryDropdown();
+            renderCategorySettings();
+            refreshAllViews();
+
+            // Initialize Cloud Connection
+            initCloudStorage();
+        });
+
+        // Dynamic Dropdown update based on Selected Transaction Type
+        function updateCategoryDropdown() {
+            const typeSelect = document.getElementById('input-type');
+            const categorySelect = document.getElementById('input-category');
+            if (!typeSelect || !categorySelect) return;
+
+            const type = typeSelect.value;
+            categorySelect.innerHTML = '';
+
+            if (type === 'INCOME') {
+                const opt = document.createElement('option');
+                opt.value = '매출액';
+                opt.textContent = '💰 매출액';
+                categorySelect.appendChild(opt);
+            } else if (type === 'FIXED') {
+                window.categories.FIXED.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = cat;
+                    categorySelect.appendChild(opt);
+                });
+            } else if (type === 'VARIABLE') {
+                window.categories.VARIABLE.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = cat;
+                    categorySelect.appendChild(opt);
+                });
+            }
+        }
+
+        window.updateCategoryDropdown = updateCategoryDropdown;
+
+        // Add Transaction Function
+        async function handleAddTransaction(e) {
+            e.preventDefault();
+            const date = document.getElementById('input-date').value;
+            const type = document.getElementById('input-type').value;
+            const category = document.getElementById('input-category').value;
+            const amount = parseInt(document.getElementById('input-amount').value, 10);
+            const memo = document.getElementById('input-memo').value.trim();
+
+            if (!date || !category || isNaN(amount) || amount <= 0) {
+                showModal("입력 오류", "날짜, 세부 항목, 그리고 올바른 금액을 입력해 주세요.");
+                return;
+            }
+
+            const newTx = {
+                id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                date,
+                type,
+                category,
+                amount,
+                memo
+            };
+
+            window.transactions.unshift(newTx);
+            await syncSaveToCloud();
+
+            // Reset Input Fields
+            document.getElementById('input-amount').value = '';
+            document.getElementById('input-memo').value = '';
+
+            refreshAllViews();
+            showModal("등록 완료", `${type === 'INCOME' ? '수입' : '지출'} 내역이 클라우드에 자동 백업되었습니다.`);
+        }
+
+        window.handleAddTransaction = handleAddTransaction;
+
+        // Delete Transaction
+        async function deleteTransaction(id) {
+            window.transactions = window.transactions.filter(t => t.id !== id);
+            await syncSaveToCloud();
+            refreshAllViews();
+        }
+
+        window.deleteTransaction = deleteTransaction;
+
+        function refreshAllViews() {
+            renderDashboard();
+            renderTransactionList();
+        }
+
+        // Dashboard Calculation & Visualizations
+        function renderDashboard() {
+            const selectedMonth = document.getElementById('current-month-select').value;
+            document.getElementById('chart-month-label').innerText = `${selectedMonth} 기준`;
+
+            let totalIncome = 0;
+            let totalFixed = 0;
+            let totalVariable = 0;
+            let incomeCount = 0;
+
+            const categorySums = {};
+
+            window.transactions.forEach(t => {
+                if (t.date.startsWith(selectedMonth)) {
+                    if (t.type === 'INCOME') {
+                        totalIncome += t.amount;
+                        incomeCount++;
+                    } else if (t.type === 'FIXED') {
+                        totalFixed += t.amount;
+                        categorySums[t.category] = (categorySums[t.category] || 0) + t.amount;
+                    } else if (t.type === 'VARIABLE') {
+                        totalVariable += t.amount;
+                        categorySums[t.category] = (categorySums[t.category] || 0) + t.amount;
+                    }
+                }
+            });
+
+            const totalExpense = totalFixed + totalVariable;
+            const netProfit = totalIncome - totalExpense;
+            const margin = totalIncome > 0 ? ((netProfit / totalIncome) * 100).toFixed(1) : 0;
+
+            // Display Figures
+            document.getElementById('dash-total-income').innerText = formatKRW(totalIncome);
+            document.getElementById('dash-income-count').innerText = `입력 건수: ${incomeCount}건`;
+
+            document.getElementById('dash-total-expense').innerText = formatKRW(totalExpense);
+            document.getElementById('dash-fixed-expense').innerText = formatKRW(totalFixed);
+            document.getElementById('dash-variable-expense').innerText = formatKRW(totalVariable);
+
+            document.getElementById('dash-net-profit').innerText = formatKRW(netProfit);
+            document.getElementById('dash-profit-margin').innerText = `${margin} %`;
+
+            // Status Badge based on margin
+            const statusEl = document.getElementById('margin-status-text');
+            if (totalIncome === 0) {
+                statusEl.innerText = "매출을 입력해주세요.";
+                statusEl.className = "text-[11px] text-slate-400 font-medium mt-0.5";
+            } else if (margin >= 25) {
+                statusEl.innerText = "🎉 우수한 영업 이익률입니다!";
+                statusEl.className = "text-[11px] text-emerald-600 font-bold mt-0.5";
+            } else if (margin >= 10) {
+                statusEl.innerText = "👍 안정적인 영업 이익 수준입니다.";
+                statusEl.className = "text-[11px] text-blue-600 font-semibold mt-0.5";
+            } else if (margin > 0) {
+                statusEl.innerText = "⚠️ 지출 관리가 다소 필요합니다.";
+                statusEl.className = "text-[11px] text-amber-600 font-medium mt-0.5";
+            } else {
+                statusEl.innerText = "🚨 이번 달 적자 상태입니다.";
+                statusEl.className = "text-[11px] text-rose-600 font-bold mt-0.5";
+            }
+
+            // Expense Breakdown Table
+            const sortedCategories = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
+            const topTbody = document.getElementById('top-expenses-tbody');
+            topTbody.innerHTML = '';
+
+            if (sortedCategories.length === 0) {
+                topTbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">이번 달 기록된 지출 내역이 없습니다.</td></tr>`;
+            } else {
+                sortedCategories.forEach(cat => {
+                    const amt = categorySums[cat];
+                    const ratio = totalExpense > 0 ? ((amt / totalExpense) * 100).toFixed(1) : 0;
+                    const isFixed = window.categories.FIXED.includes(cat);
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-2 text-[10px]">
+                            <span class="px-1.5 py-0.5 rounded font-bold ${isFixed ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
+                                ${isFixed ? '고정비' : '변동비'}
+                            </span>
+                        </td>
+                        <td class="p-2 font-medium text-slate-800">${escapeHtml(cat)}</td>
+                        <td class="p-2 text-right font-semibold text-slate-900">${formatKRW(amt)}</td>
+                        <td class="p-2 text-right text-slate-500 text-xs">${ratio}%</td>
+                    `;
+                    topTbody.appendChild(tr);
+                });
+            }
+
+            // Render Doughnut Chart
+            renderChart(sortedCategories, categorySums);
+        }
+
+        function renderChart(labels, dataMap) {
+            const ctx = document.getElementById('expenseCategoryChart').getContext('2d');
+
+            if (expenseChart) {
+                expenseChart.destroy();
+            }
+
+            const dataValues = labels.map(l => dataMap[l]);
+            if (dataValues.length === 0) {
+                expenseChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['지출 없음'],
+                        datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+                return;
+            }
+
+            const bgColors = [
+                '#f97316', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981',
+                '#f59e0b', '#3b82f6', '#6366f1', '#14b8a6', '#84cc16'
+            ];
+
+            expenseChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: bgColors.slice(0, labels.length),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 10,
+                                font: { size: 10, family: 'Noto Sans KR' },
+                                padding: 8
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // Render Master Transaction List
+        function renderTransactionList() {
+            const selectedMonth = document.getElementById('current-month-select').value;
+            const keyword = document.getElementById('search-keyword').value.trim().toLowerCase();
+            const tbody = document.getElementById('transaction-tbody');
+            tbody.innerHTML = '';
+
+            const filtered = window.transactions.filter(t => {
+                const matchMonth = t.date.startsWith(selectedMonth);
+                const matchKw = !keyword || t.category.toLowerCase().includes(keyword) || (t.memo && t.memo.toLowerCase().includes(keyword));
+                return matchMonth && matchKw;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">해당 조건의 거래 내역이 존재하지 않습니다.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                
+                let typeBadge = '';
+                if (t.type === 'INCOME') {
+                    typeBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">💰 수입</span>';
+                } else if (t.type === 'FIXED') {
+                    typeBadge = '<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold text-[10px]">📌 고정비</span>';
+                } else {
+                    typeBadge = '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">🛒 변동비</span>';
+                }
+
+                const amtClass = t.type === 'INCOME' ? 'text-emerald-600 font-bold' : 'text-slate-900 font-bold';
+
+                tr.innerHTML = `
+                    <td class="p-2.5 font-medium text-slate-600 text-xs whitespace-nowrap">${t.date}</td>
+                    <td class="p-2.5 whitespace-nowrap">${typeBadge}</td>
+                    <td class="p-2.5 font-semibold text-slate-800 whitespace-nowrap">${escapeHtml(t.category)}</td>
+                    <td class="p-2.5 text-slate-500 max-w-[150px] truncate">${escapeHtml(t.memo || '-')}</td>
+                    <td class="p-2.5 text-right whitespace-nowrap ${amtClass}">${formatKRW(t.amount)}</td>
+                    <td class="p-2.5 text-center whitespace-nowrap">
+                        <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 transition p-1">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.renderTransactionList = renderTransactionList;
+
+        // Render Dynamic Category Manager Tags
+        function renderCategorySettings() {
+            const fixedContainer = document.getElementById('fixed-categories-tags');
+            const variableContainer = document.getElementById('variable-categories-tags');
+
+            fixedContainer.innerHTML = '';
+            variableContainer.innerHTML = '';
+
+            window.categories.FIXED.forEach(cat => {
+                const tag = document.createElement('span');
+                tag.className = "inline-flex items-center px-2 py-1 bg-white border border-slate-200 text-slate-700 font-medium text-xs rounded-lg shadow-sm";
+                tag.innerHTML = `
+                    <span>${escapeHtml(cat)}</span>
+                    <button onclick="removeCategory('FIXED', '${escapeHtml(cat)}')" class="ml-1.5 text-slate-400 hover:text-rose-500">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                `;
+                fixedContainer.appendChild(tag);
+            });
+
+            window.categories.VARIABLE.forEach(cat => {
+                const tag = document.createElement('span');
+                tag.className = "inline-flex items-center px-2 py-1 bg-white border border-slate-200 text-slate-700 font-medium text-xs rounded-lg shadow-sm";
+                tag.innerHTML = `
+                    <span>${escapeHtml(cat)}</span>
+                    <button onclick="removeCategory('VARIABLE', '${escapeHtml(cat)}')" class="ml-1.5 text-slate-400 hover:text-rose-500">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                `;
+                variableContainer.appendChild(tag);
+            });
+        }
+
+        async function addCategory(type) {
+            const inputId = type === 'FIXED' ? 'new-fixed-cat' : 'new-variable-cat';
+            const val = document.getElementById(inputId).value.trim();
+
+            if (!val) return;
+
+            if (window.categories[type].includes(val)) {
+                showModal("중복 항목", "이미 존재하는 세부 항목입니다.");
+                return;
+            }
+
+            window.categories[type].push(val);
+            await syncSaveToCloud();
+            document.getElementById(inputId).value = '';
+            
+            renderCategorySettings();
+            updateCategoryDropdown();
+        }
+
+        window.addCategory = addCategory;
+
+        async function removeCategory(type, name) {
+            window.categories[type] = window.categories[type].filter(c => c !== name);
+            await syncSaveToCloud();
+            renderCategorySettings();
+            updateCategoryDropdown();
+        }
+
+        window.removeCategory = removeCategory;
+
+        // Export CSV Function
+        function exportToCSV() {
+            const selectedMonth = document.getElementById('current-month-select').value;
+            const filtered = window.transactions.filter(t => t.date.startsWith(selectedMonth));
+
+            if (filtered.length === 0) {
+                showModal("다운로드 오류", "해당 월에 내보낼 데이터가 없습니다.");
+                return;
+            }
+
+            let csvContent = "\uFEFF날짜,구분,세부항목,금액,메모\n";
+            filtered.forEach(t => {
+                const typeText = t.type === 'INCOME' ? '수입' : (t.type === 'FIXED' ? '고정비' : '변동비');
+                csvContent += `"${t.date}","${typeText}","${t.category.replace(/"/g, '""')}","${t.amount}","${(t.memo || '').replace(/"/g, '""')}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `더크래프트버거_세종도담점_장부_${selectedMonth}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        window.exportToCSV = exportToCSV;
+
+        // Gemini AI Receipt OCR & Categorization Integration
+        async function handleReceiptUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const overlay = document.getElementById('ai-loading-overlay');
+            overlay.classList.remove('hidden');
+
+            try {
+                const base64Data = await fileToBase64(file);
+                const pureBase64 = base64Data.split(',')[1];
+                const mimeType = file.type || "image/jpeg";
+
+                const allCategories = [...window.categories.FIXED, ...window.categories.VARIABLE].join(', ');
+
+                const systemPrompt = `너는 수제버거 전문점 '더크래프트버거 세종도담점'의 전문 회계 AI 비서다.
+가게 매장 영수증 이미지에서 다음 정보를 정확히 분석해서 JSON 형태로 반환해라.
+
+분류 가능 카테고리 항목 목록: [${allCategories}]
+
+만약 카테고리 목록 중 영수증 매장명이나 품목에 딱 들어맞는 게 없다면, 가장 유사한 카테고리를 고르고 메모에 구체적인 매장명을 적어라.
+(예: 코스트코 구매 영수증 -> 카테고리: 코스트코)
+(예: 가스요금 지로 용지 -> 카테고리: 가스비)
+
+응답은 오직 올바른 JSON 문자열로만 작성해라:
+{
+  "date": "YYYY-MM-DD", // 영수증 날짜, 찾을 수 없으면 오늘 날짜 "${getTodayYMD()}"
+  "amount": 150000, // 최종 합계 금액 (숫자만)
+  "category": "추천카테고리명", // 분류된 카테고리명
+  "type": "FIXED 또는 VARIABLE", // 고정비면 FIXED, 식자재/수수료 등 변동비면 VARIABLE
+  "memo": "매장명 및 대표 품목 요약"
+}`;
+
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: "이 영수증 이미지를 분석해서 거래 정보를 JSON으로 추출해줘." },
+                            { inlineData: { mimeType: mimeType, data: pureBase64 } }
+                        ]
+                    }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!jsonText) {
+                    throw new Error("AI 분석 결과를 가져올 수 없습니다.");
+                }
+
+                const parsed = JSON.parse(jsonText);
+
+                // Populate Form with AI extracted values
+                document.getElementById('input-date').value = parsed.date || getTodayYMD();
+                document.getElementById('input-type').value = parsed.type || 'VARIABLE';
+                
+                // Update dynamic dropdown to reflect type
+                updateCategoryDropdown();
+
+                const catSelect = document.getElementById('input-category');
+                if (parsed.category) {
+                    let exists = false;
+                    for (let i = 0; i < catSelect.options.length; i++) {
+                        if (catSelect.options[i].value === parsed.category) {
+                            catSelect.selectedIndex = i;
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists && catSelect.options.length > 0) {
+                        catSelect.selectedIndex = 0;
+                    }
+                }
+
+                document.getElementById('input-amount').value = parsed.amount || '';
+                document.getElementById('input-memo').value = parsed.memo || '';
+
+                showModal("AI 스캔 완료", `영수증을 성공적으로 읽었습니다!\n- 매장/품목: ${parsed.memo || '-'}\n- 금액: ${formatKRW(parsed.amount || 0)}\n- 분류: ${parsed.category}\n\n입력폼에 자동 입력되었습니다. [기록 추가] 버튼을 눌러 등록하세요.`);
+
+            } catch (err) {
+                console.error(err);
+                showModal("AI 영수증 분석 실패", "영수증 인식 중 오류가 발생했습니다. 선명한 사진으로 다시 시도해 주세요.");
+            } finally {
+                overlay.classList.add('hidden');
+                e.target.value = '';
+            }
+        }
+
+        window.handleReceiptUpload = handleReceiptUpload;
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+    </script>
+</body>
+</html>
