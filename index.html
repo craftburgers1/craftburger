@@ -3,61 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>더크래프트버거 세종도담점 - 장부 관리</title>
+    <title>더크래프트버거 세종도담점 - 스마트 장부</title>
     
-    <!-- PWA & Web App Settings -->
+    <!-- PWA Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="더크래프트버거">
     <meta name="theme-color" content="#1e293b">
     <link rel="apple-touch-icon" href="https://img.icons8.com/emoji/192/hamburger-emoji.png">
     <link rel="icon" type="image/png" href="https://img.icons8.com/emoji/192/hamburger-emoji.png">
 
-    <!-- CSS / Font CDN -->
+    <!-- CSS & Icon CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Firebase SDK Compat v9.x -->
+    <!-- Firebase SDK Compat -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-        body { font-family: 'Pretendard', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .glass-panel { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding-bottom: 80px; }
+        .glass-card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 16px; }
+        .tab-btn { padding: 8px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; color: #94a3b8; background: transparent; transition: all 0.2s; }
         .tab-btn.active { background-color: #2563eb; color: #ffffff; font-weight: 700; }
-        input, select { color-scheme: dark; }
+        input, select { background-color: #0f172a !important; color: #ffffff !important; border: 1px solid #334155 !important; }
+        input:focus, select:focus { outline: none; border-color: #3b82f6 !important; }
     </style>
 </head>
-<body class="pb-20">
+<body>
 
-    <!-- Header -->
-    <header class="sticky top-0 z-50 glass-panel border-b border-slate-700/80 px-4 py-3 flex justify-between items-center shadow-lg">
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex justify-between items-center backdrop-blur-md">
         <div class="flex items-center gap-2">
             <span class="text-2xl">🍔</span>
             <div>
-                <h1 class="text-base font-bold text-white leading-tight">더크래프트버거</h1>
+                <h1 class="text-base font-bold text-white">더크래프트버거</h1>
                 <p class="text-xs text-slate-400">세종도담점 장부 관리</p>
             </div>
         </div>
         <div id="syncStatus" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> 실시간 클라우드
+            <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> 실시간 연동됨
         </div>
     </header>
 
     <!-- Main Container -->
     <main class="max-w-4xl mx-auto px-4 pt-4 space-y-4">
 
-        <!-- Date Filter -->
-        <section class="glass-panel rounded-2xl p-3.5 flex flex-wrap gap-2 justify-between items-center">
+        <!-- Date Selection Filter -->
+        <section class="glass-card flex flex-wrap gap-2 justify-between items-center">
             <div class="flex items-center gap-2 w-full sm:w-auto">
-                <select id="yearSelect" class="bg-slate-800 text-white text-xs font-semibold rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="yearSelect" onchange="renderDashboard()" class="text-xs font-semibold rounded-xl px-3 py-2">
                     <option value="2026">2026년</option>
                     <option value="2025">2025년</option>
                 </select>
-                <select id="monthSelect" class="bg-slate-800 text-white text-xs font-semibold rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1">
+                <select id="monthSelect" onchange="renderDashboard()" class="text-xs font-semibold rounded-xl px-3 py-2 flex-1">
                     <option value="ALL">📅 연간 전체 (1년 누적)</option>
                     <option value="01">1월</option><option value="02">2월</option><option value="03">3월</option>
                     <option value="04">4월</option><option value="05">5월</option><option value="06">6월</option>
@@ -65,62 +66,62 @@
                     <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
                 </select>
             </div>
-            <span class="text-[11px] text-slate-400"><i class="fa-solid fa-cloud-arrow-up text-blue-400 mr-1"></i>PC-스마트폰 자동 동기화</span>
+            <span class="text-[11px] text-slate-400"><i class="fa-solid fa-cloud-arrow-up text-blue-400 mr-1"></i>클라우드 자동 저장</span>
         </section>
 
-        <!-- KPI Cards -->
+        <!-- KPI Summary Cards -->
         <section class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-blue-500">
-                <p class="text-[11px] font-medium text-slate-400">총 매출</p>
-                <p id="totalSales" class="text-base sm:text-lg font-bold text-white mt-0.5">0원</p>
+            <div class="glass-card border-l-4 border-blue-500">
+                <p class="text-[11px] text-slate-400">총 매출</p>
+                <p id="totalSales" class="text-base sm:text-lg font-bold text-white mt-1">0원</p>
             </div>
-            <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-rose-500">
-                <p class="text-[11px] font-medium text-slate-400">총 지출</p>
-                <p id="totalExpense" class="text-base sm:text-lg font-bold text-rose-400 mt-0.5">0원</p>
+            <div class="glass-card border-l-4 border-rose-500">
+                <p class="text-[11px] text-slate-400">총 지출</p>
+                <p id="totalExpense" class="text-base sm:text-lg font-bold text-rose-400 mt-1">0원</p>
             </div>
-            <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-emerald-500">
-                <p class="text-[11px] font-medium text-slate-400">순이익</p>
-                <p id="netProfit" class="text-base sm:text-lg font-bold text-emerald-400 mt-0.5">0원</p>
+            <div class="glass-card border-l-4 border-emerald-500">
+                <p class="text-[11px] text-slate-400">순이익</p>
+                <p id="netProfit" class="text-base sm:text-lg font-bold text-emerald-400 mt-1">0원</p>
             </div>
-            <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-amber-500">
-                <p class="text-[11px] font-medium text-slate-400">순이익률</p>
-                <p id="profitMargin" class="text-base sm:text-lg font-bold text-amber-400 mt-0.5">0%</p>
+            <div class="glass-card border-l-4 border-amber-500">
+                <p class="text-[11px] text-slate-400">순이익률</p>
+                <p id="profitMargin" class="text-base sm:text-lg font-bold text-amber-400 mt-1">0%</p>
             </div>
         </section>
 
-        <!-- AI OCR Card -->
-        <section class="glass-panel p-3.5 rounded-2xl bg-gradient-to-r from-blue-900/40 to-slate-800 border border-blue-500/30 flex items-center justify-between">
+        <!-- OCR Receipt Scan Banner -->
+        <section class="glass-card bg-slate-800 border-blue-500/40 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-blue-600/30 text-blue-400 flex items-center justify-center text-lg">
+                <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg">
                     <i class="fa-solid fa-camera"></i>
                 </div>
                 <div>
                     <h3 class="text-xs font-bold text-white">AI 영수증 자동 스캔</h3>
-                    <p class="text-[11px] text-slate-400">카메라 촬영으로 금액·날짜 자동 입력</p>
+                    <p class="text-[11px] text-slate-400">카메라 촬영 시 금액·날짜 자동 추출</p>
                 </div>
             </div>
-            <button id="ocrOpenBtn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md transition">
+            <button onclick="openOcrModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition">
                 스캔하기
             </button>
         </section>
 
-        <!-- Entry Tabs & Form Area -->
-        <section class="glass-panel rounded-2xl p-4">
-            <div class="flex border-b border-slate-700/80 pb-3 gap-1.5 overflow-x-auto">
-                <button id="tab-sales" class="tab-btn active px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap">매출 입력</button>
-                <button id="tab-fixed" class="tab-btn px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap text-slate-400">고정비 (9개)</button>
-                <button id="tab-variable" class="tab-btn px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap text-slate-400">식자재/변동비 (13개)</button>
-                <button id="tab-history" class="tab-btn px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap text-slate-400">전체 내역 조회</button>
+        <!-- Entry Form Navigation Tabs -->
+        <section class="glass-card">
+            <div class="flex border-b border-slate-700/80 pb-3 gap-1 overflow-x-auto">
+                <button onclick="switchTab('sales')" id="tab-sales" class="tab-btn active">매출 입력</button>
+                <button onclick="switchTab('fixed')" id="tab-fixed" class="tab-btn">고정비 (9개)</button>
+                <button onclick="switchTab('variable')" id="tab-variable" class="tab-btn">식자재/변동비 (13개)</button>
+                <button onclick="switchTab('history')" id="tab-history" class="tab-btn">전체 내역 조회</button>
             </div>
 
-            <!-- Form Rendering Box -->
+            <!-- Main Input Form Area -->
             <div id="form-container" class="mt-4">
-                <!-- Javascript Form Will Render Here -->
+                <!-- Javascript Form Injected Here -->
             </div>
         </section>
 
         <!-- Chart Section -->
-        <section class="glass-panel p-4 rounded-2xl space-y-2">
+        <section class="glass-card space-y-2">
             <h3 id="chartTitle" class="text-xs font-bold text-white flex items-center gap-1.5">
                 <i class="fa-solid fa-chart-pie text-blue-400"></i> 지출 항목별 분석
             </h3>
@@ -133,18 +134,18 @@
 
     <!-- OCR Receipt Modal -->
     <div id="ocrModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 space-y-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 space-y-4">
             <div class="flex justify-between items-center">
                 <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-receipt text-blue-400 mr-2"></i>영수증 촬영 및 인식</h3>
-                <button id="ocrCloseBtn" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeOcrModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             
-            <input type="file" id="receiptInput" accept="image/*" capture="environment" class="hidden">
+            <input type="file" id="receiptInput" accept="image/*" capture="environment" class="hidden" onchange="processReceipt(event)">
             
-            <div id="ocrDropArea" class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer">
+            <div onclick="document.getElementById('receiptInput').click()" class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer">
                 <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-500 mb-2"></i>
                 <p class="text-xs font-semibold text-slate-300">카메라로 영수증 촬영 또는 이미지 선택</p>
-                <p class="text-[10px] text-slate-500 mt-1">영수증의 금액과 날짜를 AI가 자동 추출합니다</p>
+                <p class="text-[10px] text-slate-500 mt-1">영수증의 금액과 날짜를 AI가 추출합니다</p>
             </div>
 
             <div id="ocrProgress" class="hidden space-y-2">
@@ -161,16 +162,16 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-[11px] text-slate-400">날짜</label>
-                        <input type="date" id="ocrDate" class="w-full bg-slate-800 text-white text-xs rounded-lg p-2 border border-slate-700">
+                        <input type="date" id="ocrDate" class="w-full text-xs rounded-lg p-2">
                     </div>
                     <div>
                         <label class="text-[11px] text-slate-400">금액</label>
-                        <input type="number" id="ocrAmount" class="w-full bg-slate-800 text-white text-xs rounded-lg p-2 border border-slate-700">
+                        <input type="number" id="ocrAmount" class="w-full text-xs rounded-lg p-2">
                     </div>
                 </div>
                 <div>
                     <label class="text-[11px] text-slate-400">분류 항목</label>
-                    <select id="ocrCategory" class="w-full bg-slate-800 text-white text-xs rounded-lg p-2 border border-slate-700">
+                    <select id="ocrCategory" class="w-full text-xs rounded-lg p-2">
                         <option value="고기">🥩 고기 (패티 식자재)</option>
                         <option value="빵/번">🍞 빵/번</option>
                         <option value="코스트코">🛒 코스트코</option>
@@ -181,16 +182,16 @@
                         <option value="기타 식자재">🛒 기타 식자재</option>
                     </select>
                 </div>
-                <button id="ocrSaveBtn" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-500">
+                <button onclick="saveOcrEntry()" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-500">
                     장부에 저장하기
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Application Script -->
+    <!-- Firebase System Logic -->
     <script>
-        // 1. Firebase Config Setup
+        // 1. Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyB4YZlNVSkc7haxMxTBInMsECMFCuU6ztE",
             authDomain: "data-base-94ba6.firebaseapp.com",
@@ -201,13 +202,12 @@
             measurementId: "G-B3EV2XZ0T3"
         };
 
-        // Initialize Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
 
-        // 2. State & Categories
+        // Categories
         const fixedCategories = ['가게세(임대료)', '상가관리비', '전기요금', '수도요금', '가스요금', '인건비(박동찬 등)', '인터넷/포스/통신비', '세무사수수료', '기타고정비'];
         const variableCategories = ['고기', '빵/번', '채소/신선', '소스/시즈닝', '음료/주류/맥주', '코스트코', '기타 식자재', '배민 수수료', '쿠팡이츠 수수료', '요기요 수수료', '포장 용기/소모품', '카드 수수료', '기타 변동비'];
 
@@ -217,32 +217,17 @@
 
         const getTodayStr = () => new Date().toISOString().split('T')[0];
 
-        // 3. App Initialization
-        document.addEventListener('DOMContentLoaded', () => {
+        // Init Setup
+        window.onload = function() {
             const now = new Date();
             document.getElementById('yearSelect').value = now.getFullYear().toString();
             document.getElementById('monthSelect').value = "ALL";
 
-            // Event Listeners
-            document.getElementById('yearSelect').addEventListener('change', renderDashboard);
-            document.getElementById('monthSelect').addEventListener('change', renderDashboard);
-
-            document.getElementById('tab-sales').addEventListener('click', () => switchTab('sales'));
-            document.getElementById('tab-fixed').addEventListener('click', () => switchTab('fixed'));
-            document.getElementById('tab-variable').addEventListener('click', () => switchTab('variable'));
-            document.getElementById('tab-history').addEventListener('click', () => switchTab('history'));
-
-            document.getElementById('ocrOpenBtn').addEventListener('click', () => document.getElementById('ocrModal').classList.remove('hidden'));
-            document.getElementById('ocrCloseBtn').addEventListener('click', () => document.getElementById('ocrModal').classList.add('hidden'));
-            document.getElementById('ocrDropArea').addEventListener('click', () => document.getElementById('receiptInput').click());
-            document.getElementById('receiptInput').addEventListener('change', processReceipt);
-            document.getElementById('ocrSaveBtn').addEventListener('click', saveOcrEntry);
-
             switchTab('sales');
             initRealtimeSync();
-        });
+        };
 
-        // 4. Realtime Sync
+        // Realtime Firestore Listener
         function initRealtimeSync() {
             db.collection("craftburger_ledger").onSnapshot((snapshot) => {
                 dbData = [];
@@ -259,19 +244,15 @@
             });
         }
 
-        // 5. Tab Switching
+        // Tab Switching Logic
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-blue-600', 'text-white');
-                btn.classList.add('text-slate-400');
+                btn.classList.remove('active');
             });
 
             const activeBtn = document.getElementById(`tab-${tab}`);
-            if (activeBtn) {
-                activeBtn.classList.add('active', 'bg-blue-600', 'text-white');
-                activeBtn.classList.remove('text-slate-400');
-            }
+            if (activeBtn) activeBtn.classList.add('active');
 
             const container = document.getElementById('form-container');
             if (tab === 'sales') renderSalesForm(container);
@@ -283,15 +264,15 @@
         // Render Sales Form
         function renderSalesForm(container) {
             container.innerHTML = `
-                <form id="salesForm" class="space-y-3">
+                <form onsubmit="handleSaveEntry(event, 'sales')" class="space-y-3">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="text-[11px] text-slate-400">날짜</label>
-                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full text-xs rounded-xl p-2.5">
                         </div>
                         <div>
                             <label class="text-[11px] text-slate-400">매출 구분</label>
-                            <select id="salesType" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                            <select id="salesType" class="w-full text-xs rounded-xl p-2.5">
                                 <option value="일일 총매출">일일 통합 매출</option>
                                 <option value="홀 매출">홀 매출</option>
                                 <option value="배달 매출">배달 매출 (배민/쿠팡)</option>
@@ -300,51 +281,49 @@
                     </div>
                     <div>
                         <label class="text-[11px] text-slate-400">매출 금액 (원)</label>
-                        <input type="number" id="inputAmount" placeholder="예: 850000" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700 font-bold text-emerald-400">
+                        <input type="number" id="inputAmount" placeholder="예: 850000" required class="w-full text-xs font-bold text-emerald-400 rounded-xl p-2.5">
                     </div>
                     <div>
                         <label class="text-[11px] text-slate-400">메모 (선택사항)</label>
-                        <input type="text" id="inputMemo" placeholder="예: 토요일 단체 주문 포함" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                        <input type="text" id="inputMemo" placeholder="예: 토요일 단체 주문 포함" class="w-full text-xs rounded-xl p-2.5">
                     </div>
                     <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition">
                         <i class="fa-solid fa-plus mr-1"></i> 매출 등록하기
                     </button>
                 </form>
             `;
-            document.getElementById('salesForm').addEventListener('submit', (e) => handleSaveEntry(e, 'sales'));
         }
 
         // Render Expense Form
         function renderExpenseForm(container, type, categories) {
             const options = categories.map(c => `<option value="${c}">${c}</option>`).join('');
             container.innerHTML = `
-                <form id="expenseForm" class="space-y-3">
+                <form onsubmit="handleSaveEntry(event, '${type}')" class="space-y-3">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="text-[11px] text-slate-400">날짜</label>
-                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full text-xs rounded-xl p-2.5">
                         </div>
                         <div>
                             <label class="text-[11px] text-slate-400">지출 항목</label>
-                            <select id="inputCategory" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                            <select id="inputCategory" class="w-full text-xs rounded-xl p-2.5">
                                 ${options}
                             </select>
                         </div>
                     </div>
                     <div>
                         <label class="text-[11px] text-slate-400">지출 금액 (원)</label>
-                        <input type="number" id="inputAmount" placeholder="예: 155000" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700 font-bold text-rose-400">
+                        <input type="number" id="inputAmount" placeholder="예: 155000" required class="w-full text-xs font-bold text-rose-400 rounded-xl p-2.5">
                     </div>
                     <div>
                         <label class="text-[11px] text-slate-400">적요 / 거래처</label>
-                        <input type="text" id="inputMemo" placeholder="예: 패티용 소고기 구매" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                        <input type="text" id="inputMemo" placeholder="예: 패티용 소고기 구매" class="w-full text-xs rounded-xl p-2.5">
                     </div>
                     <button type="submit" class="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition">
                         <i class="fa-solid fa-minus mr-1"></i> 지출 내역 저장
                     </button>
                 </form>
             `;
-            document.getElementById('expenseForm').addEventListener('submit', (e) => handleSaveEntry(e, type));
         }
 
         // Save Entry
@@ -429,7 +408,7 @@
             });
         }
 
-        // Render Dashboard KPIs & Chart
+        // Render Dashboard
         function renderDashboard() {
             const filtered = getFilteredData();
             let sales = 0, expense = 0, categories = {};
@@ -488,6 +467,10 @@
             });
         }
 
+        // OCR Modal Open/Close
+        function openOcrModal() { document.getElementById('ocrModal').classList.remove('hidden'); }
+        function closeOcrModal() { document.getElementById('ocrModal').classList.add('hidden'); }
+
         // OCR Receipt Process
         function processReceipt(e) {
             const file = e.target.files[0];
@@ -534,7 +517,7 @@
                 memo: 'AI 영수증 스캔 저장',
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
-                document.getElementById('ocrModal').classList.add('hidden');
+                closeOcrModal();
                 alert('영수증 내역이 저장되었습니다.');
             });
         }
