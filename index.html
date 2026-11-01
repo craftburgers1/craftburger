@@ -3,62 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>더크래프트버거 세종도담점 - 스마트 장부</title>
-    
-    <!-- PWA Settings -->
+    <!-- Web App & iOS Fullscreen Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1e293b">
+    <meta name="apple-mobile-web-app-title" content="더크래프트버거">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    
+    <!-- Home Screen Web App Icon -->
     <link rel="apple-touch-icon" href="https://img.icons8.com/emoji/192/hamburger-emoji.png">
     <link rel="icon" type="image/png" href="https://img.icons8.com/emoji/192/hamburger-emoji.png">
 
-    <!-- CSS & Icon CDNs -->
+    <title>더크래프트버거 세종도담점 - 매출 & 지출 스마트 관리</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tesseract.js (AI 영수증 OCR) CDN -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Firebase SDK Compat -->
+    <!-- Firebase SDK v9.x (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-        body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding-bottom: 80px; }
-        .glass-card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 16px; }
-        .tab-btn { padding: 8px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; color: #94a3b8; background: transparent; transition: all 0.2s; }
-        .tab-btn.active { background-color: #2563eb; color: #ffffff; font-weight: 700; }
-        input, select { background-color: #0f172a !important; color: #ffffff !important; border: 1px solid #334155 !important; }
-        input:focus, select:focus { outline: none; border-color: #3b82f6 !important; }
+        body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .tab-btn.active { background-color: #3b82f6; color: white; font-weight: 700; }
+        /* Mobile Scrollbar Clean */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
 </head>
-<body>
+<body class="pb-24">
 
     <!-- Header Navigation -->
-    <header class="sticky top-0 z-50 bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex justify-between items-center backdrop-blur-md">
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-700/50 px-4 py-3 flex justify-between items-center">
         <div class="flex items-center gap-2">
             <span class="text-2xl">🍔</span>
             <div>
-                <h1 class="text-base font-bold text-white">더크래프트버거</h1>
-                <p class="text-xs text-slate-400">세종도담점 장부 관리</p>
+                <h1 class="text-base font-bold text-white leading-none">더크래프트버거</h1>
+                <p class="text-xs text-slate-400 mt-0.5">세종도담점 장부 관리</p>
             </div>
         </div>
-        <div id="syncStatus" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> 실시간 연동됨
+        <div class="flex items-center gap-2">
+            <span id="syncStatus" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> 실시간 클라우드
+            </span>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="max-w-4xl mx-auto px-4 pt-4 space-y-4">
+    <main class="max-w-4xl mx-auto px-4 pt-4 space-y-5">
 
-        <!-- Date Selection Filter -->
-        <section class="glass-card flex flex-wrap gap-2 justify-between items-center">
+        <!-- Date Filter & Quick Switch -->
+        <section class="glass-panel rounded-2xl p-4 flex flex-col sm:flex-row gap-3 justify-between items-center">
             <div class="flex items-center gap-2 w-full sm:w-auto">
-                <select id="yearSelect" onchange="renderDashboard()" class="text-xs font-semibold rounded-xl px-3 py-2">
+                <select id="yearSelect" onchange="renderDashboard()" class="bg-slate-800 text-white text-sm font-semibold rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="2026">2026년</option>
                     <option value="2025">2025년</option>
                 </select>
-                <select id="monthSelect" onchange="renderDashboard()" class="text-xs font-semibold rounded-xl px-3 py-2 flex-1">
+                <select id="monthSelect" onchange="renderDashboard()" class="bg-slate-800 text-white text-sm font-semibold rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1">
                     <option value="ALL">📅 연간 전체 (1년 누적)</option>
                     <option value="01">1월</option><option value="02">2월</option><option value="03">3월</option>
                     <option value="04">4월</option><option value="05">5월</option><option value="06">6월</option>
@@ -66,38 +74,44 @@
                     <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
                 </select>
             </div>
-            <span class="text-[11px] text-slate-400"><i class="fa-solid fa-cloud-arrow-up text-blue-400 mr-1"></i>클라우드 자동 저장</span>
+            <div class="text-xs text-slate-400 flex items-center gap-1 w-full sm:w-auto justify-end">
+                <i class="fa-solid fa-arrows-rotate"></i> PC-스마트폰 자동 동기화 적용됨
+            </div>
         </section>
 
         <!-- KPI Summary Cards -->
-        <section class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div class="glass-card border-l-4 border-blue-500">
-                <p class="text-[11px] text-slate-400">총 매출</p>
-                <p id="totalSales" class="text-base sm:text-lg font-bold text-white mt-1">0원</p>
+        <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="glass-panel p-4 rounded-2xl border-l-4 border-blue-500">
+                <p class="text-xs font-semibold text-slate-400">총 매출</p>
+                <p id="totalSales" class="text-lg sm:text-xl font-bold text-white mt-1">0원</p>
+                <p class="text-[10px] text-slate-500 mt-1">배달 + 홀 누적</p>
             </div>
-            <div class="glass-card border-l-4 border-rose-500">
-                <p class="text-[11px] text-slate-400">총 지출</p>
-                <p id="totalExpense" class="text-base sm:text-lg font-bold text-rose-400 mt-1">0원</p>
+            <div class="glass-panel p-4 rounded-2xl border-l-4 border-rose-500">
+                <p class="text-xs font-semibold text-slate-400">총 지출</p>
+                <p id="totalExpense" class="text-lg sm:text-xl font-bold text-rose-400 mt-1">0원</p>
+                <p class="text-[10px] text-slate-500 mt-1">고정비 + 식자재/변동비</p>
             </div>
-            <div class="glass-card border-l-4 border-emerald-500">
-                <p class="text-[11px] text-slate-400">순이익</p>
-                <p id="netProfit" class="text-base sm:text-lg font-bold text-emerald-400 mt-1">0원</p>
+            <div class="glass-panel p-4 rounded-2xl border-l-4 border-emerald-500">
+                <p class="text-xs font-semibold text-slate-400">순이익</p>
+                <p id="netProfit" class="text-lg sm:text-xl font-bold text-emerald-400 mt-1">0원</p>
+                <p class="text-[10px] text-slate-500 mt-1">매출 - 지출</p>
             </div>
-            <div class="glass-card border-l-4 border-amber-500">
-                <p class="text-[11px] text-slate-400">순이익률</p>
-                <p id="profitMargin" class="text-base sm:text-lg font-bold text-amber-400 mt-1">0%</p>
+            <div class="glass-panel p-4 rounded-2xl border-l-4 border-amber-500">
+                <p class="text-xs font-semibold text-slate-400">순이익률</p>
+                <p id="profitMargin" class="text-lg sm:text-xl font-bold text-amber-400 mt-1">0%</p>
+                <p class="text-[10px] text-slate-500 mt-1">수익성 마진</p>
             </div>
         </section>
 
-        <!-- OCR Receipt Scan Banner -->
-        <section class="glass-card bg-slate-800 border-blue-500/40 flex items-center justify-between">
+        <!-- OCR Receipt Scanner Modal Trigger Card -->
+        <section class="glass-panel p-4 rounded-2xl bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-500/30 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl">
                     <i class="fa-solid fa-camera"></i>
                 </div>
                 <div>
-                    <h3 class="text-xs font-bold text-white">AI 영수증 자동 스캔</h3>
-                    <p class="text-[11px] text-slate-400">카메라 촬영 시 금액·날짜 자동 추출</p>
+                    <h3 class="text-sm font-bold text-white">AI 영수증 자동 스캔</h3>
+                    <p class="text-xs text-slate-300">카메라 촬영으로 금액·날짜 자동 입력</p>
                 </div>
             </div>
             <button onclick="openOcrModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition">
@@ -105,44 +119,44 @@
             </button>
         </section>
 
-        <!-- Entry Form Navigation Tabs -->
-        <section class="glass-card">
-            <div class="flex border-b border-slate-700/80 pb-3 gap-1 overflow-x-auto">
-                <button onclick="switchTab('sales')" id="tab-sales" class="tab-btn active">매출 입력</button>
-                <button onclick="switchTab('fixed')" id="tab-fixed" class="tab-btn">고정비 (9개)</button>
-                <button onclick="switchTab('variable')" id="tab-variable" class="tab-btn">식자재/변동비 (13개)</button>
-                <button onclick="switchTab('history')" id="tab-history" class="tab-btn">전체 내역 조회</button>
+        <!-- Dynamic Entry Tab System -->
+        <section class="glass-panel rounded-2xl p-4">
+            <div class="flex border-b border-slate-700/60 pb-3 gap-2 overflow-x-auto">
+                <button onclick="switchTab('sales')" id="tab-sales" class="tab-btn active px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition">매출 입력</button>
+                <button onclick="switchTab('fixed')" id="tab-fixed" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap text-slate-400 transition">고정비 (9개)</button>
+                <button onclick="switchTab('variable')" id="tab-variable" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap text-slate-400 transition">식자재/변동비 (13개)</button>
+                <button onclick="switchTab('history')" id="tab-history" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap text-slate-400 transition">전체 내역 조회</button>
             </div>
 
-            <!-- Main Input Form Area -->
+            <!-- Form Content Areas -->
             <div id="form-container" class="mt-4">
-                <!-- Javascript Form Injected Here -->
+                <!-- JavaScript Form Injection Area -->
             </div>
         </section>
 
-        <!-- Chart Section -->
-        <section class="glass-card space-y-2">
-            <h3 id="chartTitle" class="text-xs font-bold text-white flex items-center gap-1.5">
+        <!-- Annual & Monthly Expense Breakdown Chart -->
+        <section class="glass-panel p-4 rounded-2xl space-y-3">
+            <h3 id="chartTitle" class="text-sm font-bold text-white flex items-center gap-2">
                 <i class="fa-solid fa-chart-pie text-blue-400"></i> 지출 항목별 분석
             </h3>
-            <div class="h-56 relative">
+            <div class="h-64 relative">
                 <canvas id="expenseChart"></canvas>
             </div>
         </section>
 
     </main>
 
-    <!-- OCR Receipt Modal -->
+    <!-- OCR Receipt Scan Modal -->
     <div id="ocrModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 space-y-4">
+        <div class="glass-panel bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 space-y-4">
             <div class="flex justify-between items-center">
-                <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-receipt text-blue-400 mr-2"></i>영수증 촬영 및 인식</h3>
+                <h3 class="text-base font-bold text-white"><i class="fa-solid fa-receipt text-blue-400 mr-2"></i>영수증 촬영 및 인식</h3>
                 <button onclick="closeOcrModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             
             <input type="file" id="receiptInput" accept="image/*" capture="environment" class="hidden" onchange="processReceipt(event)">
             
-            <div onclick="document.getElementById('receiptInput').click()" class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer">
+            <div id="ocrDropArea" onclick="document.getElementById('receiptInput').click()" class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-8 text-center cursor-pointer transition">
                 <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-500 mb-2"></i>
                 <p class="text-xs font-semibold text-slate-300">카메라로 영수증 촬영 또는 이미지 선택</p>
                 <p class="text-[10px] text-slate-500 mt-1">영수증의 금액과 날짜를 AI가 추출합니다</p>
@@ -162,16 +176,16 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-[11px] text-slate-400">날짜</label>
-                        <input type="date" id="ocrDate" class="w-full text-xs rounded-lg p-2">
+                        <input type="date" id="ocrDate" class="w-full bg-slate-800 text-white text-xs rounded-lg p-2 border border-slate-700">
                     </div>
                     <div>
                         <label class="text-[11px] text-slate-400">금액</label>
-                        <input type="number" id="ocrAmount" class="w-full text-xs rounded-lg p-2">
+                        <input type="number" id="ocrAmount" class="w-full bg-slate-800 text-white text-xs rounded-lg p-2 border border-slate-700">
                     </div>
                 </div>
                 <div>
                     <label class="text-[11px] text-slate-400">분류 항목</label>
-                    <select id="ocrCategory" class="w-full text-xs rounded-lg p-2">
+                    <select id="ocrCategory" class="w-full bg-slate-800 text-white text-xs rounded-lg p-2 border border-slate-700">
                         <option value="고기">🥩 고기 (패티 식자재)</option>
                         <option value="빵/번">🍞 빵/번</option>
                         <option value="코스트코">🛒 코스트코</option>
@@ -183,15 +197,15 @@
                     </select>
                 </div>
                 <button onclick="saveOcrEntry()" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-500">
-                    장부에 저장하기
+                    장부에 등록하기
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase System Logic -->
+    <!-- Firebase Application Logic JS -->
     <script>
-        // 1. Firebase Config
+        // 1. Firebase Configuration (전달받은 파이어베이스 키 적용 완료)
         const firebaseConfig = {
             apiKey: "AIzaSyB4YZlNVSkc7haxMxTBInMsECMFCuU6ztE",
             authDomain: "data-base-94ba6.firebaseapp.com",
@@ -202,12 +216,11 @@
             measurementId: "G-B3EV2XZ0T3"
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        // Firebase Initialization
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Categories
+        // 2. Data Categories
         const fixedCategories = ['가게세(임대료)', '상가관리비', '전기요금', '수도요금', '가스요금', '인건비(박동찬 등)', '인터넷/포스/통신비', '세무사수수료', '기타고정비'];
         const variableCategories = ['고기', '빵/번', '채소/신선', '소스/시즈닝', '음료/주류/맥주', '코스트코', '기타 식자재', '배민 수수료', '쿠팡이츠 수수료', '요기요 수수료', '포장 용기/소모품', '카드 수수료', '기타 변동비'];
 
@@ -215,19 +228,10 @@
         let currentTab = 'sales';
         let expenseChartObj = null;
 
+        // Today Date Helper
         const getTodayStr = () => new Date().toISOString().split('T')[0];
 
-        // Init Setup
-        window.onload = function() {
-            const now = new Date();
-            document.getElementById('yearSelect').value = now.getFullYear().toString();
-            document.getElementById('monthSelect').value = "ALL";
-
-            switchTab('sales');
-            initRealtimeSync();
-        };
-
-        // Realtime Firestore Listener
+        // Realtime Firestore Listener Sync
         function initRealtimeSync() {
             db.collection("craftburger_ledger").onSnapshot((snapshot) => {
                 dbData = [];
@@ -237,22 +241,34 @@
                 renderDashboard();
                 if (currentTab === 'history') renderHistoryTab();
             }, (error) => {
-                console.error("Sync error: ", error);
-                const statusEl = document.getElementById('syncStatus');
-                statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400 mr-1.5"></span> 오프라인`;
-                statusEl.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                console.error("Firestore Sync Error: ", error);
+                document.getElementById('syncStatus').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5"></span> 오프라인 모드`;
+                document.getElementById('syncStatus').className = "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
             });
         }
 
-        // Tab Switching Logic
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            document.getElementById('yearSelect').value = now.getFullYear().toString();
+            // Default to ALL (annual view) or current month
+            document.getElementById('monthSelect').value = "ALL";
+            switchTab('sales');
+            initRealtimeSync();
+        });
+
+        // Tab Navigation
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
+                btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                btn.classList.add('text-slate-400');
             });
-
             const activeBtn = document.getElementById(`tab-${tab}`);
-            if (activeBtn) activeBtn.classList.add('active');
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'bg-blue-600', 'text-white');
+                activeBtn.classList.remove('text-slate-400');
+            }
 
             const container = document.getElementById('form-container');
             if (tab === 'sales') renderSalesForm(container);
@@ -268,11 +284,11 @@
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="text-[11px] text-slate-400">날짜</label>
-                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full text-xs rounded-xl p-2.5">
+                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
                         </div>
                         <div>
-                            <label class="text-[11px] text-slate-400">매출 구분</label>
-                            <select id="salesType" class="w-full text-xs rounded-xl p-2.5">
+                            <label class="text-[11px] text-slate-400">매출 구문</label>
+                            <select id="salesType" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
                                 <option value="일일 총매출">일일 통합 매출</option>
                                 <option value="홀 매출">홀 매출</option>
                                 <option value="배달 매출">배달 매출 (배민/쿠팡)</option>
@@ -281,14 +297,14 @@
                     </div>
                     <div>
                         <label class="text-[11px] text-slate-400">매출 금액 (원)</label>
-                        <input type="number" id="inputAmount" placeholder="예: 850000" required class="w-full text-xs font-bold text-emerald-400 rounded-xl p-2.5">
+                        <input type="number" id="inputAmount" placeholder="예: 850000" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700 font-bold text-emerald-400">
                     </div>
                     <div>
                         <label class="text-[11px] text-slate-400">메모 (선택사항)</label>
-                        <input type="text" id="inputMemo" placeholder="예: 토요일 단체 주문 포함" class="w-full text-xs rounded-xl p-2.5">
+                        <input type="text" id="inputMemo" placeholder="예: 토요일 단체 주문 포함" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
                     </div>
-                    <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition">
-                        <i class="fa-solid fa-plus mr-1"></i> 매출 등록하기
+                    <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> 매출 등록하기
                     </button>
                 </form>
             `;
@@ -302,86 +318,102 @@
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="text-[11px] text-slate-400">날짜</label>
-                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full text-xs rounded-xl p-2.5">
+                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
                         </div>
                         <div>
                             <label class="text-[11px] text-slate-400">지출 항목</label>
-                            <select id="inputCategory" class="w-full text-xs rounded-xl p-2.5">
+                            <select id="inputCategory" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
                                 ${options}
                             </select>
                         </div>
                     </div>
                     <div>
                         <label class="text-[11px] text-slate-400">지출 금액 (원)</label>
-                        <input type="number" id="inputAmount" placeholder="예: 155000" required class="w-full text-xs font-bold text-rose-400 rounded-xl p-2.5">
+                        <input type="number" id="inputAmount" placeholder="예: 155000" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700 font-bold text-rose-400">
                     </div>
                     <div>
                         <label class="text-[11px] text-slate-400">적요 / 거래처</label>
-                        <input type="text" id="inputMemo" placeholder="예: 패티용 소고기 구매" class="w-full text-xs rounded-xl p-2.5">
+                        <input type="text" id="inputMemo" placeholder="예: 패티용 소고기 9.32kg" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
                     </div>
-                    <button type="submit" class="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition">
-                        <i class="fa-solid fa-minus mr-1"></i> 지출 내역 저장
+                    <button type="submit" class="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-minus"></i> 지출 내역 저장
                     </button>
                 </form>
             `;
         }
 
-        // Save Entry
+        // Save Entry to Firestore
         function handleSaveEntry(e, type) {
             e.preventDefault();
             const date = document.getElementById('inputDate').value;
             const amount = parseInt(document.getElementById('inputAmount').value) || 0;
             const memo = document.getElementById('inputMemo').value || '';
-            const category = type === 'sales' ? document.getElementById('salesType').value : document.getElementById('inputCategory').value;
+            
+            let category = '';
+            if (type === 'sales') {
+                category = document.getElementById('salesType').value;
+            } else {
+                category = document.getElementById('inputCategory').value;
+            }
 
-            db.collection("craftburger_ledger").add({
-                type: type,
+            const entryData = {
+                type: type, // 'sales', 'fixed', 'variable'
                 date: date,
                 category: category,
                 amount: amount,
                 memo: memo,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                document.getElementById('inputAmount').value = '';
-                document.getElementById('inputMemo').value = '';
-                alert('성공적으로 저장되었습니다.');
-            }).catch(err => alert('저장 실패: ' + err.message));
+            };
+
+            db.collection("craftburger_ledger").add(entryData)
+                .then(() => {
+                    document.getElementById('inputAmount').value = '';
+                    document.getElementById('inputMemo').value = '';
+                    alert('성공적으로 저장되었습니다.');
+                })
+                .catch((error) => {
+                    alert('저장 실패: ' + error.message);
+                });
         }
 
-        // Render History
+        // Render History Tab
         function renderHistoryTab(container = document.getElementById('form-container')) {
-            const filtered = getFilteredData();
-            if (filtered.length === 0) {
-                container.innerHTML = `<p class="text-center text-xs text-slate-500 py-6">등록된 내역이 없습니다.</p>`;
+            const filteredData = getFilteredData();
+            if (filteredData.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-500 py-8">등록된 내역이 없습니다.</p>`;
                 return;
             }
 
-            filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+            // Sort newest first
+            filteredData.sort((a,b) => new Date(b.date) - new Date(a.date));
 
             let html = `
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs">
                         <thead>
-                            <tr class="text-slate-400 border-b border-slate-700">
+                            <tr class="text-slate-400 border-b border-slate-700/80">
                                 <th class="pb-2">날짜</th>
                                 <th class="pb-2">구분</th>
                                 <th class="pb-2">항목</th>
                                 <th class="pb-2 text-right">금액</th>
-                                <th class="pb-2 text-center">삭제</th>
+                                <th class="pb-2 pl-2">삭제</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800">
             `;
 
-            filtered.forEach(item => {
+            filteredData.forEach(item => {
                 const isSales = item.type === 'sales';
+                const amountClass = isSales ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
+                const typeLabel = isSales ? '매출' : (item.type === 'fixed' ? '고정비' : '변동비');
+                
                 html += `
                     <tr>
-                        <td class="py-2.5 text-slate-300">${item.date}</td>
-                        <td class="py-2.5"><span class="px-1.5 py-0.5 rounded text-[10px] ${isSales ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${isSales ? '매출' : '지출'}</span></td>
-                        <td class="py-2.5 text-white">${item.category} <span class="text-[10px] text-slate-500">${item.memo ? '('+item.memo+')' : ''}</span></td>
-                        <td class="py-2.5 text-right font-bold ${isSales ? 'text-emerald-400' : 'text-rose-400'}">${item.amount.toLocaleString()}원</td>
-                        <td class="py-2.5 text-center"><button onclick="deleteEntry('${item.id}')" class="text-slate-500 hover:text-rose-400 px-2 py-1"><i class="fa-solid fa-trash"></i></button></td>
+                        <td class="py-2 text-slate-300">${item.date}</td>
+                        <td class="py-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${isSales ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">${typeLabel}</span></td>
+                        <td class="py-2 text-white font-medium">${item.category} <span class="text-[10px] text-slate-500 font-normal">${item.memo ? '('+item.memo+')' : ''}</span></td>
+                        <td class="py-2 text-right ${amountClass}">${item.amount.toLocaleString()}원</td>
+                        <td class="py-2 pl-2"><button onclick="deleteEntry('${item.id}')" class="text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button></td>
                     </tr>
                 `;
             });
@@ -390,63 +422,79 @@
             container.innerHTML = html;
         }
 
+        // Delete Entry
         function deleteEntry(id) {
-            if (confirm('이 내역을 삭제하시겠습니까?')) {
+            if (confirm('해당 내역을 삭제하시겠습니까?')) {
                 db.collection("craftburger_ledger").doc(id).delete();
             }
         }
 
-        // Filter Data Helper
+        // Filter Data Helper (Supports Annual 'ALL')
         function getFilteredData() {
             const year = document.getElementById('yearSelect').value;
             const month = document.getElementById('monthSelect').value;
 
             return dbData.filter(item => {
                 if (!item.date) return false;
-                const parts = item.date.split('-');
-                return month === 'ALL' ? parts[0] === year : (parts[0] === year && parts[1] === month);
+                const parts = item.date.split('-'); // YYYY-MM-DD
+                const itemYear = parts[0];
+                const itemMonth = parts[1];
+
+                if (month === 'ALL') {
+                    return itemYear === year; // 연간 전체 집계
+                } else {
+                    return itemYear === year && itemMonth === month; // 월별 집계
+                }
             });
         }
 
-        // Render Dashboard
+        // Render Dashboard KPIs and Charts
         function renderDashboard() {
             const filtered = getFilteredData();
-            let sales = 0, expense = 0, categories = {};
+
+            let totalSales = 0;
+            let totalExpense = 0;
+            let categoryMap = {};
 
             filtered.forEach(item => {
-                if (item.type === 'sales') sales += item.amount;
-                else {
-                    expense += item.amount;
-                    categories[item.category] = (categories[item.category] || 0) + item.amount;
+                if (item.type === 'sales') {
+                    totalSales += item.amount;
+                } else {
+                    totalExpense += item.amount;
+                    categoryMap[item.category] = (categoryMap[item.category] || 0) + item.amount;
                 }
             });
 
-            const net = sales - expense;
-            const margin = sales > 0 ? ((net / sales) * 100).toFixed(1) : 0;
+            const netProfit = totalSales - totalExpense;
+            const profitMargin = totalSales > 0 ? ((netProfit / totalSales) * 100).toFixed(1) : 0;
 
-            document.getElementById('totalSales').innerText = sales.toLocaleString() + '원';
-            document.getElementById('totalExpense').innerText = expense.toLocaleString() + '원';
-            document.getElementById('netProfit').innerText = net.toLocaleString() + '원';
-            document.getElementById('profitMargin').innerText = margin + '%';
+            // Update KPI DOM
+            document.getElementById('totalSales').innerText = totalSales.toLocaleString() + '원';
+            document.getElementById('totalExpense').innerText = totalExpense.toLocaleString() + '원';
+            document.getElementById('netProfit').innerText = netProfit.toLocaleString() + '원';
+            document.getElementById('profitMargin').innerText = profitMargin + '%';
 
-            renderChart(categories);
+            // Chart Update
+            renderExpenseChart(categoryMap);
         }
 
-        // Render Chart
-        function renderChart(categoryMap) {
+        // Render Chart.js Expense Breakdown
+        function renderExpenseChart(categoryMap) {
             const ctx = document.getElementById('expenseChart').getContext('2d');
             const labels = Object.keys(categoryMap);
             const dataValues = Object.values(categoryMap);
 
-            if (expenseChartObj) expenseChartObj.destroy();
+            if (expenseChartObj) {
+                expenseChartObj.destroy();
+            }
 
             if (labels.length === 0) {
-                document.getElementById('chartTitle').innerText = "지출 항목별 분석 (내역 없음)";
+                document.getElementById('chartTitle').innerText = "지출 항목별 분석 (데이터 없음)";
                 return;
             }
 
-            const month = document.getElementById('monthSelect').value;
-            document.getElementById('chartTitle').innerText = month === 'ALL' ? '📅 연간 지출 항목별 분석' : '📊 월간 지출 항목별 분석';
+            const selectedMonth = document.getElementById('monthSelect').value;
+            document.getElementById('chartTitle').innerText = selectedMonth === 'ALL' ? '📅 연간 지출 항목별 분석 (TOP)' : '📊 월간 지출 항목별 분석';
 
             expenseChartObj = new Chart(ctx, {
                 type: 'doughnut',
@@ -454,71 +502,96 @@
                     labels: labels,
                     datasets: [{
                         data: dataValues,
-                        backgroundColor: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
+                        backgroundColor: [
+                            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+                            '#ec4899', '#06b6d4', '#84cc16', '#6366f1', '#14b8a6'
+                        ],
+                        borderWidth: 0
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10 } } }
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#94a3b8', font: { size: 11 } }
+                        }
                     }
                 }
             });
         }
 
-        // OCR Modal Open/Close
-        function openOcrModal() { document.getElementById('ocrModal').classList.remove('hidden'); }
-        function closeOcrModal() { document.getElementById('ocrModal').classList.add('hidden'); }
+        // Modal OCR Handlers
+        function openOcrModal() {
+            document.getElementById('ocrModal').classList.remove('hidden');
+        }
+        function closeOcrModal() {
+            document.getElementById('ocrModal').classList.add('hidden');
+            document.getElementById('ocrResultForm').classList.add('hidden');
+            document.getElementById('ocrProgress').classList.add('hidden');
+        }
 
-        // OCR Receipt Process
+        // Tesseract.js OCR Processing
         function processReceipt(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             document.getElementById('ocrProgress').classList.remove('hidden');
-
-            Tesseract.recognize(file, 'kor+eng', {
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        const pct = Math.round(m.progress * 100);
-                        document.getElementById('ocrPercent').innerText = pct + '%';
-                        document.getElementById('ocrBar').style.width = pct + '%';
+            
+            Tesseract.recognize(
+                file,
+                'kor+eng',
+                {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const pct = Math.round(m.progress * 100);
+                            document.getElementById('ocrPercent').innerText = pct + '%';
+                            document.getElementById('ocrBar').style.width = pct + '%';
+                        }
                     }
                 }
-            }).then(({ data: { text } }) => {
+            ).then(({ data: { text } }) => {
                 document.getElementById('ocrProgress').classList.add('hidden');
                 document.getElementById('ocrResultForm').classList.remove('hidden');
 
+                // Extract Amount (Regex for won/numbers)
                 const numbers = text.match(/[\d,]{3,}/g);
                 if (numbers) {
                     const cleanNums = numbers.map(n => parseInt(n.replace(/,/g, ''))).filter(n => n > 100 && n < 10000000);
-                    if (cleanNums.length > 0) document.getElementById('ocrAmount').value = Math.max(...cleanNums);
+                    if (cleanNums.length > 0) {
+                        document.getElementById('ocrAmount').value = Math.max(...cleanNums);
+                    }
                 }
+
                 document.getElementById('ocrDate').value = getTodayStr();
             }).catch(err => {
-                alert('OCR 오류: ' + err.message);
+                alert('OCR 인식 오류: ' + err.message);
                 document.getElementById('ocrProgress').classList.add('hidden');
             });
         }
 
+        // Save OCR Entry
         function saveOcrEntry() {
             const date = document.getElementById('ocrDate').value;
             const amount = parseInt(document.getElementById('ocrAmount').value) || 0;
             const category = document.getElementById('ocrCategory').value;
 
-            if (!amount) return alert('금액을 입력해 주세요.');
+            if (!amount) {
+                alert('금액을 입력해주세요.');
+                return;
+            }
 
             db.collection("craftburger_ledger").add({
                 type: 'variable',
                 date: date,
                 category: category,
                 amount: amount,
-                memo: 'AI 영수증 스캔 저장',
+                memo: 'AI 영수증 자동 입력',
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 closeOcrModal();
-                alert('영수증 내역이 저장되었습니다.');
+                alert('영수증 내역이 장부에 성공적으로 저장되었습니다.');
             });
         }
     </script>
