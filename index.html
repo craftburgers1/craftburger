@@ -19,968 +19,455 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tesseract.js (AI 영수증 OCR) CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Noto Sans KR Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK v9.x (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
     <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn-active:active {
-            transform: scale(0.97);
-            opacity: 0.9;
-        }
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .tab-btn.active { background-color: #3b82f6; color: white; font-weight: 700; }
+        /* Mobile Scrollbar Clean */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-16">
+<body class="pb-24">
 
-    <!-- Header / Navbar -->
-    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-amber-500 text-slate-900 w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl shadow-inner">
-                    🍔
-                </div>
-                <div>
-                    <h1 class="font-bold text-base sm:text-lg leading-tight">더크래프트버거</h1>
-                    <p class="text-xs text-amber-400 font-medium">세종도담점 장부 & 경영지표</p>
-                </div>
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-700/50 px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🍔</span>
+            <div>
+                <h1 class="text-base font-bold text-white leading-none">더크래프트버거</h1>
+                <p class="text-xs text-slate-400 mt-0.5">세종도담점 장부 관리</p>
             </div>
-            <div class="flex items-center space-x-2">
-                <!-- Cloud Sync Badge -->
-                <div id="cloud-sync-status" class="hidden sm:flex items-center text-[11px] bg-slate-800 text-emerald-400 px-2.5 py-1 rounded-lg border border-slate-700">
-                    <i class="fa-solid fa-cloud-arrow-up mr-1.5 animate-pulse"></i>
-                    <span>클라우드 동기화됨</span>
-                </div>
-                
-                <!-- Year & Month Selectors -->
-                <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 space-x-1">
-                    <i class="fa-regular fa-calendar-check text-amber-400 text-xs hidden sm:inline"></i>
-                    <select id="select-year" onchange="refreshAllViews()" class="bg-transparent text-white text-xs sm:text-sm font-semibold focus:outline-none cursor-pointer">
-                        <!-- Populated dynamically -->
-                    </select>
-                    <select id="select-month" onchange="refreshAllViews()" class="bg-transparent text-amber-300 text-xs sm:text-sm font-bold focus:outline-none cursor-pointer">
-                        <option value="ALL">📅 연간 전체 (1년 누적)</option>
-                        <option value="01">01월</option>
-                        <option value="02">02월</option>
-                        <option value="03">03월</option>
-                        <option value="04">04월</option>
-                        <option value="05">05월</option>
-                        <option value="06">06월</option>
-                        <option value="07">07월</option>
-                        <option value="08">08월</option>
-                        <option value="09">09월</option>
-                        <option value="10">10월</option>
-                        <option value="11">11월</option>
-                        <option value="12">12월</option>
-                    </select>
-                </div>
-            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span id="syncStatus" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> 실시간 클라우드
+            </span>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="max-w-5xl mx-auto px-3 sm:px-4 pt-4 space-y-4">
+    <main class="max-w-4xl mx-auto px-4 pt-4 space-y-5">
 
-        <!-- KPI Executive Summary Cards -->
-        <section class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
-            <!-- Revenue -->
-            <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-                <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
-                    <span id="kpi-income-title">총 매출액</span>
-                    <span class="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-wallet"></i></span>
-                </div>
-                <div class="mt-2">
-                    <div id="dash-total-income" class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">0원</div>
-                    <p id="dash-income-count" class="text-[11px] text-slate-400 mt-0.5">입력 0건</p>
-                </div>
+        <!-- Date Filter & Quick Switch -->
+        <section class="glass-panel rounded-2xl p-4 flex flex-col sm:flex-row gap-3 justify-between items-center">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <select id="yearSelect" onchange="renderDashboard()" class="bg-slate-800 text-white text-sm font-semibold rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="2026">2026년</option>
+                    <option value="2025">2025년</option>
+                </select>
+                <select id="monthSelect" onchange="renderDashboard()" class="bg-slate-800 text-white text-sm font-semibold rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1">
+                    <option value="ALL">📅 연간 전체 (1년 누적)</option>
+                    <option value="01">1월</option><option value="02">2월</option><option value="03">3월</option>
+                    <option value="04">4월</option><option value="05">5월</option><option value="06">6월</option>
+                    <option value="07">07월</option><option value="08">08월</option><option value="09">09월</option>
+                    <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+                </select>
             </div>
-
-            <!-- Total Expenses -->
-            <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-                <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
-                    <span id="kpi-expense-title">총 지출액</span>
-                    <span class="w-7 h-7 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-xs"><i class="fa-solid fa-receipt"></i></span>
-                </div>
-                <div class="mt-2">
-                    <div id="dash-total-expense" class="text-lg sm:text-2xl font-black text-rose-600 tracking-tight">0원</div>
-                    <div class="flex justify-between items-center text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
-                        <span>고정: <span id="dash-fixed-expense">0원</span></span>
-                        <span>변동: <span id="dash-variable-expense">0원</span></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Net Profit -->
-            <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-3.5 sm:p-4 rounded-2xl shadow-md flex flex-col justify-between col-span-1">
-                <div class="flex items-center justify-between text-xs font-semibold text-amber-100">
-                    <span>순이익 (남은 돈)</span>
-                    <span class="w-7 h-7 rounded-full bg-white/20 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-piggy-bank"></i></span>
-                </div>
-                <div class="mt-2">
-                    <div id="dash-net-profit" class="text-lg sm:text-2xl font-black tracking-tight">0원</div>
-                    <p class="text-[11px] text-amber-100/90 mt-0.5">매출 - (고정비+변동비)</p>
-                </div>
-            </div>
-
-            <!-- Operating Profit Margin -->
-            <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between col-span-1">
-                <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
-                    <span>영업 이익률</span>
-                    <span class="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-chart-line"></i></span>
-                </div>
-                <div class="mt-2">
-                    <div id="dash-profit-margin" class="text-lg sm:text-2xl font-black text-blue-600 tracking-tight">0.0 %</div>
-                    <p id="margin-status-text" class="text-[11px] font-semibold mt-0.5 text-slate-400">매출을 입력해주세요</p>
-                </div>
+            <div class="text-xs text-slate-400 flex items-center gap-1 w-full sm:w-auto justify-end">
+                <i class="fa-solid fa-arrows-rotate"></i> PC-스마트폰 자동 동기화 적용됨
             </div>
         </section>
 
-        <!-- AI Receipt Scanner Banner -->
-        <section class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden">
-            <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div class="space-y-1">
-                    <div class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-900">
-                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Gemini AI 스마트 파싱
-                    </div>
-                    <h2 class="text-base sm:text-lg font-bold">영수증 사진 한 장으로 지출 자동 등록</h2>
-                    <p class="text-xs text-slate-300">종이 영수증을 촬영하면 AI가 매장명, 날짜, 금액, 카테고리를 자동으로 추출해 줍니다.</p>
-                </div>
-                <div class="w-full sm:w-auto flex items-center gap-2">
-                    <label for="ai-receipt-input" class="w-full sm:w-auto px-4 py-2.5 bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-bold text-xs sm:text-sm rounded-xl cursor-pointer text-center shadow-lg transition flex items-center justify-center space-x-2 btn-active">
-                        <i class="fa-solid fa-camera text-base"></i>
-                        <span>영수증 촬영 / 업로드</span>
-                    </label>
-                    <input type="file" id="ai-receipt-input" accept="image/*,image/heic,image/heif" capture="environment" class="hidden" onchange="handleReceiptUpload(event)">
-                </div>
+        <!-- KPI Summary Cards -->
+        <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="glass-panel p-4 rounded-2xl border-l-4 border-blue-500">
+                <p class="text-xs font-semibold text-slate-400">총 매출</p>
+                <p id="totalSales" class="text-lg sm:text-xl font-bold text-white mt-1">0원</p>
+                <p class="text-[10px] text-slate-500 mt-1">배달 + 홀 누적</p>
+            </div>
+            <div class="glass-panel p-4 rounded-2xl border-l-4 border-rose-500">
+                <p class="text-xs font-semibold text-slate-400">총 지출</p>
+                <p id="totalExpense" class="text-lg sm:text-xl font-bold text-rose-400 mt-1">0원</p>
+                <p class="text-[10px] text-slate-500 mt-1">고정비 + 식자재/변동비</p>
+            </div>
+            <div class="glass-panel p-4 rounded-2xl border-l-4 border-emerald-500">
+                <p class="text-xs font-semibold text-slate-400">순이익</p>
+                <p id="netProfit" class="text-lg sm:text-xl font-bold text-emerald-400 mt-1">0원</p>
+                <p class="text-[10px] text-slate-500 mt-1">매출 - 지출</p>
+            </div>
+            <div class="glass-panel p-4 rounded-2xl border-l-4 border-amber-500">
+                <p class="text-xs font-semibold text-slate-400">순이익률</p>
+                <p id="profitMargin" class="text-lg sm:text-xl font-bold text-amber-400 mt-1">0%</p>
+                <p class="text-[10px] text-slate-500 mt-1">수익성 마진</p>
             </div>
         </section>
 
-        <!-- Input Form Section -->
-        <section class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200">
-            <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
-                <i class="fa-solid fa-pen-to-square text-amber-500 mr-2"></i> 거래 내역 직접 등록
+        <!-- OCR Receipt Scanner Modal Trigger Card -->
+        <section class="glass-panel p-4 rounded-2xl bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-500/30 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-white">AI 영수증 자동 스캔</h3>
+                    <p class="text-xs text-slate-300">카메라 촬영으로 금액·날짜 자동 입력</p>
+                </div>
+            </div>
+            <button onclick="openOcrModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition">
+                스캔하기
+            </button>
+        </section>
+
+        <!-- Dynamic Entry Tab System -->
+        <section class="glass-panel rounded-2xl p-4">
+            <div class="flex border-b border-slate-700/60 pb-3 gap-2 overflow-x-auto">
+                <button onclick="switchTab('sales')" id="tab-sales" class="tab-btn active px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition">매출 입력</button>
+                <button onclick="switchTab('fixed')" id="tab-fixed" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap text-slate-400 transition">고정비 (9개)</button>
+                <button onclick="switchTab('variable')" id="tab-variable" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap text-slate-400 transition">식자재/변동비 (13개)</button>
+                <button onclick="switchTab('history')" id="tab-history" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap text-slate-400 transition">전체 내역 조회</button>
+            </div>
+
+            <!-- Form Content Areas -->
+            <div id="form-container" class="mt-4">
+                <!-- JavaScript Form Injection Area -->
+            </div>
+        </section>
+
+        <!-- Annual & Monthly Expense Breakdown Chart -->
+        <section class="glass-panel p-4 rounded-2xl space-y-3">
+            <h3 id="chartTitle" class="text-sm font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-blue-400"></i> 지출 항목별 분석
             </h3>
-            <form id="transaction-form" onsubmit="handleAddTransaction(event)" class="space-y-3">
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <!-- Date Input -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">날짜</label>
-                        <input type="date" id="input-date" required class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                    </div>
-                    <!-- Type Input -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">구분</label>
-                        <select id="input-type" onchange="updateCategoryDropdown()" class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium">
-                            <option value="INCOME">💰 수입 (매출)</option>
-                            <option value="FIXED">📌 고정비</option>
-                            <option value="VARIABLE">🛒 식자재/변동비</option>
-                        </select>
-                    </div>
-                    <!-- Category Input -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">세부 항목</label>
-                        <select id="input-category" required class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium">
-                            <!-- Populated dynamically -->
-                        </select>
-                    </div>
-                    <!-- Amount Input -->
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">금액 (원)</label>
-                        <input type="number" id="input-amount" required placeholder="0" min="0" step="10" class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-semibold">
-                    </div>
-                </div>
-
-                <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
-                    <input type="text" id="input-memo" placeholder="메모 (예: 코스트코 장보기, 부릉 배달대행료 등)" class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                    <button type="submit" class="w-full sm:w-36 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow transition btn-active flex items-center justify-center space-x-1 shrink-0">
-                        <i class="fa-solid fa-plus text-xs"></i>
-                        <span>기록 추가</span>
-                    </button>
-                </div>
-            </form>
-        </section>
-
-        <!-- Chart & Breakdown Section -->
-        <section class="grid md:grid-cols-2 gap-4">
-            <!-- Expense Category Doughnut Chart -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                <h3 class="font-bold text-slate-800 text-sm mb-2 flex items-center justify-between">
-                    <span><i class="fa-solid fa-chart-pie text-indigo-500 mr-2"></i> 지출 카테고리별 비중</span>
-                    <span id="chart-period-label" class="text-xs text-slate-400 font-normal">선택 기간 기준</span>
-                </h3>
-                <div class="relative w-full h-48 sm:h-56 flex items-center justify-center">
-                    <canvas id="expenseCategoryChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Expense Ranking Table -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-                <h3 class="font-bold text-slate-800 text-sm mb-3 flex items-center justify-between">
-                    <span><i class="fa-solid fa-list-ol text-emerald-500 mr-2"></i> 지출 TOP 항목 순위</span>
-                    <span class="text-xs text-slate-400 font-normal">합계 순</span>
-                </h3>
-                <div class="overflow-y-auto max-h-48 sm:max-h-56">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 text-[11px] font-semibold text-slate-500 sticky top-0">
-                            <tr>
-                                <th class="p-2 rounded-l-lg">구분</th>
-                                <th class="p-2">항목</th>
-                                <th class="p-2 text-right">금액</th>
-                                <th class="p-2 text-right rounded-r-lg">비중</th>
-                            </tr>
-                        </thead>
-                        <tbody id="top-expenses-tbody" class="divide-y divide-slate-100 text-xs">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Main Ledger History List -->
-        <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                <h3 class="font-bold text-slate-800 text-base flex items-center">
-                    <i class="fa-solid fa-clock-rotate-left text-amber-500 mr-2"></i> 
-                    <span id="ledger-title-text">선택 기간 수입/지출 내역</span>
-                </h3>
-                <div class="flex items-center space-x-2">
-                    <input type="text" id="search-keyword" oninput="renderTransactionList()" placeholder="항목/메모 검색..." class="text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500">
-                    <button onclick="exportToCSV()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg shadow-sm transition flex items-center space-x-1 shrink-0">
-                        <i class="fa-solid fa-file-excel"></i>
-                        <span>엑셀 다운로드</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Transaction Table -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-100 text-xs font-semibold text-slate-600">
-                        <tr>
-                            <th class="p-2.5 rounded-l-lg">날짜</th>
-                            <th class="p-2.5">구분</th>
-                            <th class="p-2.5">항목</th>
-                            <th class="p-2.5">메모</th>
-                            <th class="p-2.5 text-right">금액</th>
-                            <th class="p-2.5 text-center rounded-r-lg">삭제</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transaction-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm">
-                        <!-- Populated dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Category Settings Section -->
-        <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="font-bold text-slate-800 text-base flex items-center">
-                    <i class="fa-solid fa-sliders text-indigo-500 mr-2"></i> 커스텀 항목(카테고리) 설정
-                </h3>
-                <span class="text-xs text-slate-400">필요 시 항목 추가/삭제</span>
-            </div>
-            
-            <div class="grid sm:grid-cols-2 gap-4">
-                <!-- Fixed Cost Manager -->
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                    <h4 class="font-bold text-xs text-rose-600 mb-2 flex items-center justify-between">
-                        <span>📌 고정비 항목 목록</span>
-                    </h4>
-                    <div id="fixed-categories-tags" class="flex flex-wrap gap-1.5 mb-2.5"></div>
-                    <div class="flex gap-1.5">
-                        <input type="text" id="new-fixed-cat" placeholder="신규 고정비 항목명" class="text-xs p-2 bg-white border border-slate-200 rounded-lg w-full focus:outline-none">
-                        <button onclick="addCategory('FIXED')" class="bg-slate-800 text-white font-bold text-xs px-3 py-2 rounded-lg shrink-0">추가</button>
-                    </div>
-                </div>
-
-                <!-- Variable Cost Manager -->
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                    <h4 class="font-bold text-xs text-emerald-600 mb-2 flex items-center justify-between">
-                        <span>🛒 식자재 및 변동비 항목 목록</span>
-                    </h4>
-                    <div id="variable-categories-tags" class="flex flex-wrap gap-1.5 mb-2.5"></div>
-                    <div class="flex gap-1.5">
-                        <input type="text" id="new-variable-cat" placeholder="신규 변동비 항목명" class="text-xs p-2 bg-white border border-slate-200 rounded-lg w-full focus:outline-none">
-                        <button onclick="addCategory('VARIABLE')" class="bg-slate-800 text-white font-bold text-xs px-3 py-2 rounded-lg shrink-0">추가</button>
-                    </div>
-                </div>
+            <div class="h-64 relative">
+                <canvas id="expenseChart"></canvas>
             </div>
         </section>
 
     </main>
 
-    <!-- Custom Modal Layer -->
-    <div id="custom-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
-            <h3 id="modal-title" class="font-bold text-slate-900 text-base">알림</h3>
-            <p id="modal-body" class="text-xs sm:text-sm text-slate-600 leading-relaxed">내용</p>
-            <div class="flex justify-end pt-2">
-                <button onclick="closeModal()" class="bg-amber-500 text-slate-950 font-bold text-xs sm:text-sm px-4 py-2 rounded-xl">확인</button>
+    <!-- OCR Receipt Scan Modal -->
+    <div id="ocrModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-white"><i class="fa-solid fa-receipt text-blue-400 mr-2"></i>영수증 촬영 및 인식</h3>
+                <button onclick="closeOcrModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <input type="file" id="receiptInput" accept="image/*" capture="environment" class="hidden" onchange="processReceipt(event)">
+            
+            <div id="ocrDropArea" onclick="document.getElementById('receiptInput').click()" class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-8 text-center cursor-pointer transition">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-500 mb-2"></i>
+                <p class="text-xs font-semibold text-slate-300">카메라로 영수증 촬영 또는 이미지 선택</p>
+                <p class="text-[10px] text-slate-500 mt-1">영수증의 금액과 날짜를 AI가 추출합니다</p>
+            </div>
+
+            <div id="ocrProgress" class="hidden space-y-2">
+                <div class="flex justify-between text-xs text-slate-400">
+                    <span>영수증 분석 중...</span>
+                    <span id="ocrPercent">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                    <div id="ocrBar" class="bg-blue-500 h-2 rounded-full w-0 transition-all duration-200"></div>
+                </div>
+            </div>
+
+            <div id="ocrResultForm" class="hidden space-y-3 pt-2 border-t border-slate-800">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[11px] text-slate-400">날짜</label>
+                        <input type="date" id="ocrDate" class="w-full bg-slate-800 text-white text-xs rounded-lg p-2 border border-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-400">금액</label>
+                        <input type="number" id="ocrAmount" class="w-full bg-slate-800 text-white text-xs rounded-lg p-2 border border-slate-700">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[11px] text-slate-400">분류 항목</label>
+                    <select id="ocrCategory" class="w-full bg-slate-800 text-white text-xs rounded-lg p-2 border border-slate-700">
+                        <option value="고기">🥩 고기 (패티 식자재)</option>
+                        <option value="빵/번">🍞 빵/번</option>
+                        <option value="코스트코">🛒 코스트코</option>
+                        <option value="채소/신선">🥬 채소/신선식재료</option>
+                        <option value="소스/시즈닝">🧂 소스/시즈닝</option>
+                        <option value="음료/주류/맥주">🍺 음료/주류/수제맥주</option>
+                        <option value="포장 용기/소모품">📦 포장 용기/소모품</option>
+                        <option value="기타 식자재">🛒 기타 식자재</option>
+                    </select>
+                </div>
+                <button onclick="saveOcrEntry()" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-500">
+                    장부에 등록하기
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- AI Loading Spinner Overlay -->
-    <div id="ai-loading-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center p-4 text-white">
-        <div class="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <h4 class="font-bold text-base mb-1">Gemini AI가 영수증을 분석 중입니다...</h4>
-        <p class="text-xs text-slate-300">날짜, 결제 금액, 품목 및 지출 항목을 분류하고 있습니다.</p>
-    </div>
-
-    <!-- Firebase SDK Modules Integration -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'craftburger-sejong-dodam';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "dummy-key",
-            authDomain: "dummy-app.firebaseapp.com",
-            projectId: "dummy-project"
+    <!-- Firebase Application Logic JS -->
+    <script>
+        // 1. Firebase Configuration (전달받은 파이어베이스 키 적용 완료)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB4YZlNVSkc7haxMxTBInMsECMFCuU6ztE",
+            authDomain: "data-base-94ba6.firebaseapp.com",
+            projectId: "data-base-94ba6",
+            storageBucket: "data-base-94ba6.firebasestorage.app",
+            messagingSenderId: "623523294374",
+            appId: "1:623523294374:web:d7b6ae7916e9eb998d1867",
+            measurementId: "G-B3EV2XZ0T3"
         };
 
-        let app, db, auth, currentUser = null;
+        // Firebase Initialization
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        const defaultCategories = {
-            FIXED: ['가게세', '관리비', '부가세', '가스비', '인터넷', '티오더', '인건비', '부릉배달비', '기장비'],
-            VARIABLE: ['고기', '빵', '맥주', '감자', '베이컨', '토마토', '코스트코', '베스트코', '오케이마트', '음료(콜라사이다)', '잡자재(종이봉투,비닐,스티커 등)', '배민수수료', '쿠팡수수료']
-        };
+        // 2. Data Categories
+        const fixedCategories = ['가게세(임대료)', '상가관리비', '전기요금', '수도요금', '가스요금', '인건비(박동찬 등)', '인터넷/포스/통신비', '세무사수수료', '기타고정비'];
+        const variableCategories = ['고기', '빵/번', '채소/신선', '소스/시즈닝', '음료/주류/맥주', '코스트코', '기타 식자재', '배민 수수료', '쿠팡이츠 수수료', '요기요 수수료', '포장 용기/소모품', '카드 수수료', '기타 변동비'];
 
-        window.categories = JSON.parse(localStorage.getItem('craftburger_categories')) || defaultCategories;
-        window.transactions = JSON.parse(localStorage.getItem('craftburger_transactions')) || [];
-        let expenseChart = null;
+        let dbData = [];
+        let currentTab = 'sales';
+        let expenseChartObj = null;
 
-        async function initCloudStorage() {
-            try {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+        // Today Date Helper
+        const getTodayStr = () => new Date().toISOString().split('T')[0];
 
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    const userCredential = await signInWithCustomToken(auth, __initial_auth_token);
-                    currentUser = userCredential.user;
-                } else {
-                    const userCredential = await signInAnonymously(auth);
-                    currentUser = userCredential.user;
-                }
-
-                if (currentUser) {
-                    listenToCloudData();
-                }
-            } catch (error) {
-                console.warn("Cloud Storage init failed or running offline mode:", error);
-            }
-        }
-
-        function listenToCloudData() {
-            if (!currentUser) return;
-
-            const txCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'transactions_store');
-            const catDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'categories_store', 'main_categories');
-
-            onSnapshot(txCollectionRef, (snapshot) => {
-                const cloudTxs = [];
-                snapshot.forEach((docSnap) => {
-                    cloudTxs.push(docSnap.data());
+        // Realtime Firestore Listener Sync
+        function initRealtimeSync() {
+            db.collection("craftburger_ledger").onSnapshot((snapshot) => {
+                dbData = [];
+                snapshot.forEach((doc) => {
+                    dbData.push({ id: doc.id, ...doc.data() });
                 });
-                if (cloudTxs.length > 0) {
-                    cloudTxs.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    window.transactions = cloudTxs;
-                    localStorage.setItem('craftburger_transactions', JSON.stringify(window.transactions));
-                    refreshAllViews();
-                }
-            });
-
-            onSnapshot(catDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data && data.FIXED && data.VARIABLE) {
-                        window.categories = { FIXED: data.FIXED, VARIABLE: data.VARIABLE };
-                        localStorage.setItem('craftburger_categories', JSON.stringify(window.categories));
-                        renderCategorySettings();
-                        updateCategoryDropdown();
-                    }
-                }
+                renderDashboard();
+                if (currentTab === 'history') renderHistoryTab();
+            }, (error) => {
+                console.error("Firestore Sync Error: ", error);
+                document.getElementById('syncStatus').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5"></span> 오프라인 모드`;
+                document.getElementById('syncStatus').className = "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
             });
         }
 
-        async function syncSaveToCloud() {
-            localStorage.setItem('craftburger_categories', JSON.stringify(window.categories));
-            localStorage.setItem('craftburger_transactions', JSON.stringify(window.transactions));
-
-            if (!currentUser || !db) return;
-
-            try {
-                const catDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'categories_store', 'main_categories');
-                await setDoc(catDocRef, window.categories);
-
-                for (const tx of window.transactions) {
-                    const txDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'transactions_store', tx.id);
-                    await setDoc(txDocRef, tx);
-                }
-            } catch (err) {
-                console.error("Cloud Sync Error:", err);
-            }
-        }
-
-        window.syncSaveToCloud = syncSaveToCloud;
-
-        function getTodayYMD() {
-            const d = new Date();
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        function formatKRW(amt) {
-            return new Intl.NumberFormat('ko-KR').format(amt) + '원';
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-
-        function showModal(title, message) {
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-body').innerText = message;
-            document.getElementById('custom-modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('custom-modal').classList.add('hidden');
-        }
-
-        window.closeModal = closeModal;
-
-        // Populate Year Options
-        function initYearOptions() {
-            const yearSelect = document.getElementById('select-year');
-            const currentYear = new Date().getFullYear();
-            yearSelect.innerHTML = '';
-
-            for (let y = currentYear + 1; y >= currentYear - 3; y--) {
-                const opt = document.createElement('option');
-                opt.value = String(y);
-                opt.textContent = `${y}년`;
-                if (y === currentYear) opt.selected = true;
-                yearSelect.appendChild(opt);
-            }
-
-            const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
-            document.getElementById('select-month').value = currentMonth;
-        }
-
+        // Initialize App
         window.addEventListener('DOMContentLoaded', () => {
-            initYearOptions();
-            document.getElementById('input-date').value = getTodayYMD();
-
-            updateCategoryDropdown();
-            renderCategorySettings();
-            refreshAllViews();
-
-            initCloudStorage();
+            const now = new Date();
+            document.getElementById('yearSelect').value = now.getFullYear().toString();
+            // Default to ALL (annual view) or current month
+            document.getElementById('monthSelect').value = "ALL";
+            switchTab('sales');
+            initRealtimeSync();
         });
 
-        function updateCategoryDropdown() {
-            const typeSelect = document.getElementById('input-type');
-            const categorySelect = document.getElementById('input-category');
-            if (!typeSelect || !categorySelect) return;
-
-            const type = typeSelect.value;
-            categorySelect.innerHTML = '';
-
-            if (type === 'INCOME') {
-                const opt = document.createElement('option');
-                opt.value = '매출액';
-                opt.textContent = '💰 매출액';
-                categorySelect.appendChild(opt);
-            } else if (type === 'FIXED') {
-                window.categories.FIXED.forEach(cat => {
-                    const opt = document.createElement('option');
-                    opt.value = cat;
-                    opt.textContent = cat;
-                    categorySelect.appendChild(opt);
-                });
-            } else if (type === 'VARIABLE') {
-                window.categories.VARIABLE.forEach(cat => {
-                    const opt = document.createElement('option');
-                    opt.value = cat;
-                    opt.textContent = cat;
-                    categorySelect.appendChild(opt);
-                });
+        // Tab Navigation
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                btn.classList.add('text-slate-400');
+            });
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'bg-blue-600', 'text-white');
+                activeBtn.classList.remove('text-slate-400');
             }
+
+            const container = document.getElementById('form-container');
+            if (tab === 'sales') renderSalesForm(container);
+            else if (tab === 'fixed') renderExpenseForm(container, 'fixed', fixedCategories);
+            else if (tab === 'variable') renderExpenseForm(container, 'variable', variableCategories);
+            else if (tab === 'history') renderHistoryTab(container);
         }
 
-        window.updateCategoryDropdown = updateCategoryDropdown;
+        // Render Sales Form
+        function renderSalesForm(container) {
+            container.innerHTML = `
+                <form onsubmit="handleSaveEntry(event, 'sales')" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[11px] text-slate-400">날짜</label>
+                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400">매출 구문</label>
+                            <select id="salesType" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                                <option value="일일 총매출">일일 통합 매출</option>
+                                <option value="홀 매출">홀 매출</option>
+                                <option value="배달 매출">배달 매출 (배민/쿠팡)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-400">매출 금액 (원)</label>
+                        <input type="number" id="inputAmount" placeholder="예: 850000" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700 font-bold text-emerald-400">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-400">메모 (선택사항)</label>
+                        <input type="text" id="inputMemo" placeholder="예: 토요일 단체 주문 포함" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> 매출 등록하기
+                    </button>
+                </form>
+            `;
+        }
 
-        async function handleAddTransaction(e) {
+        // Render Expense Form
+        function renderExpenseForm(container, type, categories) {
+            const options = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            container.innerHTML = `
+                <form onsubmit="handleSaveEntry(event, '${type}')" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[11px] text-slate-400">날짜</label>
+                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400">지출 항목</label>
+                            <select id="inputCategory" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                                ${options}
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-400">지출 금액 (원)</label>
+                        <input type="number" id="inputAmount" placeholder="예: 155000" required class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700 font-bold text-rose-400">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-400">적요 / 거래처</label>
+                        <input type="text" id="inputMemo" placeholder="예: 패티용 소고기 9.32kg" class="w-full bg-slate-800 text-white text-xs rounded-xl p-2.5 border border-slate-700">
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-minus"></i> 지출 내역 저장
+                    </button>
+                </form>
+            `;
+        }
+
+        // Save Entry to Firestore
+        function handleSaveEntry(e, type) {
             e.preventDefault();
-            const date = document.getElementById('input-date').value;
-            const type = document.getElementById('input-type').value;
-            const category = document.getElementById('input-category').value;
-            const amount = parseInt(document.getElementById('input-amount').value, 10);
-            const memo = document.getElementById('input-memo').value.trim();
-
-            if (!date || !category || isNaN(amount) || amount <= 0) {
-                showModal("입력 오류", "날짜, 세부 항목, 그리고 올바른 금액을 입력해 주세요.");
-                return;
+            const date = document.getElementById('inputDate').value;
+            const amount = parseInt(document.getElementById('inputAmount').value) || 0;
+            const memo = document.getElementById('inputMemo').value || '';
+            
+            let category = '';
+            if (type === 'sales') {
+                category = document.getElementById('salesType').value;
+            } else {
+                category = document.getElementById('inputCategory').value;
             }
 
-            const newTx = {
-                id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-                date,
-                type,
-                category,
-                amount,
-                memo
+            const entryData = {
+                type: type, // 'sales', 'fixed', 'variable'
+                date: date,
+                category: category,
+                amount: amount,
+                memo: memo,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            window.transactions.unshift(newTx);
-            await syncSaveToCloud();
-
-            document.getElementById('input-amount').value = '';
-            document.getElementById('input-memo').value = '';
-
-            refreshAllViews();
-            showModal("등록 완료", `${type === 'INCOME' ? '수입' : '지출'} 내역이 클라우드에 자동 백업되었습니다.`);
-        }
-
-        window.handleAddTransaction = handleAddTransaction;
-
-        async function deleteTransaction(id) {
-            window.transactions = window.transactions.filter(t => t.id !== id);
-            await syncSaveToCloud();
-            refreshAllViews();
-        }
-
-        window.deleteTransaction = deleteTransaction;
-
-        function refreshAllViews() {
-            renderDashboard();
-            renderTransactionList();
-        }
-
-        window.refreshAllViews = refreshAllViews;
-
-        // Dashboard Calculation (Annual & Monthly)
-        function renderDashboard() {
-            const year = document.getElementById('select-year').value;
-            const month = document.getElementById('select-month').value;
-
-            const isAnnual = (month === 'ALL');
-            const periodKey = isAnnual ? `${year}년 연간 전체` : `${year}년 ${month}월`;
-
-            document.getElementById('chart-period-label').innerText = periodKey;
-            document.getElementById('ledger-title-text').innerText = `${periodKey} 수입/지출 내역`;
-
-            document.getElementById('kpi-income-title').innerText = isAnnual ? '연간 총 매출액' : '이번 달 총 매출';
-            document.getElementById('kpi-expense-title').innerText = isAnnual ? '연간 총 지출액' : '이번 달 총 지출';
-
-            let totalIncome = 0;
-            let totalFixed = 0;
-            let totalVariable = 0;
-            let incomeCount = 0;
-
-            const categorySums = {};
-
-            window.transactions.forEach(t => {
-                const matchYear = t.date.startsWith(year);
-                const matchMonth = isAnnual ? true : t.date.startsWith(`${year}-${month}`);
-
-                if (matchYear && matchMonth) {
-                    if (t.type === 'INCOME') {
-                        totalIncome += t.amount;
-                        incomeCount++;
-                    } else if (t.type === 'FIXED') {
-                        totalFixed += t.amount;
-                        categorySums[t.category] = (categorySums[t.category] || 0) + t.amount;
-                    } else if (t.type === 'VARIABLE') {
-                        totalVariable += t.amount;
-                        categorySums[t.category] = (categorySums[t.category] || 0) + t.amount;
-                    }
-                }
-            });
-
-            const totalExpense = totalFixed + totalVariable;
-            const netProfit = totalIncome - totalExpense;
-            const margin = totalIncome > 0 ? ((netProfit / totalIncome) * 100).toFixed(1) : 0;
-
-            document.getElementById('dash-total-income').innerText = formatKRW(totalIncome);
-            document.getElementById('dash-income-count').innerText = `입력 건수: ${incomeCount}건`;
-
-            document.getElementById('dash-total-expense').innerText = formatKRW(totalExpense);
-            document.getElementById('dash-fixed-expense').innerText = formatKRW(totalFixed);
-            document.getElementById('dash-variable-expense').innerText = formatKRW(totalVariable);
-
-            document.getElementById('dash-net-profit').innerText = formatKRW(netProfit);
-            document.getElementById('dash-profit-margin').innerText = `${margin} %`;
-
-            const statusEl = document.getElementById('margin-status-text');
-            if (totalIncome === 0) {
-                statusEl.innerText = "매출을 입력해주세요.";
-                statusEl.className = "text-[11px] text-slate-400 font-medium mt-0.5";
-            } else if (margin >= 25) {
-                statusEl.innerText = "🎉 우수한 영업 이익률입니다!";
-                statusEl.className = "text-[11px] text-emerald-600 font-bold mt-0.5";
-            } else if (margin >= 10) {
-                statusEl.innerText = "👍 안정적인 영업 이익 수준입니다.";
-                statusEl.className = "text-[11px] text-blue-600 font-semibold mt-0.5";
-            } else if (margin > 0) {
-                statusEl.innerText = "⚠️ 지출 관리가 다소 필요합니다.";
-                statusEl.className = "text-[11px] text-amber-600 font-medium mt-0.5";
-            } else {
-                statusEl.innerText = "🚨 적자 상태입니다.";
-                statusEl.className = "text-[11px] text-rose-600 font-bold mt-0.5";
-            }
-
-            const sortedCategories = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
-            const topTbody = document.getElementById('top-expenses-tbody');
-            topTbody.innerHTML = '';
-
-            if (sortedCategories.length === 0) {
-                topTbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">선택한 기간의 지출 내역이 없습니다.</td></tr>`;
-            } else {
-                sortedCategories.forEach(cat => {
-                    const amt = categorySums[cat];
-                    const ratio = totalExpense > 0 ? ((amt / totalExpense) * 100).toFixed(1) : 0;
-                    const isFixed = window.categories.FIXED.includes(cat);
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td class="p-2 text-[10px]">
-                            <span class="px-1.5 py-0.5 rounded font-bold ${isFixed ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
-                                ${isFixed ? '고정비' : '변동비'}
-                            </span>
-                        </td>
-                        <td class="p-2 font-medium text-slate-800">${escapeHtml(cat)}</td>
-                        <td class="p-2 text-right font-semibold text-slate-900">${formatKRW(amt)}</td>
-                        <td class="p-2 text-right text-slate-500 text-xs">${ratio}%</td>
-                    `;
-                    topTbody.appendChild(tr);
+            db.collection("craftburger_ledger").add(entryData)
+                .then(() => {
+                    document.getElementById('inputAmount').value = '';
+                    document.getElementById('inputMemo').value = '';
+                    alert('성공적으로 저장되었습니다.');
+                })
+                .catch((error) => {
+                    alert('저장 실패: ' + error.message);
                 });
-            }
-
-            renderChart(sortedCategories, categorySums);
         }
 
-        function renderChart(labels, dataMap) {
-            const ctx = document.getElementById('expenseCategoryChart').getContext('2d');
-
-            if (expenseChart) {
-                expenseChart.destroy();
-            }
-
-            const dataValues = labels.map(l => dataMap[l]);
-            if (dataValues.length === 0) {
-                expenseChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['지출 없음'],
-                        datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
+        // Render History Tab
+        function renderHistoryTab(container = document.getElementById('form-container')) {
+            const filteredData = getFilteredData();
+            if (filteredData.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-500 py-8">등록된 내역이 없습니다.</p>`;
                 return;
             }
 
-            const bgColors = [
-                '#f97316', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981',
-                '#f59e0b', '#3b82f6', '#6366f1', '#14b8a6', '#84cc16'
-            ];
+            // Sort newest first
+            filteredData.sort((a,b) => new Date(b.date) - new Date(a.date));
 
-            expenseChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: dataValues,
-                        backgroundColor: bgColors.slice(0, labels.length),
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 10,
-                                font: { size: 10, family: 'Noto Sans KR' },
-                                padding: 8
-                            }
-                        }
-                    },
-                    cutout: '65%'
-                }
-            });
-        }
+            let html = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="text-slate-400 border-b border-slate-700/80">
+                                <th class="pb-2">날짜</th>
+                                <th class="pb-2">구분</th>
+                                <th class="pb-2">항목</th>
+                                <th class="pb-2 text-right">금액</th>
+                                <th class="pb-2 pl-2">삭제</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800">
+            `;
 
-        function renderTransactionList() {
-            const year = document.getElementById('select-year').value;
-            const month = document.getElementById('select-month').value;
-            const isAnnual = (month === 'ALL');
-
-            const keyword = document.getElementById('search-keyword').value.trim().toLowerCase();
-            const tbody = document.getElementById('transaction-tbody');
-            tbody.innerHTML = '';
-
-            const filtered = window.transactions.filter(t => {
-                const matchYear = t.date.startsWith(year);
-                const matchMonth = isAnnual ? true : t.date.startsWith(`${year}-${month}`);
-                const matchKw = !keyword || t.category.toLowerCase().includes(keyword) || (t.memo && t.memo.toLowerCase().includes(keyword));
-                return matchYear && matchMonth && matchKw;
-            });
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">해당 조건의 거래 내역이 존재하지 않습니다.</td></tr>`;
-                return;
-            }
-
-            filtered.forEach(t => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition";
+            filteredData.forEach(item => {
+                const isSales = item.type === 'sales';
+                const amountClass = isSales ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
+                const typeLabel = isSales ? '매출' : (item.type === 'fixed' ? '고정비' : '변동비');
                 
-                let typeBadge = '';
-                if (t.type === 'INCOME') {
-                    typeBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">💰 수입</span>';
-                } else if (t.type === 'FIXED') {
-                    typeBadge = '<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold text-[10px]">📌 고정비</span>';
+                html += `
+                    <tr>
+                        <td class="py-2 text-slate-300">${item.date}</td>
+                        <td class="py-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${isSales ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">${typeLabel}</span></td>
+                        <td class="py-2 text-white font-medium">${item.category} <span class="text-[10px] text-slate-500 font-normal">${item.memo ? '('+item.memo+')' : ''}</span></td>
+                        <td class="py-2 text-right ${amountClass}">${item.amount.toLocaleString()}원</td>
+                        <td class="py-2 pl-2"><button onclick="deleteEntry('${item.id}')" class="text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        }
+
+        // Delete Entry
+        function deleteEntry(id) {
+            if (confirm('해당 내역을 삭제하시겠습니까?')) {
+                db.collection("craftburger_ledger").doc(id).delete();
+            }
+        }
+
+        // Filter Data Helper (Supports Annual 'ALL')
+        function getFilteredData() {
+            const year = document.getElementById('yearSelect').value;
+            const month = document.getElementById('monthSelect').value;
+
+            return dbData.filter(item => {
+                if (!item.date) return false;
+                const parts = item.date.split('-'); // YYYY-MM-DD
+                const itemYear = parts[0];
+                const itemMonth = parts[1];
+
+                if (month === 'ALL') {
+                    return itemYear === year; // 연간 전체 집계
                 } else {
-                    typeBadge = '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">🛒 변동비</span>';
+                    return itemYear === year && itemMonth === month; // 월별 집계
                 }
-
-                const amtClass = t.type === 'INCOME' ? 'text-emerald-600 font-bold' : 'text-slate-900 font-bold';
-
-                tr.innerHTML = `
-                    <td class="p-2.5 font-medium text-slate-600 text-xs whitespace-nowrap">${t.date}</td>
-                    <td class="p-2.5 whitespace-nowrap">${typeBadge}</td>
-                    <td class="p-2.5 font-semibold text-slate-800 whitespace-nowrap">${escapeHtml(t.category)}</td>
-                    <td class="p-2.5 text-slate-500 max-w-[150px] truncate">${escapeHtml(t.memo || '-')}</td>
-                    <td class="p-2.5 text-right whitespace-nowrap ${amtClass}">${formatKRW(t.amount)}</td>
-                    <td class="p-2.5 text-center whitespace-nowrap">
-                        <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-600 transition p-1">
-                            <i class="fa-regular fa-trash-can"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
             });
         }
 
-        window.renderTransactionList = renderTransactionList;
+        // Render Dashboard KPIs and Charts
+        function renderDashboard() {
+            const filtered = getFilteredData();
 
-        function renderCategorySettings() {
-            const fixedContainer = document.getElementById('fixed-categories-tags');
-            const variableContainer = document.getElementById('variable-categories-tags');
+            let totalSales = 0;
+            let totalExpense = 0;
+            let categoryMap = {};
 
-            fixedContainer.innerHTML = '';
-            variableContainer.innerHTML = '';
-
-            window.categories.FIXED.forEach(cat => {
-                const tag = document.createElement('span');
-                tag.className = "inline-flex items-center px-2 py-1 bg-white border border-slate-200 text-slate-700 font-medium text-xs rounded-lg shadow-sm";
-                tag.innerHTML = `
-                    <span>${escapeHtml(cat)}</span>
-                    <button onclick="removeCategory('FIXED', '${escapeHtml(cat)}')" class="ml-1.5 text-slate-400 hover:text-rose-500">
-                        <i class="fa-solid fa-xmark text-xs"></i>
-                    </button>
-                `;
-                fixedContainer.appendChild(tag);
-            });
-
-            window.categories.VARIABLE.forEach(cat => {
-                const tag = document.createElement('span');
-                tag.className = "inline-flex items-center px-2 py-1 bg-white border border-slate-200 text-slate-700 font-medium text-xs rounded-lg shadow-sm";
-                tag.innerHTML = `
-                    <span>${escapeHtml(cat)}</span>
-                    <button onclick="removeCategory('VARIABLE', '${escapeHtml(cat)}')" class="ml-1.5 text-slate-400 hover:text-rose-500">
-                        <i class="fa-solid fa-xmark text-xs"></i>
-                    </button>
-                `;
-                variableContainer.appendChild(tag);
-            });
-        }
-
-        async function addCategory(type) {
-            const inputId = type === 'FIXED' ? 'new-fixed-cat' : 'new-variable-cat';
-            const val = document.getElementById(inputId).value.trim();
-
-            if (!val) return;
-
-            if (window.categories[type].includes(val)) {
-                showModal("중복 항목", "이미 존재하는 세부 항목입니다.");
-                return;
-            }
-
-            window.categories[type].push(val);
-            await syncSaveToCloud();
-            document.getElementById(inputId).value = '';
-            
-            renderCategorySettings();
-            updateCategoryDropdown();
-        }
-
-        window.addCategory = addCategory;
-
-        async function removeCategory(type, name) {
-            window.categories[type] = window.categories[type].filter(c => c !== name);
-            await syncSaveToCloud();
-            renderCategorySettings();
-            updateCategoryDropdown();
-        }
-
-        window.removeCategory = removeCategory;
-
-        function exportToCSV() {
-            const year = document.getElementById('select-year').value;
-            const month = document.getElementById('select-month').value;
-            const isAnnual = (month === 'ALL');
-
-            const filtered = window.transactions.filter(t => {
-                const matchYear = t.date.startsWith(year);
-                const matchMonth = isAnnual ? true : t.date.startsWith(`${year}-${month}`);
-                return matchYear && matchMonth;
-            });
-
-            if (filtered.length === 0) {
-                showModal("다운로드 오류", "해당 기간에 내보낼 데이터가 없습니다.");
-                return;
-            }
-
-            let csvContent = "\uFEFF날짜,구분,세부항목,금액,메모\n";
-            filtered.forEach(t => {
-                const typeText = t.type === 'INCOME' ? '수입' : (t.type === 'FIXED' ? '고정비' : '변동비');
-                csvContent += `"${t.date}","${typeText}","${t.category.replace(/"/g, '""')}","${t.amount}","${(t.memo || '').replace(/"/g, '""')}"\n`;
-            });
-
-            const fileNamePeriod = isAnnual ? `${year}년_연간전체` : `${year}년_${month}월`;
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `더크래프트버거_세종도담점_장부_${fileNamePeriod}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        window.exportToCSV = exportToCSV;
-
-        async function handleReceiptUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const overlay = document.getElementById('ai-loading-overlay');
-            overlay.classList.remove('hidden');
-
-            try {
-                const base64Data = await fileToBase64(file);
-                const pureBase64 = base64Data.split(',')[1];
-                const mimeType = file.type || "image/jpeg";
-
-                const allCategories = [...window.categories.FIXED, ...window.categories.VARIABLE].join(', ');
-
-                const systemPrompt = `너는 수제버거 전문점 '더크래프트버거 세종도담점'의 전문 회계 AI 비서다.
-가게 매장 영수증 이미지에서 다음 정보를 정확히 분석해서 JSON 형태로 반환해라.
-
-분류 가능 카테고리 항목 목록: [${allCategories}]
-
-만약 카테고리 목록 중 영수증 매장명이나 품목에 딱 들어맞는 게 없다면, 가장 유사한 카테고리를 고르고 메모에 구체적인 매장명을 적어라.
-
-응답은 오직 올바른 JSON 문자열로만 작성해라:
-{
-  "date": "YYYY-MM-DD",
-  "amount": 150000,
-  "category": "추천카테고리명",
-  "type": "FIXED 또는 VARIABLE",
-  "memo": "매장명 및 대표 품목 요약"
-}`;
-
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-
-                const payload = {
-                    contents: [{
-                        role: "user",
-                        parts: [
-                            { text: "이 영수증 이미지를 분석해서 거래 정보를 JSON으로 추출해줘." },
-                            { inlineData: { mimeType: mimeType, data: pureBase64 } }
-                        ]
-                    }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    generationConfig: { responseMimeType: "application/json" }
-                };
-
-                const res = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await res.json();
-                const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                if (!jsonText) throw new Error("AI 분석 실패");
-
-                const parsed = JSON.parse(jsonText);
-
-                document.getElementById('input-date').value = parsed.date || getTodayYMD();
-                document.getElementById('input-type').value = parsed.type || 'VARIABLE';
-                
-                updateCategoryDropdown();
-
-                const catSelect = document.getElementById('input-category');
-                if (parsed.category) {
-                    for (let i = 0; i < catSelect.options.length; i++) {
-                        if (catSelect.options[i].value === parsed.category) {
-                            catSelect.selectedIndex = i;
-                            break;
-                        }
-                    }
+            filtered.forEach(item => {
+                if (item.type === 'sales') {
+                    totalSales += item.amount;
+                } else {
+                    totalExpense += item.amount;
+                    categoryMap[item.category] = (categoryMap[item.category] || 0) + item.amount;
                 }
-
-                document.getElementById('input-amount').value = parsed.amount || '';
-                document.getElementById('input-memo').value = parsed.memo || '';
-
-                showModal("AI 스캔 완료", `영수증 정보가 자동으로 입력되었습니다.\n- 품목/매장: ${parsed.memo || '-'}\n- 금액: ${formatKRW(parsed.amount || 0)}\n- 분류: ${parsed.category}`);
-
-            } catch (err) {
-                console.error(err);
-                showModal("AI 분석 오류", "영수증을 인식하지 못했습니다. 선명한 사진으로 다시 올려주세요.");
-            } finally {
-                overlay.classList.add('hidden');
-                e.target.value = '';
-            }
-        }
-
-        window.handleReceiptUpload = handleReceiptUpload;
-
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
             });
-        }
-    </script>
-</body>
-</html>
+
+            const netProfit = totalSales - totalExpense;
+            const profitMargin = totalSales > 0 ? ((netProfit / totalSales) * 100).toFixed(1) : 0;
+
+            // Update KPI DOM
+            document.getElementById('totalSales').innerText = totalSales.toLocaleString() + '원';
+            document.getElementById('totalExpense').innerText = totalExpense.toLocaleString
