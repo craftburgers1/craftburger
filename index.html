@@ -34,115 +34,144 @@
 </head>
 <body>
 
-    <!-- Header Navigation -->
-    <header class="sticky top-0 z-50 bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex justify-between items-center backdrop-blur-md">
-        <div class="flex items-center gap-2">
-            <span class="text-2xl">🍔</span>
+    <!-- PIN Security Modal (App Lock Screen) -->
+    <div id="pinModal" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border-slate-700 w-full max-w-xs text-center p-6 space-y-4 shadow-2xl">
+            <div class="w-14 h-14 bg-blue-600/20 text-blue-400 rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-lock"></i>
+            </div>
             <div>
-                <h1 class="text-base font-bold text-white">더크래프트버거</h1>
-                <p class="text-xs text-slate-400">세종도담점 장부 관리</p>
+                <h2 class="text-base font-bold text-white">더크래프트버거 장부</h2>
+                <p class="text-xs text-slate-400 mt-1">접속을 위해 PIN 4자리를 입력하세요</p>
             </div>
-        </div>
-        <div id="syncStatus" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> 실시간 연동됨
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <main class="max-w-4xl mx-auto px-4 pt-4 space-y-4">
-
-        <!-- Date Selection Filter -->
-        <section class="glass-card flex flex-wrap gap-2 justify-between items-center">
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <select id="yearSelect" onchange="renderDashboard()" class="text-xs font-semibold rounded-xl px-3 py-2">
-                    <option value="2026">2026년</option>
-                    <option value="2025">2025년</option>
-                </select>
-                <select id="monthSelect" onchange="renderDashboard()" class="text-xs font-semibold rounded-xl px-3 py-2 flex-1">
-                    <option value="ALL">📅 연간 전체 (1년 누적)</option>
-                    <option value="01">1월</option><option value="02">2월</option><option value="03">3월</option>
-                    <option value="04">4월</option><option value="05">5월</option><option value="06">6월</option>
-                    <option value="07">07월</option><option value="08">08월</option><option value="09">09월</option>
-                    <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
-                </select>
+            <div class="flex justify-center gap-2">
+                <input type="password" maxlength="4" id="pinInput" placeholder="••••" pattern="\d*" inputmode="numeric" class="w-36 text-center text-xl font-bold tracking-widest rounded-xl p-2.5 border border-slate-700">
             </div>
-            <span class="text-[11px] text-slate-400"><i class="fa-solid fa-cloud-arrow-up text-blue-400 mr-1"></i>클라우드 자동 저장</span>
-        </section>
-
-        <!-- KPI Summary Cards -->
-        <section class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div class="glass-card border-l-4 border-blue-500">
-                <p class="text-[11px] text-slate-400">총 매출</p>
-                <p id="totalSales" class="text-base sm:text-lg font-bold text-white mt-1">0원</p>
-            </div>
-            <div class="glass-card border-l-4 border-rose-500">
-                <p class="text-[11px] text-slate-400">총 지출</p>
-                <p id="totalExpense" class="text-base sm:text-lg font-bold text-rose-400 mt-1">0원</p>
-            </div>
-            <div class="glass-card border-l-4 border-emerald-500">
-                <p class="text-[11px] text-slate-400">순이익</p>
-                <p id="netProfit" class="text-base sm:text-lg font-bold text-emerald-400 mt-1">0원</p>
-            </div>
-            <div class="glass-card border-l-4 border-amber-500">
-                <p class="text-[11px] text-slate-400">순이익률</p>
-                <p id="profitMargin" class="text-base sm:text-lg font-bold text-amber-400 mt-1">0%</p>
-            </div>
-        </section>
-
-        <!-- OCR Receipt Scan Banner -->
-        <section class="glass-card bg-slate-800 border-blue-500/40 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg">
-                    <i class="fa-solid fa-camera"></i>
-                </div>
-                <div>
-                    <h3 class="text-xs font-bold text-white">AI 영수증 자동 스캔</h3>
-                    <p class="text-[11px] text-slate-400">카메라 촬영 시 금액·날짜 자동 추출</p>
-                </div>
-            </div>
-            <button onclick="openOcrModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition">
-                스캔하기
+            <p id="pinError" class="text-xs text-rose-400 hidden">비밀번호가 일치하지 않습니다.</p>
+            <button onclick="checkPin()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition">
+                확인
             </button>
-        </section>
+        </div>
+    </div>
 
-        <!-- Entry Form Navigation Tabs -->
-        <section class="glass-card">
-            <div class="flex border-b border-slate-700/80 pb-3 gap-1 overflow-x-auto">
-                <button onclick="switchTab('sales')" id="tab-sales" class="tab-btn active">매출 입력</button>
-                <button onclick="switchTab('fixed')" id="tab-fixed" class="tab-btn">고정비 입력</button>
-                <button onclick="switchTab('variable')" id="tab-variable" class="tab-btn">식자재/변동비 입력</button>
+    <!-- Main Content Area -->
+    <div id="appContent" class="hidden">
+
+        <!-- Header Navigation -->
+        <header class="sticky top-0 z-40 bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex justify-between items-center backdrop-blur-md">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🍔</span>
+                <div>
+                    <h1 class="text-base font-bold text-white">더크래프트버거</h1>
+                    <p class="text-xs text-slate-400">세종도담점 장부 관리</p>
+                </div>
             </div>
-
-            <!-- Main Input Form Area -->
-            <div id="form-container" class="mt-4">
-                <!-- Javascript Form Injected Here -->
+            <div class="flex items-center gap-2">
+                <div id="syncStatus" class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> 실시간
+                </div>
+                <button onclick="lockApp()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold border border-slate-700">
+                    <i class="fa-solid fa-lock mr-1"></i>잠금
+                </button>
             </div>
-        </section>
+        </header>
 
-        <!-- Chart Section -->
-        <section class="glass-card space-y-2">
-            <h3 id="chartTitle" class="text-xs font-bold text-white flex items-center gap-1.5">
-                <i class="fa-solid fa-chart-pie text-blue-400"></i> 지출 항목별 분석
-            </h3>
-            <div class="h-52 relative">
-                <canvas id="expenseChart"></canvas>
-            </div>
-        </section>
+        <!-- Main Container -->
+        <main class="max-w-4xl mx-auto px-4 pt-4 space-y-4">
 
-        <!-- Live Ledger History List -->
-        <section class="glass-card space-y-3">
-            <div class="flex justify-between items-center border-b border-slate-700/80 pb-2.5">
-                <h3 class="text-xs font-bold text-white flex items-center gap-1.5">
-                    <i class="fa-solid fa-list-check text-blue-400"></i> 매출 및 지출 상세 내역
+            <!-- Date Selection Filter -->
+            <section class="glass-card flex flex-wrap gap-2 justify-between items-center">
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <select id="yearSelect" onchange="renderDashboard()" class="text-xs font-semibold rounded-xl px-3 py-2">
+                        <option value="2026">2026년</option>
+                        <option value="2025">2025년</option>
+                    </select>
+                    <select id="monthSelect" onchange="renderDashboard()" class="text-xs font-semibold rounded-xl px-3 py-2 flex-1">
+                        <option value="ALL">📅 연간 전체 (1년 누적)</option>
+                        <option value="01">1월</option><option value="02">2월</option><option value="03">3월</option>
+                        <option value="04">4월</option><option value="05">5월</option><option value="06">6월</option>
+                        <option value="07">07월</option><option value="08">08월</option><option value="09">09월</option>
+                        <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+                    </select>
+                </div>
+                <span class="text-[11px] text-slate-400"><i class="fa-solid fa-cloud-arrow-up text-blue-400 mr-1"></i>클라우드 자동 저장</span>
+            </section>
+
+            <!-- KPI Summary Cards -->
+            <section class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div class="glass-card border-l-4 border-blue-500">
+                    <p class="text-[11px] text-slate-400">총 매출</p>
+                    <p id="totalSales" class="text-base sm:text-lg font-bold text-white mt-1">0원</p>
+                </div>
+                <div class="glass-card border-l-4 border-rose-500">
+                    <p class="text-[11px] text-slate-400">총 지출</p>
+                    <p id="totalExpense" class="text-base sm:text-lg font-bold text-rose-400 mt-1">0원</p>
+                </div>
+                <div class="glass-card border-l-4 border-emerald-500">
+                    <p class="text-[11px] text-slate-400">순이익</p>
+                    <p id="netProfit" class="text-base sm:text-lg font-bold text-emerald-400 mt-1">0원</p>
+                </div>
+                <div class="glass-card border-l-4 border-amber-500">
+                    <p class="text-[11px] text-slate-400">순이익률</p>
+                    <p id="profitMargin" class="text-base sm:text-lg font-bold text-amber-400 mt-1">0%</p>
+                </div>
+            </section>
+
+            <!-- OCR Receipt Scan Banner -->
+            <section class="glass-card bg-slate-800 border-blue-500/40 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold text-white">AI 영수증 자동 스캔</h3>
+                        <p class="text-[11px] text-slate-400">카메라 촬영 시 금액·날짜 자동 추출</p>
+                    </div>
+                </div>
+                <button onclick="openOcrModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition">
+                    스캔하기
+                </button>
+            </section>
+
+            <!-- Entry Form Navigation Tabs -->
+            <section class="glass-card">
+                <div class="flex border-b border-slate-700/80 pb-3 gap-1 overflow-x-auto">
+                    <button onclick="switchTab('sales')" id="tab-sales" class="tab-btn active">매출 입력</button>
+                    <button onclick="switchTab('fixed')" id="tab-fixed" class="tab-btn">고정비 입력</button>
+                    <button onclick="switchTab('variable')" id="tab-variable" class="tab-btn">식자재/변동비 입력</button>
+                </div>
+
+                <!-- Main Input Form Area -->
+                <div id="form-container" class="mt-4">
+                    <!-- Javascript Form Injected Here -->
+                </div>
+            </section>
+
+            <!-- Chart Section -->
+            <section class="glass-card space-y-2">
+                <h3 id="chartTitle" class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-pie text-blue-400"></i> 지출 항목별 분석
                 </h3>
-                <span id="historyCount" class="text-[11px] text-slate-400">0건</span>
-            </div>
-            <div id="history-container">
-                <!-- Live Table Rendered Here -->
-            </div>
-        </section>
+                <div class="h-52 relative">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </section>
 
-    </main>
+            <!-- Live Ledger History List -->
+            <section class="glass-card space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-700/80 pb-2.5">
+                    <h3 class="text-xs font-bold text-white flex items-center gap-1.5">
+                        <i class="fa-solid fa-list-check text-blue-400"></i> 매출 및 지출 상세 내역
+                    </h3>
+                    <span id="historyCount" class="text-[11px] text-slate-400">0건</span>
+                </div>
+                <div id="history-container">
+                    <!-- Live Table Rendered Here -->
+                </div>
+            </section>
+
+        </main>
+    </div>
 
     <!-- OCR Receipt Modal -->
     <div id="ocrModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
@@ -194,6 +223,34 @@
 
     <!-- Firebase System Logic -->
     <script>
+        const APP_PIN = "1234";
+
+        function checkPin() {
+            const input = document.getElementById('pinInput').value;
+            if (input === APP_PIN) {
+                sessionStorage.setItem('cb_auth', 'true');
+                document.getElementById('pinModal').classList.add('hidden');
+                document.getElementById('appContent').classList.remove('hidden');
+                initApp();
+            } else {
+                document.getElementById('pinError').classList.remove('hidden');
+                document.getElementById('pinInput').value = '';
+                document.getElementById('pinInput').focus();
+            }
+        }
+
+        function lockApp() {
+            sessionStorage.removeItem('cb_auth');
+            document.getElementById('appContent').classList.add('hidden');
+            document.getElementById('pinModal').classList.remove('hidden');
+            document.getElementById('pinInput').value = '';
+            document.getElementById('pinError').classList.add('hidden');
+        }
+
+        document.getElementById('pinInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') checkPin();
+        });
+
         // 1. Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyB4YZlNVSkc7haxMxTBInMsECMFCuU6ztE",
@@ -210,9 +267,22 @@
         }
         const db = firebase.firestore();
 
-        // Default Categories
-        const defaultFixed = ['가게세(임대료)', '상가관리비', '전기요금', '수도요금', '가스요금', '인건비(박동찬 등)', '인터넷/포스/통신비', '세무사수수료', '기타고정비'];
-        const defaultVariable = ['고기', '빵/번', '채소/신선', '소스/시즈닝', '음료/주류/맥주', '코스트코', '기타 식자재', '배민 수수료', '쿠팡이츠 수수료', '요기요 수수료', '포장 용기/소모품', '카드 수수료', '기타 변동비'];
+        // 2. Updated Default Categories from User Images
+        const defaultFixed = [
+            '가게세(임대료)', '상가관리비', '가스요금', '세무사수수료', '기타고정비',
+            '인건비', '티오더', '포스기', '인터넷', '부가세 세금(월적립)', '4대보험료'
+        ];
+
+        const defaultVariable = [
+            '배민 수수료', '쿠팡이츠 수수료', '요기요 수수료', '포장 용기/소모품', '카드 수수료',
+            '기타 변동비', '대전합동주류', '가나다라맥주', '고기(미트원)', '햄버거치즈(코스트코)',
+            '치즈안주(코스트코)', '콜라', '제로콜라', '스프라이트', '망고주스(코스트코)',
+            '자몽주스(코스트코)', '탄산수', '살사소스(코스트코)', '케찹(소스용,하인즈)',
+            '케찹(홀용,오뚜기)', '마요네즈', '쿠팡식자재주문(월일괄)', '베스트코식자재(월일괄)',
+            '코스트코(월일괄)', '감자튀김(네이버)', '스티커(네이버)', '종이봉투(네이버)',
+            '베이컨(네이버)', '맥주용기(네이버)', '빵(정일식품)', '행복한정육점(토마토)',
+            '배달비(부릉)', 'OK 마트 (식자재)'
+        ];
 
         let fixedCategories = [...defaultFixed];
         let variableCategories = [...defaultVariable];
@@ -223,8 +293,15 @@
 
         const getTodayStr = () => new Date().toISOString().split('T')[0];
 
-        // Init App
         window.onload = function() {
+            if (sessionStorage.getItem('cb_auth') === 'true') {
+                document.getElementById('pinModal').classList.add('hidden');
+                document.getElementById('appContent').classList.remove('hidden');
+                initApp();
+            }
+        };
+
+        function initApp() {
             const now = new Date();
             document.getElementById('yearSelect').value = now.getFullYear().toString();
             document.getElementById('monthSelect').value = "ALL";
@@ -232,9 +309,8 @@
             switchTab('sales');
             initRealtimeSync();
             initCategorySync();
-        };
+        }
 
-        // Realtime Category Firestore Sync
         function initCategorySync() {
             db.collection("craftburger_config").doc("categories").onSnapshot((doc) => {
                 if (doc.exists) {
@@ -242,7 +318,6 @@
                     if (data.fixed) fixedCategories = data.fixed;
                     if (data.variable) variableCategories = data.variable;
                 } else {
-                    // Save default settings if doc does not exist
                     db.collection("craftburger_config").doc("categories").set({
                         fixed: defaultFixed,
                         variable: defaultVariable
@@ -255,7 +330,6 @@
             });
         }
 
-        // Realtime Ledger Firestore Sync
         function initRealtimeSync() {
             db.collection("craftburger_ledger").onSnapshot((snapshot) => {
                 dbData = [];
@@ -267,12 +341,11 @@
             }, (error) => {
                 console.error("Sync error: ", error);
                 const statusEl = document.getElementById('syncStatus');
-                statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400 mr-1.5"></span> 오프라인`;
-                statusEl.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5"></span> 오프라인`;
+                statusEl.className = "inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20";
             });
         }
 
-        // Tab Switching
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -286,7 +359,6 @@
             else if (tab === 'variable') renderExpenseForm(container, 'variable', variableCategories);
         }
 
-        // Render Sales Form
         function renderSalesForm(container) {
             container.innerHTML = `
                 <form onsubmit="handleSaveEntry(event, 'sales')" class="space-y-3">
@@ -319,7 +391,6 @@
             `;
         }
 
-        // Render Expense Form with Realtime Categories
         function renderExpenseForm(container, type, categories) {
             const options = categories.map(c => `<option value="${c}">${c}</option>`).join('');
             const typeName = type === 'fixed' ? '고정비' : '식자재/변동비';
@@ -354,7 +425,6 @@
                     </button>
                 </form>
 
-                <!-- Category Delete Management List -->
                 <div class="mt-4 pt-3 border-t border-slate-800">
                     <p class="text-[11px] text-slate-400 mb-2">등록된 ${typeName} 항목 목록 (삭제하려면 클릭)</p>
                     <div class="flex flex-wrap gap-1.5">
@@ -369,7 +439,6 @@
             `;
         }
 
-        // Add Category to Cloud
         function addCategoryPrompt(type) {
             const name = prompt('새로 추가할 지출 항목명을 입력하세요:');
             if (!name || !name.trim()) return;
@@ -384,10 +453,9 @@
             db.collection("craftburger_config").doc("categories").set({
                 fixed: fixedCategories,
                 variable: variableCategories
-            }).then(() => alert('새 지출 항목이 모든 기기에 연동되었습니다.'));
+            });
         }
 
-        // Delete Category from Cloud
         function deleteCategory(type, catName) {
             if (!confirm(`'${catName}' 항목을 연동 목록에서 삭제하시겠습니까?`)) return;
 
@@ -403,7 +471,6 @@
             });
         }
 
-        // Update OCR Modal Categories Select
         function updateOcrCategorySelect() {
             const el = document.getElementById('ocrCategory');
             if (!el) return;
@@ -411,7 +478,6 @@
             el.innerHTML = allVar.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
-        // Save Entry
         function handleSaveEntry(e, type) {
             e.preventDefault();
             const date = document.getElementById('inputDate').value;
@@ -433,7 +499,6 @@
             }).catch(err => alert('저장 실패: ' + err.message));
         }
 
-        // Render History Section
         function renderHistorySection() {
             const container = document.getElementById('history-container');
             const countEl = document.getElementById('historyCount');
@@ -486,7 +551,6 @@
             }
         }
 
-        // Filter Data Helper
         function getFilteredData() {
             const year = document.getElementById('yearSelect').value;
             const month = document.getElementById('monthSelect').value;
@@ -498,7 +562,6 @@
             });
         }
 
-        // Render Dashboard
         function renderDashboard() {
             const filtered = getFilteredData();
             let sales = 0, expense = 0, categories = {};
@@ -523,7 +586,6 @@
             renderHistorySection();
         }
 
-        // Render Chart
         function renderChart(categoryMap) {
             const ctx = document.getElementById('expenseChart').getContext('2d');
             const labels = Object.keys(categoryMap);
@@ -558,7 +620,6 @@
             });
         }
 
-        // OCR Handlers
         function openOcrModal() { document.getElementById('ocrModal').classList.remove('hidden'); }
         function closeOcrModal() { document.getElementById('ocrModal').classList.add('hidden'); }
 
