@@ -3,953 +3,743 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>우리매장 알바 관리 매니저</title>
+    <title>더크래프트버거 - 알바생 관리 및 근태/급여 시스템</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts (Noto Sans KR) -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK (v9 Moduler -> Compat version for clean CDN script) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-gray-100 min-h-screen text-gray-800">
 
-    <!-- Header / Navbar -->
-    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-[#store] text-yellow-300 text-2xl"></i>
-                <h1 class="text-xl font-bold tracking-tight">알바 메이트 <span class="text-xs bg-indigo-900 px-2 py-1 rounded text-indigo-200">v1.0</span></h1>
+    <!-- Top Navigation Bar -->
+    <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-burger text-amber-500 text-2xl"></i>
+                <h1 class="text-xl font-bold tracking-tight">더크래프트버거 <span class="text-xs text-amber-400 font-normal ml-1">근태/급여</span></h1>
             </div>
-            
             <div id="userInfoHeader" class="hidden flex items-center space-x-3">
-                <span id="userBadge" class="bg-indigo-800 text-indigo-100 text-sm px-3 py-1 rounded-full font-medium flex items-center gap-1">
-                    <i class="fa-solid fa-user text-xs"></i> <span id="userNameDisplay">사용자</span>
-                </span>
-                <button onclick="logout()" class="text-xs bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded transition shadow-sm">
-                    로그아웃
+                <span id="loggedInBadge" class="bg-amber-500 text-slate-900 text-xs font-bold px-2.5 py-1 rounded-full"></span>
+                <button onclick="logout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-gray-300 px-3 py-1.5 rounded transition">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i>로그아웃
                 </button>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Main Container -->
-    <main class="max-w-6xl mx-auto w-full px-4 py-6 flex-1">
+    <div class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
 
-        <!-- Notification Banner / Custom Alert Box -->
-        <div id="toast" class="hidden fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl z-50 transition-all duration-300 flex items-center space-x-3">
-            <i id="toastIcon" class="fa-solid fa-circle-info text-indigo-400"></i>
-            <span id="toastMessage" class="text-sm">메시지 내용</span>
-        </div>
-
-        <!-- Section 1: LOGIN / ROLE SELECT -->
-        <section id="loginSection" class="max-w-md mx-auto my-12 bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-slate-100">
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
-                    <i class="fa-solid fa-users"></i>
+        <!-- ========================================== -->
+        <!-- 1. LOGIN SECTION                           -->
+        <!-- ========================================== -->
+        <div id="loginSection" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-md mx-auto my-12 border border-gray-100">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-amber-100 text-amber-600 rounded-full mb-3">
+                    <i class="fa-solid fa-users-gear text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-800">로그인</h2>
-                <p class="text-sm text-slate-500 mt-1">접속할 계정 유형을 선택해 주세요.</p>
+                <h2 class="text-2xl font-bold text-gray-900">시스템 로그인</h2>
+                <p class="text-sm text-gray-500 mt-1">알바생 및 관리자 전용 공간입니다.</p>
             </div>
 
-            <!-- Tab Switcher -->
-            <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
-                <button id="tabStaffBtn" onclick="switchLoginTab('staff')" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-indigo-600 shadow-sm transition">
-                    <i class="fa-solid fa-user-gear mr-1"></i> 알바생 로그인
+            <!-- Login Tabs -->
+            <div class="flex border-b border-gray-200 mb-6">
+                <button id="tabStaffBtn" onclick="switchLoginTab('staff')" class="flex-1 py-2.5 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-sm">
+                    알바생 접속
                 </button>
-                <button id="tabAdminBtn" onclick="switchLoginTab('admin')" class="flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 transition">
-                    <i class="fa-solid fa-user-shield mr-1"></i> 관리자 로그인
+                <button id="tabAdminBtn" onclick="switchLoginTab('admin')" class="flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600">
+                    관리자 접속
                 </button>
             </div>
 
             <!-- Staff Login Form -->
-            <form id="staffLoginForm" onsubmit="handleStaffLogin(event)">
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-2">알바생 이름 선택 또는 입력</label>
-                    <select id="staffNameSelect" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 bg-white">
-                        <option value="">등록된 알바생을 선택하세요</option>
+            <div id="staffLoginForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">이름 선택</label>
+                    <select id="staffSelect" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="">알바생을 선택하세요</option>
                     </select>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-2">신규 이름 직접 입력 (목록에 없을 때)</label>
-                    <input type="text" id="staffNameInput" placeholder="예: 홍길동" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">비밀번호</label>
+                    <input type="password" id="staffPassword" placeholder="비밀번호 입력" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    <p class="text-[11px] text-gray-400 mt-1">* 첫 로그인 시 입력한 비밀번호가 등록됩니다.</p>
                 </div>
-                <div class="mb-6">
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-2">개인 비밀번호 (4자리)</label>
-                    <input type="password" id="staffPasswordInput" maxlength="10" placeholder="비밀번호 입력 (첫 방문 시 자동 설정됨)" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
-                    <p class="text-xs text-slate-400 mt-1">* 처음 로그인하는 경우 작성한 비밀번호로 새로 설정됩니다.</p>
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 transition">
-                    알바생으로 로그인
+                <button onclick="loginStaff()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg shadow-md transition">
+                    알바생 로그인
                 </button>
-            </form>
+            </div>
 
             <!-- Admin Login Form -->
-            <form id="adminLoginForm" onsubmit="handleAdminLogin(event)" class="hidden">
-                <div class="mb-6">
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-2">관리자 암호</label>
-                    <input type="password" id="adminPasswordInput" placeholder="관리자 비밀번호를 입력하세요" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" required>
+            <div id="adminLoginForm" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">관리자 비밀번호</label>
+                    <input type="password" id="adminPassword" placeholder="비밀번호를 입력하세요" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                 </div>
-                <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                <button onclick="loginAdmin()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-md transition">
                     관리자 로그인
                 </button>
-            </form>
-        </section>
-
-        <!-- Section 2: STAFF DASHBOARD -->
-        <section id="staffDashboard" class="hidden space-y-6">
-            <!-- Staff Welcome Banner -->
-            <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <span id="staffMonthBadge" class="bg-indigo-500 text-indigo-100 text-xs px-2.5 py-1 rounded-md font-semibold">2026년 11월</span>
-                    <h2 class="text-2xl font-bold mt-1"><span id="currentStaffName" class="text-yellow-300">알바생</span>님, 오늘도 힘내세요! 👏</h2>
-                    <p class="text-indigo-200 text-sm mt-1">개인 급여 정보는 본인과 관리자만 확인 가능합니다. (매달 말일 지급)</p>
-                </div>
-                <!-- Salary Quick Summary -->
-                <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 text-right">
-                    <span class="text-xs text-indigo-100 block">이번 달 예상 누적 급여 (분 단위 정산)</span>
-                    <span id="staffCalcSalary" class="text-2xl font-extrabold text-yellow-300">0 원</span>
-                    <div class="text-xs text-indigo-200 mt-1">시급: <span id="staffHourlyWage">0</span>원 | 총 근무: <span id="staffTotalHoursText">0시간 0분</span></div>
-                </div>
             </div>
+        </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Left: Attendance Form & My Logs -->
-                <div class="lg:col-span-2 space-y-6">
-                    <!-- Add Work Log Form -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <i class="fa-regular fa-clock text-indigo-600"></i> 근태 입력 (출퇴근 등록)
-                        </h3>
-                        <form id="workLogForm" onsubmit="addWorkLog(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">출근 시간 (년-월-일 시:분)</label>
-                                <input type="datetime-local" id="startTime" onchange="calculateWorkDuration()" class="w-full px-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm" required>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">퇴근 시간 (년-월-일 시:분)</label>
-                                <input type="datetime-local" id="endTime" onchange="calculateWorkDuration()" class="w-full px-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm" required>
-                            </div>
-                            <div class="sm:col-span-2 bg-indigo-50 p-3 rounded-lg border border-indigo-100 text-indigo-900 text-xs font-semibold flex justify-between items-center">
-                                <span>계산된 총 근무시간:</span>
-                                <span id="calculatedTimeDisplay" class="text-indigo-700 font-extrabold text-sm">0시간 0분</span>
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">근무 메모 (선택)</label>
-                                <input type="text" id="workMemo" placeholder="예: 오픈 준비, 야간 연장 근무 등" class="w-full px-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm">
-                            </div>
-                            <div class="sm:col-span-2">
-                                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg shadow-sm transition text-sm">
-                                    근무 기록 저장하기
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- My Recent Logs Table -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                <i class="fa-solid fa-list-check text-indigo-600"></i> 내 이번 달 근태 내역 (대외비)
-                            </h3>
-                            <span class="text-xs text-slate-400">* 본인 작성 기록</span>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                                        <th class="p-3">출근 일시</th>
-                                        <th class="p-3">퇴근 일시</th>
-                                        <th class="p-3">근무 시간</th>
-                                        <th class="p-3">예상 일급</th>
-                                        <th class="p-3 text-right">삭제</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="staffLogTableBody" class="divide-y divide-slate-100">
-                                    <!-- Dynamic Rows -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: TODO Checklist / Announcements -->
-                <div class="space-y-6">
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-                            <i class="fa-solid fa-clipboard-list text-emerald-600"></i> 알바 업무 가이드 (To-Do)
-                        </h3>
-                        <p class="text-xs text-slate-500 mb-4">점장님이 지정한 매장 필수 점검 사항입니다.</p>
-                        
-                        <div id="todoListStaff" class="space-y-2.5">
-                            <!-- Dynamic Todo Items -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 3: ADMIN DASHBOARD -->
-        <section id="adminDashboard" class="hidden space-y-6">
-            <!-- Admin Top Controls -->
-            <div class="bg-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <span class="bg-yellow-400 text-slate-900 text-xs font-extrabold px-2.5 py-1 rounded">관리자 모드</span>
-                    <h2 class="text-2xl font-bold mt-2">전체 알바생 근무 및 정산 관리</h2>
-                    <p class="text-slate-400 text-sm mt-0.5">매월 말일 기준 분 단위 급여 정산표입니다.</p>
-                </div>
-                
-                <!-- Month Filter -->
-                <div class="flex items-center space-x-2 bg-slate-800 p-2 rounded-xl border border-slate-700">
-                    <label class="text-xs text-slate-300 font-medium pl-2">조회 월:</label>
-                    <input type="month" id="adminMonthPicker" onchange="renderAdminView()" class="bg-slate-900 text-white border border-slate-600 text-sm rounded-lg px-3 py-1.5 focus:outline-none">
-                </div>
-            </div>
-
-            <!-- Overall Stats -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <span class="text-xs font-bold text-slate-400 uppercase">등록된 총 알바생</span>
-                    <div class="text-2xl font-black text-slate-800 mt-1" id="totalStaffCount">0 명</div>
-                </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <span class="text-xs font-bold text-slate-400 uppercase">선택 월 총 누적 근무</span>
-                    <div class="text-2xl font-black text-indigo-600 mt-1" id="totalWorkedHours">0시간 0분</div>
-                </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <span class="text-xs font-bold text-slate-400 uppercase">이번 달 총 지급 급여 합계</span>
-                    <div class="text-2xl font-black text-emerald-600 mt-1" id="totalSalaryPayable">0 원</div>
-                </div>
-            </div>
-
-            <!-- Staff Management & Wage Settings -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+        <!-- ========================================== -->
+        <!-- 2. STAFF DASHBOARD                         -->
+        <!-- ========================================== -->
+        <div id="staffDashboard" class="hidden space-y-6">
+            <!-- Header Summary Card -->
+            <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-6 text-white shadow-lg">
+                <div class="flex justify-between items-start">
                     <div>
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-calculator text-indigo-600"></i> 알바생 시급/비밀번호 관리 및 월 급여 현황
-                        </h3>
-                        <p class="text-xs text-slate-500 mt-0.5">시급을 변경하면 선택한 월의 급여가 자동 수정됩니다.</p>
+                        <p class="text-amber-100 text-xs font-medium">반갑습니다!</p>
+                        <h2 id="staffNameDisplay" class="text-2xl font-bold mt-0.5"></h2>
                     </div>
-                    <button onclick="openAddStaffModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition shadow-sm flex items-center gap-1">
-                        <i class="fa-solid fa-user-plus"></i> 알바생 등록
-                    </button>
+                    <div class="text-right">
+                        <p class="text-amber-100 text-xs">시급</p>
+                        <p id="staffWageDisplay" class="text-xl font-bold mt-0.5">0원</p>
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t border-amber-400/40 flex justify-between items-end">
+                    <div>
+                        <p class="text-amber-100 text-xs">현재 시점 예상 누적 급여</p>
+                        <p id="staffTotalPayDisplay" class="text-3xl font-extrabold mt-1">0원</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-amber-100 text-xs">총 근무시간</p>
+                        <p id="staffTotalHoursDisplay" class="text-sm font-semibold mt-1">0시간 0분</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Work Record -->
+            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+                <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fa-regular fa-clock text-amber-500 mr-2"></i>근무 시간 등록
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
+                        <input type="datetime-local" id="workStart" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
+                        <input type="datetime-local" id="workEnd" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
                 </div>
 
+                <div class="mt-4 p-3 bg-amber-50 rounded-lg flex justify-between items-center text-xs sm:text-sm text-amber-900">
+                    <span>계산된 근무시간: <strong id="calculatedTimeText" class="text-amber-700">0시간 0분</strong></span>
+                    <span>예상 산출 급여: <strong id="calculatedPayText" class="text-amber-700">0원</strong></span>
+                </div>
+
+                <button onclick="saveAttendanceRecord()" class="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow transition">
+                    근태 기록 제출하기
+                </button>
+            </div>
+
+            <!-- Todo Checklist -->
+            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+                <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center">
+                    <i class="fa-solid fa-list-check text-amber-500 mr-2"></i>오늘 해야 할 일
+                </h3>
+                <div id="staffTodoList" class="space-y-2">
+                    <!-- Dynamic rendering -->
+                </div>
+            </div>
+
+            <!-- My History Table -->
+            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+                <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fa-solid fa-calendar-days text-amber-500 mr-2"></i>내 근무 기록 목록
+                </h3>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                                <th class="p-3">이름</th>
-                                <th class="p-3">시급 (원)</th>
-                                <th class="p-3">선택 월 근무시간</th>
-                                <th class="p-3">말일 정산 급여</th>
-                                <th class="p-3 text-right">관리</th>
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead class="bg-gray-50 text-gray-500 border-b">
+                            <tr>
+                                <th class="p-3">출근시간</th>
+                                <th class="p-3">퇴근시간</th>
+                                <th class="p-3">근무시간</th>
+                                <th class="p-3 text-right">급여</th>
+                                <th class="p-3 text-center">삭제</th>
                             </tr>
                         </thead>
-                        <tbody id="adminStaffTableBody" class="divide-y divide-slate-100">
-                            <!-- Dynamic Rows -->
+                        <tbody id="staffAttendanceTable" class="divide-y divide-gray-100">
+                            <!-- Dynamic rendering -->
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div>
 
-            <!-- Two Column Layout: All Work Logs & Todo Manager -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- All Attendance Logs -->
-                <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> 전체 출퇴근 기록 상세
-                    </h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                                    <th class="p-3">이름</th>
-                                    <th class="p-3">출근 일시</th>
-                                    <th class="p-3">퇴근 일시</th>
-                                    <th class="p-3">근무시간</th>
-                                    <th class="p-3">산출 급여</th>
-                                    <th class="p-3 text-right">삭제</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminAllLogsTableBody" class="divide-y divide-slate-100">
-                                <!-- Dynamic Rows -->
-                            </tbody>
-                        </table>
-                    </div>
+        <!-- ========================================== -->
+        <!-- 3. ADMIN DASHBOARD                         -->
+        <!-- ========================================== -->
+        <div id="adminDashboard" class="hidden space-y-6">
+            <!-- Filter & Month selection -->
+            <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold">관리자 전용 대시보드</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">매월 말일 기준 자동 산출 (대외비 보안 적용)</p>
                 </div>
-
-                <!-- Admin TODO Task Management -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-tasks text-emerald-600"></i> 알바 업무 안내 작성
-                    </h3>
-                    <p class="text-xs text-slate-500 mb-4">모든 알바생 화면에 전달할 체크리스트입니다.</p>
-
-                    <form id="addTodoForm" onsubmit="addTodoTask(event)" class="flex gap-2 mb-4">
-                        <input type="text" id="todoTaskInput" placeholder="새로운 할 일 작성..." class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-lg text-sm transition">
-                            추가
-                        </button>
-                    </form>
-
-                    <div id="todoListAdmin" class="space-y-2">
-                        <!-- Dynamic Admin Todo List -->
-                    </div>
+                <div class="flex items-center space-x-2">
+                    <label class="text-xs text-gray-300">조회 월:</label>
+                    <input type="month" id="adminMonthPicker" onchange="renderAdminDashboard()" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg p-2 focus:outline-none">
                 </div>
             </div>
-        </section>
 
-    </main>
+            <!-- Staff Payroll Overview Grid -->
+            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-bold text-gray-900 flex items-center">
+                        <i class="fa-solid fa-wallet text-amber-500 mr-2"></i>월별 알바생 급여 정산
+                    </h3>
+                    <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-3 py-2 rounded-lg transition">
+                        + 알바생 등록
+                    </button>
+                </div>
 
-    <!-- Modal: Add New Staff (Admin) -->
-    <div id="staffModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
-            <h3 class="text-lg font-bold text-slate-800 mb-4">신규 알바생 등록</h3>
-            <form onsubmit="saveNewStaff(event)">
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">알바생 이름</label>
-                    <input type="text" id="newStaffName" placeholder="예: 김철수" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" required>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead class="bg-gray-50 text-gray-500 border-b">
+                            <tr>
+                                <th class="p-3">이름</th>
+                                <th class="p-3">시급</th>
+                                <th class="p-3">총 근무시간</th>
+                                <th class="p-3">지급 예정 급여</th>
+                                <th class="p-3 text-center">비번 초기화</th>
+                                <th class="p-3 text-center">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminStaffPayTable" class="divide-y divide-gray-100">
+                            <!-- Dynamic rendering -->
+                        </tbody>
+                    </table>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">시급 (원)</label>
-                    <input type="number" id="newStaffWage" value="10030" step="10" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" required>
+
+                <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm font-bold text-gray-900">
+                    <span>이달의 총 지급 예정액 합계</span>
+                    <span id="adminTotalMonthPay" class="text-amber-600 text-lg">0원</span>
                 </div>
-                <div class="mb-6">
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">초기 비밀번호</label>
-                    <input type="password" id="newStaffPass" placeholder="미입력 시 첫 로그인에 자동설정" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <!-- To-Do Management -->
+            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+                <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center">
+                    <i class="fa-solid fa-tasks text-amber-500 mr-2"></i>알바생 할 일(체크리스트) 관리
+                </h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="newTodoInput" placeholder="새로운 업무 항목 입력..." class="flex-1 border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <button onclick="addTodoItem()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 rounded-lg text-sm transition">
+                        추가
+                    </button>
                 </div>
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeAddStaffModal()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">취소</button>
-                    <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">등록하기</button>
+                <div id="adminTodoList" class="space-y-2">
+                    <!-- Dynamic rendering -->
                 </div>
-            </form>
+            </div>
+
+            <!-- All Attendance Records -->
+            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+                <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fa-solid fa-list text-amber-500 mr-2"></i>전체 근태 기록 세부내역
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead class="bg-gray-50 text-gray-500 border-b">
+                            <tr>
+                                <th class="p-3">이름</th>
+                                <th class="p-3">출근시간</th>
+                                <th class="p-3">퇴근시간</th>
+                                <th class="p-3">근무시간</th>
+                                <th class="p-3 text-right">급여</th>
+                                <th class="p-3 text-center">삭제</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminAttendanceTable" class="divide-y divide-gray-100">
+                            <!-- Dynamic rendering -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Staff Modal -->
+    <div id="addStaffModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <h3 class="text-lg font-bold text-gray-900">신규 알바생 등록</h3>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">알바생 이름</label>
+                <input type="text" id="newStaffName" placeholder="예: 김철수" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">기본 시급 (원)</label>
+                <input type="number" id="newStaffWage" value="10030" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeAddStaffModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg">취소</button>
+                <button onclick="saveNewStaff()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">등록</button>
+            </div>
         </div>
     </div>
 
-    <!-- Firebase Modular SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, onSnapshot, addDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'alba-manager-craftburger';
-        const defaultFirebaseConfig = {
-            apiKey: "AIzaSyDemoKeyForGithubDeployOnly000",
-            authDomain: "alba-manager-demo.firebaseapp.com",
-            projectId: "alba-manager-demo",
-            storageBucket: "alba-manager-demo.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef123456"
+    <!-- JavaScript Application Logic -->
+    <script>
+        // 1. Firebase Configuration Integrated
+        const firebaseConfig = {
+            apiKey: "AIzaSyCD4M452qAiF7JnG7Z9wcI_qjxNB6cwkbI",
+            authDomain: "craftburgers-database.firebaseapp.com",
+            projectId: "craftburgers-database",
+            storageBucket: "craftburgers-database.firebasestorage.app",
+            messagingSenderId: "975736531",
+            appId: "1:975736531:web:a0e140c464331bb2ea0e26",
+            measurementId: "G-6STQE039S0"
         };
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : defaultFirebaseConfig;
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         // State Variables
-        let currentUser = null; // { role: 'admin'|'staff', name: string }
-        let staffList = [];     // [{ id, name, hourlyWage, password }]
-        let workLogs = [];      // [{ id, staffName, startTime, endTime, totalMinutes, memo }]
-        let todoTasks = [];     // [{ id, text, completed }]
-        let firebaseConnected = false;
+        let currentUser = null; // { role: 'staff'|'admin', id, name, wage }
+        let staffList = [];
+        let attendanceList = [];
+        let todoList = [];
 
-        const STORAGE_STAFF = 'alba_staff_v2';
-        const STORAGE_LOGS = 'alba_logs_v2';
-        const STORAGE_TODOS = 'alba_todos_v2';
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            // Set datetime defaults
+        // Application Initialization
+        window.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
-            const nowIso = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-            document.getElementById('startTime').value = nowIso;
-            document.getElementById('endTime').value = nowIso;
-
-            const currentYearMonth = nowIso.substring(0, 7);
-            document.getElementById('adminMonthPicker').value = currentYearMonth;
-            document.getElementById('staffMonthBadge').innerText = `${now.getFullYear()}년 ${now.getMonth() + 1}월`;
-
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                firebaseConnected = true;
-                setupFirestoreListeners();
-            } catch (err) {
-                console.warn("Operating in Local Storage fallback mode:", err);
-                loadLocalData();
-            }
-
-            renderStaffSelectOptions();
+            document.getElementById('adminMonthPicker').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            
+            // Listen to Realtime Firestore updates
+            initRealtimeListeners();
         });
 
-        function setupFirestoreListeners() {
-            if (!firebaseConnected) return;
-
-            const staffCol = collection(db, 'artifacts', appId, 'public', 'data', 'staffs');
-            const logsCol = collection(db, 'artifacts', appId, 'public', 'data', 'work_logs');
-            const todoCol = collection(db, 'artifacts', appId, 'public', 'data', 'todos');
-
-            onSnapshot(staffCol, (snapshot) => {
+        function initRealtimeListeners() {
+            // Staff collection
+            db.collection("staffs").onSnapshot(snapshot => {
                 staffList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                saveLocalData();
-                renderStaffSelectOptions();
-                updateCurrentView();
-            }, (err) => console.log(err));
-
-            onSnapshot(logsCol, (snapshot) => {
-                workLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                saveLocalData();
-                updateCurrentView();
-            }, (err) => console.log(err));
-
-            onSnapshot(todoCol, (snapshot) => {
-                todoTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                saveLocalData();
-                renderTodos();
-            }, (err) => console.log(err));
-        }
-
-        function loadLocalData() {
-            staffList = JSON.parse(localStorage.getItem(STORAGE_STAFF) || '[]');
-            workLogs = JSON.parse(localStorage.getItem(STORAGE_LOGS) || '[]');
-            todoTasks = JSON.parse(localStorage.getItem(STORAGE_TODOS) || '[]');
-            renderStaffSelectOptions();
-            updateCurrentView();
-            renderTodos();
-        }
-
-        function saveLocalData() {
-            localStorage.setItem(STORAGE_STAFF, JSON.stringify(staffList));
-            localStorage.setItem(STORAGE_LOGS, JSON.stringify(workLogs));
-            localStorage.setItem(STORAGE_TODOS, JSON.stringify(todoTasks));
-        }
-
-        async function addData(colName, item) {
-            if (firebaseConnected) {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', colName), item);
-            } else {
-                item.id = Date.now().toString();
-                if (colName === 'staffs') staffList.push(item);
-                if (colName === 'work_logs') workLogs.push(item);
-                if (colName === 'todos') todoTasks.push(item);
-                saveLocalData();
-                updateCurrentView();
-                renderTodos();
-            }
-        }
-
-        async function deleteData(colName, id) {
-            if (firebaseConnected) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', colName, id));
-            } else {
-                if (colName === 'staffs') staffList = staffList.filter(i => i.id !== id);
-                if (colName === 'work_logs') workLogs = workLogs.filter(i => i.id !== id);
-                if (colName === 'todos') todoTasks = todoTasks.filter(i => i.id !== id);
-                saveLocalData();
-                updateCurrentView();
-                renderTodos();
-            }
-        }
-
-        async function updateData(colName, id, fields) {
-            if (firebaseConnected) {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', colName, id), fields);
-            } else {
-                if (colName === 'staffs') {
-                    const idx = staffList.findIndex(i => i.id === id);
-                    if (idx !== -1) staffList[idx] = { ...staffList[idx], ...fields };
+                renderStaffDropdown();
+                if (currentUser && currentUser.role === 'admin') renderAdminDashboard();
+                if (currentUser && currentUser.role === 'staff') {
+                    const currentStaffData = staffList.find(s => s.id === currentUser.id);
+                    if (currentStaffData) {
+                        currentUser.wage = currentStaffData.wage;
+                        renderStaffDashboard();
+                    }
                 }
-                if (colName === 'todos') {
-                    const idx = todoTasks.findIndex(i => i.id === id);
-                    if (idx !== -1) todoTasks[idx] = { ...todoTasks[idx], ...fields };
-                }
-                saveLocalData();
-                updateCurrentView();
-                renderTodos();
-            }
-        }
+            });
 
-        // LOGIN / LOGOUT LOGIC
-        window.switchLoginTab = function(type) {
-            const staffBtn = document.getElementById('tabStaffBtn');
-            const adminBtn = document.getElementById('tabAdminBtn');
-            const staffForm = document.getElementById('staffLoginForm');
-            const adminForm = document.getElementById('adminLoginForm');
+            // Attendance collection
+            db.collection("attendance").onSnapshot(snapshot => {
+                attendanceList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentUser && currentUser.role === 'staff') renderStaffDashboard();
+                if (currentUser && currentUser.role === 'admin') renderAdminDashboard();
+            });
 
-            if (type === 'staff') {
-                staffBtn.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-indigo-600 shadow-sm transition";
-                adminBtn.className = "flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 transition";
-                staffForm.classList.remove('hidden');
-                adminForm.classList.add('hidden');
-            } else {
-                adminBtn.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-indigo-600 shadow-sm transition";
-                staffBtn.className = "flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 transition";
-                adminForm.classList.remove('hidden');
-                staffForm.classList.add('hidden');
-            }
-        };
-
-        window.handleStaffLogin = async function(e) {
-            e.preventDefault();
-            const selectVal = document.getElementById('staffNameSelect').value;
-            const inputVal = document.getElementById('staffNameInput').value.trim();
-            const passVal = document.getElementById('staffPasswordInput').value.trim();
-
-            let targetName = selectVal || inputVal;
-
-            if (!targetName) {
-                showToast('알바생 이름을 선택하거나 입력해 주세요.', 'warning');
-                return;
-            }
-            if (!passVal) {
-                showToast('비밀번호를 입력해 주세요.', 'warning');
-                return;
-            }
-
-            let staffObj = staffList.find(s => s.name === targetName);
-
-            if (!staffObj) {
-                // Register new staff automatically with entered password
-                staffObj = { name: targetName, hourlyWage: 10030, password: passVal };
-                await addData('staffs', staffObj);
-                showToast(`'${targetName}' 신규 알바생 등록 및 비밀번호 설정 완료!`, 'success');
-            } else {
-                // Verify password if already exists
-                if (staffObj.password && staffObj.password !== passVal) {
-                    showToast('비밀번호가 올바르지 않습니다!', 'error');
-                    return;
-                } else if (!staffObj.password) {
-                    // Set password for existing record if blank
-                    await updateData('staffs', staffObj.id, { password: passVal });
-                    showToast('비밀번호가 새롭게 설정되었습니다.', 'success');
-                }
-            }
-
-            currentUser = { role: 'staff', name: targetName };
-            document.getElementById('userNameDisplay').innerText = `${targetName} (알바생)`;
-            document.getElementById('staffPasswordInput').value = '';
-            showToast(`${targetName}님 환영합니다!`, 'success');
-            renderUI();
-        };
-
-        window.handleAdminLogin = function(e) {
-            e.preventDefault();
-            const pwd = document.getElementById('adminPasswordInput').value;
-            if (pwd === '2039') {
-                currentUser = { role: 'admin', name: '관리자' };
-                document.getElementById('userNameDisplay').innerText = '관리자/점장';
-                document.getElementById('adminPasswordInput').value = '';
-                showToast('관리자로 접속하였습니다.', 'success');
-                renderUI();
-            } else {
-                showToast('관리자 비밀번호가 일치하지 않습니다.', 'error');
-            }
-        };
-
-        window.logout = function() {
-            currentUser = null;
-            renderUI();
-            showToast('로그아웃 되었습니다.', 'info');
-        };
-
-        function renderUI() {
-            const loginSec = document.getElementById('loginSection');
-            const staffDash = document.getElementById('staffDashboard');
-            const adminDash = document.getElementById('adminDashboard');
-            const headerInfo = document.getElementById('userInfoHeader');
-
-            loginSec.classList.add('hidden');
-            staffDash.classList.add('hidden');
-            adminDash.classList.add('hidden');
-
-            if (!currentUser) {
-                loginSec.classList.remove('hidden');
-                headerInfo.classList.add('hidden');
-            } else if (currentUser.role === 'staff') {
-                staffDash.classList.remove('hidden');
-                headerInfo.classList.remove('hidden');
-                document.getElementById('currentStaffName').innerText = currentUser.name;
-                renderStaffView();
-            } else if (currentUser.role === 'admin') {
-                adminDash.classList.remove('hidden');
-                headerInfo.classList.remove('hidden');
-                renderAdminView();
-            }
-            renderTodos();
-        }
-
-        function updateCurrentView() {
-            if (!currentUser) return;
-            if (currentUser.role === 'staff') renderStaffView();
-            if (currentUser.role === 'admin') renderAdminView();
-        }
-
-        function renderStaffSelectOptions() {
-            const select = document.getElementById('staffNameSelect');
-            select.innerHTML = '<option value="">등록된 알바생을 선택하세요</option>';
-            staffList.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.name;
-                opt.innerText = s.name;
-                select.appendChild(opt);
+            // Todos collection
+            db.collection("todos").onSnapshot(snapshot => {
+                todoList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentUser && currentUser.role === 'staff') renderStaffTodoList();
+                if (currentUser && currentUser.role === 'admin') renderAdminTodoList();
             });
         }
 
-        // TIME CALCULATOR HELPER
-        window.calculateWorkDuration = function() {
-            const startVal = document.getElementById('startTime').value;
-            const endVal = document.getElementById('endTime').value;
-            const display = document.getElementById('calculatedTimeDisplay');
+        // Render Dropdown options
+        function renderStaffDropdown() {
+            const select = document.getElementById('staffSelect');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">알바생을 선택하세요</option>';
+            staffList.forEach(staff => {
+                const opt = document.createElement('option');
+                opt.value = staff.id;
+                opt.textContent = staff.name;
+                select.appendChild(opt);
+            });
+            select.value = currentVal;
+        }
 
-            if (!startVal || !endVal) {
-                display.innerText = "0시간 0분";
-                return 0;
+        // Tab Switch
+        function switchLoginTab(tab) {
+            const isStaff = tab === 'staff';
+            document.getElementById('staffLoginForm').classList.toggle('hidden', !isStaff);
+            document.getElementById('adminLoginForm').classList.toggle('hidden', isStaff);
+            
+            document.getElementById('tabStaffBtn').className = isStaff 
+                ? "flex-1 py-2.5 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-sm"
+                : "flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600";
+                
+            document.getElementById('tabAdminBtn').className = !isStaff 
+                ? "flex-1 py-2.5 text-center font-bold text-slate-900 border-b-2 border-slate-900 text-sm"
+                : "flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600";
+        }
+
+        // Staff Login Logic
+        function loginStaff() {
+            const staffId = document.getElementById('staffSelect').value;
+            const inputPw = document.getElementById('staffPassword').value.trim();
+
+            if (!staffId) return alert('알바생 이름을 선택해주세요.');
+            if (!inputPw) return alert('비밀번호를 입력해주세요.');
+
+            const staff = staffList.find(s => s.id === staffId);
+            if (!staff) return alert('선택한 알바생 정보가 존재하지 않습니다.');
+
+            // Set Initial Password or Verify
+            if (!staff.password) {
+                db.collection('staffs').doc(staffId).update({ password: inputPw });
+                alert('비밀번호가 새로 설정되었습니다!');
+            } else if (staff.password !== inputPw) {
+                return alert('비밀번호가 올바르지 않습니다.');
             }
+
+            currentUser = { role: 'staff', id: staff.id, name: staff.name, wage: staff.wage };
+            showDashboard();
+        }
+
+        // Admin Login Logic
+        function loginAdmin() {
+            const pw = document.getElementById('adminPassword').value.trim();
+            if (pw === "2039") {
+                currentUser = { role: 'admin', name: '관리자' };
+                showDashboard();
+            } else {
+                alert('관리자 비밀번호가 일치하지 않습니다.');
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('userInfoHeader').classList.remove('hidden');
+            document.getElementById('loggedInBadge').textContent = `${currentUser.name} (${currentUser.role === 'admin' ? '관리자' : '알바'})`;
+
+            if (currentUser.role === 'staff') {
+                document.getElementById('staffDashboard').classList.remove('hidden');
+                renderStaffDashboard();
+            } else {
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                renderAdminDashboard();
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('userInfoHeader').classList.add('hidden');
+            document.getElementById('staffDashboard').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('staffPassword').value = '';
+            document.getElementById('adminPassword').value = '';
+        }
+
+        // ==========================================
+        // STAFF DASHBOARD FUNCTIONS
+        // ==========================================
+        function calculateWorkDuration() {
+            const startVal = document.getElementById('workStart').value;
+            const endVal = document.getElementById('workEnd').value;
+
+            if (!startVal || !endVal) return;
 
             const start = new Date(startVal);
             const end = new Date(endVal);
-            const diffMs = end - start;
 
-            if (diffMs <= 0) {
-                display.innerText = "시간 설정 오류 (퇴근이 출근보다 빠름)";
-                return 0;
-            }
-
-            const totalMinutes = Math.floor(diffMs / (1000 * 60));
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-
-            display.innerText = `${hours}시간 ${minutes}분 (${totalMinutes}분)`;
-            return totalMinutes;
-        };
-
-        // STAFF DASHBOARD VIEW
-        function renderStaffView() {
-            if (!currentUser || currentUser.role !== 'staff') return;
-
-            const staffObj = staffList.find(s => s.name === currentUser.name) || { hourlyWage: 10030 };
-            const currentWage = Number(staffObj.hourlyWage) || 10030;
-
-            const now = new Date();
-            const yearMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-            // Strict Filter: ONLY show current logged-in staff's logs
-            const myLogs = workLogs.filter(l => l.staffName === currentUser.name && l.startTime.startsWith(yearMonthStr));
-            myLogs.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
-
-            let totalMinutesAcc = 0;
-            const tableBody = document.getElementById('staffLogTableBody');
-            tableBody.innerHTML = '';
-
-            if (myLogs.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">이번 달 출퇴근 기록이 없습니다.</td></tr>`;
-            } else {
-                myLogs.forEach(log => {
-                    const mins = log.totalMinutes || 0;
-                    totalMinutesAcc += mins;
-                    const logPay = Math.floor((mins / 60) * currentWage);
-
-                    const h = Math.floor(mins / 60);
-                    const m = mins % 60;
-
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 transition";
-                    tr.innerHTML = `
-                        <td class="p-3 font-medium text-slate-700">${log.startTime.replace('T', ' ')}</td>
-                        <td class="p-3 font-medium text-slate-700">${log.endTime.replace('T', ' ')}</td>
-                        <td class="p-3"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-semibold text-xs">${h}시간 ${m}분</span></td>
-                        <td class="p-3 text-emerald-600 font-semibold">${logPay.toLocaleString()}원</td>
-                        <td class="p-3 text-right">
-                            <button onclick="deleteWorkLog('${log.id}')" class="text-xs text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
-            }
-
-            const totalHours = Math.floor(totalMinutesAcc / 60);
-            const totalMins = totalMinutesAcc % 60;
-            const totalSalary = Math.floor((totalMinutesAcc / 60) * currentWage);
-
-            document.getElementById('staffHourlyWage').innerText = currentWage.toLocaleString();
-            document.getElementById('staffTotalHoursText').innerText = `${totalHours}시간 ${totalMins}분`;
-            document.getElementById('staffCalcSalary').innerText = `${totalSalary.toLocaleString()} 원`;
-        }
-
-        window.addWorkLog = async function(e) {
-            e.preventDefault();
-            if (!currentUser) return;
-
-            const startTime = document.getElementById('startTime').value;
-            const endTime = document.getElementById('endTime').value;
-            const memo = document.getElementById('workMemo').value.trim();
-
-            const totalMins = calculateWorkDuration();
-
-            if (totalMins <= 0) {
-                showToast('출퇴근 시간을 올바르게 설정해 주세요.', 'warning');
+            if (end <= start) {
+                alert('퇴근 시간이 출근 시간보다 빠르거나 같을 수 없습니다.');
+                document.getElementById('calculatedTimeText').textContent = "0시간 0분";
+                document.getElementById('calculatedPayText').textContent = "0원";
                 return;
             }
 
-            const newLog = {
+            const diffMinutes = Math.floor((end - start) / (1000 * 60));
+            const hours = Math.floor(diffMinutes / 60);
+            const minutes = diffMinutes % 60;
+
+            const minuteWage = currentUser.wage / 60;
+            const totalPay = Math.floor(diffMinutes * minuteWage);
+
+            document.getElementById('calculatedTimeText').textContent = `${hours}시간 ${minutes}분`;
+            document.getElementById('calculatedPayText').textContent = `${totalPay.toLocaleString()}원`;
+        }
+
+        function saveAttendanceRecord() {
+            const startVal = document.getElementById('workStart').value;
+            const endVal = document.getElementById('workEnd').value;
+
+            if (!startVal || !endVal) return alert('출퇴근 시간을 올바르게 설정해주세요.');
+
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+            if (end <= start) return alert('퇴근 시간을 올바르게 확인해주세요.');
+
+            const diffMinutes = Math.floor((end - start) / (1000 * 60));
+            const minuteWage = currentUser.wage / 60;
+            const pay = Math.floor(diffMinutes * minuteWage);
+
+            const record = {
+                staffId: currentUser.id,
                 staffName: currentUser.name,
-                startTime: startTime,
-                endTime: endTime,
-                totalMinutes: totalMins,
-                memo: memo,
+                startTime: startVal,
+                endTime: endVal,
+                minutes: diffMinutes,
+                wageAtTime: currentUser.wage,
+                pay: pay,
                 createdAt: new Date().toISOString()
             };
 
-            await addData('work_logs', newLog);
-            document.getElementById('workMemo').value = '';
-            showToast('근태 내역이 저장되었습니다!', 'success');
-        };
+            db.collection('attendance').add(record).then(() => {
+                alert('근태 기록이 정상 저장되었습니다.');
+                document.getElementById('workStart').value = '';
+                document.getElementById('workEnd').value = '';
+                document.getElementById('calculatedTimeText').textContent = "0시간 0분";
+                document.getElementById('calculatedPayText').textContent = "0원";
+            });
+        }
 
-        window.deleteWorkLog = async function(id) {
-            if (confirm('선택한 근태 기록을 삭제하시겠습니까?')) {
-                await deleteData('work_logs', id);
-                showToast('삭제되었습니다.', 'info');
-            }
-        };
+        function renderStaffDashboard() {
+            document.getElementById('staffNameDisplay').textContent = `${currentUser.name} 님`;
+            document.getElementById('staffWageDisplay').textContent = `${currentUser.wage.toLocaleString()}원`;
 
-        // ADMIN DASHBOARD VIEW
-        function renderAdminView() {
-            if (!currentUser || currentUser.role !== 'admin') return;
+            const myRecords = attendanceList.filter(r => r.staffId === currentUser.id);
 
-            const selectedMonth = document.getElementById('adminMonthPicker').value; // YYYY-MM
-            document.getElementById('totalStaffCount').innerText = `${staffList.length} 명`;
+            let totalMinutes = 0;
+            let totalPay = 0;
 
-            const monthLogs = workLogs.filter(l => l.startTime && l.startTime.startsWith(selectedMonth));
+            const tableBody = document.getElementById('staffAttendanceTable');
+            tableBody.innerHTML = '';
 
-            let overallMinutes = 0;
-            let overallSalary = 0;
-
-            const staffTableBody = document.getElementById('adminStaffTableBody');
-            staffTableBody.innerHTML = '';
-
-            staffList.forEach(s => {
-                const sLogs = monthLogs.filter(l => l.staffName === s.name);
-                const sMinutes = sLogs.reduce((acc, curr) => acc + (Number(curr.totalMinutes) || 0), 0);
-                const wage = Number(s.hourlyWage) || 10030;
-                const sSalary = Math.floor((sMinutes / 60) * wage);
-
-                overallMinutes += sMinutes;
-                overallSalary += sSalary;
-
-                const h = Math.floor(sMinutes / 60);
-                const m = sMinutes % 60;
+            myRecords.sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).forEach(r => {
+                totalMinutes += r.minutes;
+                totalPay += r.pay;
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition";
+                tr.className = "hover:bg-gray-50";
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-slate-800 flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
-                            ${s.name.substring(0, 1)}
-                        </div>
-                        ${s.name}
-                    </td>
-                    <td class="p-3">
-                        <div class="flex items-center space-x-1">
-                            <input type="number" step="100" value="${wage}" onblur="updateStaffWage('${s.id}', this.value)" class="w-20 px-2 py-1 text-xs border rounded focus:ring-2 focus:ring-indigo-500 font-semibold">
-                            <span class="text-xs text-slate-400">원</span>
-                        </div>
-                    </td>
-                    <td class="p-3 font-semibold text-slate-700">${h}시간 ${m}분</td>
-                    <td class="p-3 text-emerald-600 font-extrabold">${sSalary.toLocaleString()} 원</td>
-                    <td class="p-3 text-right space-x-1">
-                        <button onclick="resetStaffPass('${s.id}', '${s.name}')" class="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 px-2 py-1 rounded transition" title="비밀번호 초기화">
-                            비번초기화
-                        </button>
-                        <button onclick="removeStaff('${s.id}', '${s.name}')" class="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-2 py-1 rounded transition">
-                            삭제
-                        </button>
+                    <td class="p-3">${formatDateTime(r.startTime)}</td>
+                    <td class="p-3">${formatDateTime(r.endTime)}</td>
+                    <td class="p-3 font-semibold">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
+                    <td class="p-3 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteAttendance('${r.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
-                staffTableBody.appendChild(tr);
+                tableBody.appendChild(tr);
             });
 
-            const overallH = Math.floor(overallMinutes / 60);
-            const overallM = overallMinutes % 60;
+            document.getElementById('staffTotalHoursDisplay').textContent = `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`;
+            document.getElementById('staffTotalPayDisplay').textContent = `${totalPay.toLocaleString()}원`;
 
-            document.getElementById('totalWorkedHours').innerText = `${overallH}시간 ${overallM}분`;
-            document.getElementById('totalSalaryPayable').innerText = `${overallSalary.toLocaleString()} 원`;
+            renderStaffTodoList();
+        }
 
-            // Render All Logs
-            const allLogsBody = document.getElementById('adminAllLogsTableBody');
-            allLogsBody.innerHTML = '';
+        function renderStaffTodoList() {
+            const container = document.getElementById('staffTodoList');
+            container.innerHTML = '';
 
-            const sortedLogs = [...monthLogs].sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+            if (todoList.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400">등록된 할 일이 없습니다.</p>';
+                return;
+            }
 
-            if (sortedLogs.length === 0) {
-                allLogsBody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">선택한 월의 출퇴근 기록이 없습니다.</td></tr>`;
+            todoList.forEach(todo => {
+                const isChecked = todo.completedBy && todo.completedBy.includes(currentUser.id);
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100";
+                div.innerHTML = `
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTodo('${todo.id}', this.checked)" class="w-4 h-4 text-amber-500 rounded focus:ring-amber-400">
+                        <span class="text-xs sm:text-sm font-medium ${isChecked ? 'line-through text-gray-400' : 'text-gray-700'}">${todo.text}</span>
+                    </label>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleTodo(todoId, isChecked) {
+            const todo = todoList.find(t => t.id === todoId);
+            if (!todo) return;
+
+            let completedBy = todo.completedBy || [];
+            if (isChecked) {
+                if (!completedBy.includes(currentUser.id)) completedBy.push(currentUser.id);
             } else {
-                sortedLogs.forEach(log => {
-                    const staffObj = staffList.find(s => s.name === log.staffName);
-                    const wage = staffObj ? Number(staffObj.hourlyWage) : 10030;
-                    const mins = Number(log.totalMinutes) || 0;
-                    const logPay = Math.floor((mins / 60) * wage);
+                completedBy = completedBy.filter(id => id !== currentUser.id);
+            }
 
-                    const h = Math.floor(mins / 60);
-                    const m = mins % 60;
+            db.collection('todos').doc(todoId).update({ completedBy });
+        }
 
+        // ==========================================
+        // ADMIN DASHBOARD FUNCTIONS
+        // ==========================================
+        function renderAdminDashboard() {
+            const selectedMonth = document.getElementById('adminMonthPicker').value; // YYYY-MM
+            
+            // Render Staff Table
+            const staffTable = document.getElementById('adminStaffPayTable');
+            staffTable.innerHTML = '';
+
+            let overallPaySum = 0;
+
+            staffList.forEach(staff => {
+                // Monthly attendance filter
+                const monthRecords = attendanceList.filter(r => r.staffId === staff.id && r.startTime.startsWith(selectedMonth));
+                
+                let staffMinutes = 0;
+                let staffPay = 0;
+
+                monthRecords.forEach(r => {
+                    staffMinutes += r.minutes;
+                    staffPay += r.pay;
+                });
+
+                overallPaySum += staffPay;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">${staff.name}</td>
+                    <td class="p-3">
+                        <input type="number" value="${staff.wage}" onchange="updateStaffWage('${staff.id}', this.value)" class="w-20 border rounded px-1.5 py-0.5 text-xs"> 원
+                    </td>
+                    <td class="p-3">${Math.floor(staffMinutes/60)}시간 ${staffMinutes%60}분</td>
+                    <td class="p-3 font-bold text-amber-600">${staffPay.toLocaleString()}원</td>
+                    <td class="p-3 text-center">
+                        <button onclick="resetStaffPassword('${staff.id}')" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded text-gray-600">초기화</button>
+                    </td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteStaff('${staff.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                staffTable.appendChild(tr);
+            });
+
+            document.getElementById('adminTotalMonthPay').textContent = `${overallPaySum.toLocaleString()}원`;
+
+            // Render All Attendance Records
+            const allTable = document.getElementById('adminAttendanceTable');
+            allTable.innerHTML = '';
+
+            attendanceList.filter(r => r.startTime.startsWith(selectedMonth))
+                .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+                .forEach(r => {
                     const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 transition";
+                    tr.className = "hover:bg-gray-50";
                     tr.innerHTML = `
-                        <td class="p-3 font-semibold text-slate-800">${log.staffName}</td>
-                        <td class="p-3 text-xs text-slate-600">${log.startTime.replace('T', ' ')}</td>
-                        <td class="p-3 text-xs text-slate-600">${log.endTime.replace('T', ' ')}</td>
-                        <td class="p-3"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">${h}시간 ${m}분</span></td>
-                        <td class="p-3 text-emerald-600 font-semibold">${logPay.toLocaleString()}원</td>
-                        <td class="p-3 text-right">
-                            <button onclick="deleteWorkLog('${log.id}')" class="text-xs text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                        <td class="p-3 font-bold">${r.staffName}</td>
+                        <td class="p-3">${formatDateTime(r.startTime)}</td>
+                        <td class="p-3">${formatDateTime(r.endTime)}</td>
+                        <td class="p-3 font-semibold">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
+                        <td class="p-3 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
+                        <td class="p-3 text-center">
+                            <button onclick="deleteAttendance('${r.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
                         </td>
                     `;
-                    allLogsBody.appendChild(tr);
+                    allTable.appendChild(tr);
                 });
+
+            renderAdminTodoList();
+        }
+
+        function updateStaffWage(staffId, newWage) {
+            db.collection('staffs').doc(staffId).update({ wage: Number(newWage) });
+        }
+
+        function resetStaffPassword(staffId) {
+            if (confirm('해당 알바생의 비밀번호를 초기화하시겠습니까?\n다음 로그인 시 새로 비밀번호를 등록하게 됩니다.')) {
+                db.collection('staffs').doc(staffId).update({ password: "" });
             }
         }
 
-        window.updateStaffWage = async function(id, newWage) {
-            const wageNum = parseInt(newWage);
-            if (isNaN(wageNum) || wageNum < 0) return;
-            await updateData('staffs', id, { hourlyWage: wageNum });
-            showToast('시급이 업데이트되었습니다.', 'success');
-        };
-
-        window.resetStaffPass = async function(id, name) {
-            if (confirm(`'${name}' 알바생의 비밀번호를 초기화하시겠습니까? (다음 로그인 시 재설정 가능)`)) {
-                await updateData('staffs', id, { password: '' });
-                showToast(`'${name}' 비밀번호가 초기화되었습니다.`, 'info');
+        function deleteStaff(staffId) {
+            if (confirm('알바생 정보를 삭제하시겠습니까?')) {
+                db.collection('staffs').doc(staffId).delete();
             }
-        };
+        }
 
-        window.removeStaff = async function(id, name) {
-            if (confirm(`'${name}' 알바생을 목록에서 삭제하시겠습니까?`)) {
-                await deleteData('staffs', id);
-                showToast('알바생이 삭제되었습니다.', 'info');
-            }
-        };
+        function openAddStaffModal() {
+            document.getElementById('addStaffModal').classList.remove('hidden');
+            document.getElementById('addStaffModal').classList.add('flex');
+        }
 
-        window.openAddStaffModal = function() {
-            document.getElementById('staffModal').classList.remove('hidden');
-        };
+        function closeAddStaffModal() {
+            document.getElementById('addStaffModal').classList.add('hidden');
+            document.getElementById('addStaffModal').classList.remove('flex');
+        }
 
-        window.closeAddStaffModal = function() {
-            document.getElementById('staffModal').classList.add('hidden');
-        };
-
-        window.saveNewStaff = async function(e) {
-            e.preventDefault();
+        function saveNewStaff() {
             const name = document.getElementById('newStaffName').value.trim();
-            const wage = parseInt(document.getElementById('newStaffWage').value);
-            const pass = document.getElementById('newStaffPass').value.trim();
+            const wage = Number(document.getElementById('newStaffWage').value);
 
-            if (!name || isNaN(wage)) return;
+            if (!name) return alert('이름을 입력해주세요.');
 
-            if (staffList.some(s => s.name === name)) {
-                showToast('이미 존재하는 알바생 이름입니다.', 'warning');
-                return;
-            }
-
-            await addData('staffs', { name: name, hourlyWage: wage, password: pass });
-            document.getElementById('newStaffName').value = '';
-            document.getElementById('newStaffPass').value = '';
-            closeAddStaffModal();
-            showToast(`${name} 알바생이 등록되었습니다.`, 'success');
-        };
-
-        // TODO TASKS
-        function renderTodos() {
-            const staffContainer = document.getElementById('todoListStaff');
-            const adminContainer = document.getElementById('todoListAdmin');
-
-            if (staffContainer) staffContainer.innerHTML = '';
-            if (adminContainer) adminContainer.innerHTML = '';
-
-            if (todoTasks.length === 0) {
-                if (staffContainer) staffContainer.innerHTML = `<p class="text-xs text-slate-400 py-2">등록된 안내사항이 없습니다.</p>`;
-                if (adminContainer) adminContainer.innerHTML = `<p class="text-xs text-slate-400 py-2">등록된 안내사항이 없습니다.</p>`;
-                return;
-            }
-
-            todoTasks.forEach(task => {
-                if (staffContainer) {
-                    const item = document.createElement('div');
-                    item.className = `flex items-center p-3 rounded-xl border transition ${task.completed ? 'bg-slate-50 border-slate-200 text-slate-400 line-through' : 'bg-white border-slate-200 text-slate-700 shadow-sm'}`;
-                    item.innerHTML = `
-                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTodoTask('${task.id}', this.checked)" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer">
-                        <span class="ml-3 text-sm font-medium flex-1">${task.text}</span>
-                    `;
-                    staffContainer.appendChild(item);
-                }
-
-                if (adminContainer) {
-                    const aItem = document.createElement('div');
-                    aItem.className = "flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm";
-                    aItem.innerHTML = `
-                        <span class="text-slate-700 text-xs font-medium flex-1 ${task.completed ? 'line-through text-slate-400' : ''}">${task.text}</span>
-                        <button onclick="removeTodoTask('${task.id}')" class="text-xs text-red-500 hover:text-red-700 ml-2">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    `;
-                    adminContainer.appendChild(aItem);
-                }
+            db.collection('staffs').add({
+                name: name,
+                wage: wage,
+                password: ""
+            }).then(() => {
+                closeAddStaffModal();
+                document.getElementById('newStaffName').value = '';
             });
         }
 
-        window.addTodoTask = async function(e) {
-            e.preventDefault();
-            const input = document.getElementById('todoTaskInput');
-            const text = input.value.trim();
+        // To-Do Admin Functions
+        function addTodoItem() {
+            const text = document.getElementById('newTodoInput').value.trim();
             if (!text) return;
 
-            await addData('todos', { text: text, completed: false });
-            input.value = '';
-            showToast('할 일이 추가되었습니다.', 'success');
-        };
+            db.collection('todos').add({
+                text: text,
+                completedBy: []
+            }).then(() => {
+                document.getElementById('newTodoInput').value = '';
+            });
+        }
 
-        window.toggleTodoTask = async function(id, completed) {
-            await updateData('todos', id, { completed: completed });
-        };
+        function deleteTodoItem(todoId) {
+            db.collection('todos').doc(todoId).delete();
+        }
 
-        window.removeTodoTask = async function(id) {
-            await deleteData('todos', id);
-            showToast('할 일이 삭제되었습니다.', 'info');
-        };
+        function renderAdminTodoList() {
+            const container = document.getElementById('adminTodoList');
+            container.innerHTML = '';
 
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMessage');
-            const toastIcon = document.getElementById('toastIcon');
+            todoList.forEach(todo => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100";
+                div.innerHTML = `
+                    <span class="text-xs sm:text-sm font-medium text-gray-700">${todo.text}</span>
+                    <button onclick="deleteTodoItem('${todo.id}')" class="text-gray-400 hover:text-red-500 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+                container.appendChild(div);
+            });
+        }
 
-            toastMsg.innerText = message;
-
-            if (type === 'success') {
-                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400';
-            } else if (type === 'warning') {
-                toastIcon.className = 'fa-solid fa-triangle-exclamation text-amber-400';
-            } else if (type === 'error') {
-                toastIcon.className = 'fa-solid fa-circle-xmark text-red-400';
-            } else {
-                toastIcon.className = 'fa-solid fa-circle-info text-indigo-400';
+        function deleteAttendance(id) {
+            if (confirm('해당 근태 기록을 삭제하시겠습니까?')) {
+                db.collection('attendance').doc(id).delete();
             }
+        }
 
-            toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
+        // Helper Utility
+        function formatDateTime(dateTimeStr) {
+            if (!dateTimeStr) return '';
+            const d = new Date(dateTimeStr);
+            const yy = String(d.getFullYear()).slice(2);
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return `${yy}년${mm}월${dd}일 ${hh}시${min}분`;
         }
     </script>
 </body>
