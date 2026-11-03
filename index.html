@@ -93,6 +93,7 @@
         <!-- 2. STAFF DASHBOARD                         -->
         <!-- ========================================== -->
         <div id="staffDashboard" class="hidden space-y-6">
+            <!-- Header Summary Card -->
             <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-6 text-white shadow-lg">
                 <div class="flex justify-between items-start">
                     <div>
@@ -106,21 +107,55 @@
                 </div>
                 <div class="mt-6 pt-4 border-t border-amber-400/40 flex justify-between items-end">
                     <div>
-                        <p class="text-amber-100 text-xs">현재 시점 예상 누적 급여</p>
+                        <p class="text-amber-100 text-xs">선택 월 예상 급여</p>
                         <p id="staffTotalPayDisplay" class="text-3xl font-extrabold mt-1">0원</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-amber-100 text-xs">총 근무시간</p>
+                        <p class="text-amber-100 text-xs">선택 월 총 근무시간</p>
                         <p id="staffTotalHoursDisplay" class="text-sm font-semibold mt-1">0시간 0분</p>
                     </div>
                 </div>
             </div>
 
+            <!-- Staff Interactive Calendar -->
+            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900 flex items-center">
+                            <i class="fa-solid fa-calendar-days text-amber-500 mr-2"></i>내 근무 달력
+                        </h3>
+                        <p class="text-xs text-gray-500 mt-0.5">달력의 날짜를 클릭하면 해당 날짜로 바로 출퇴근 시간을 입력할 수 있습니다.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs text-gray-500 font-semibold">조회 월:</label>
+                        <input type="month" id="staffMonthPicker" onchange="renderStaffDashboard()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs rounded-lg p-2 focus:outline-none font-bold">
+                    </div>
+                </div>
+
+                <!-- Calendar Grid -->
+                <div>
+                    <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-2 rounded-t-lg border border-gray-200">
+                        <span class="text-red-500">일</span>
+                        <span>월</span>
+                        <span>화</span>
+                        <span>수</span>
+                        <span>목</span>
+                        <span>금</span>
+                        <span class="text-blue-500">토</span>
+                    </div>
+                    <div id="staffCalendarGrid" class="grid grid-cols-7 gap-1 bg-gray-200 p-1 rounded-b-lg border border-t-0 border-gray-200 text-xs">
+                        <!-- Dynamic Calendar Cells -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Input Work Record -->
-            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
-                <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center">
+            <div id="inputFormCard" class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+                <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center">
                     <i class="fa-regular fa-clock text-amber-500 mr-2"></i>근무 시간 등록
                 </h3>
+                <p id="selectedDateNotice" class="text-xs text-amber-600 font-semibold mb-4">날짜를 선택하거나 출퇴근 시각을 입력해 주세요.</p>
+                
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
@@ -153,7 +188,7 @@
             <!-- History Table -->
             <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
                 <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center">
-                    <i class="fa-solid fa-calendar-days text-amber-500 mr-2"></i>내 근무 기록 목록
+                    <i class="fa-solid fa-list text-amber-500 mr-2"></i>선택 월 상세 근무 기록
                 </h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs sm:text-sm">
@@ -230,7 +265,6 @@
                         </h3>
                         <p class="text-xs text-gray-500 mt-1">원하는 알바생을 선택하면 근무일자와 시급/급여 내역을 달력으로 볼 수 있습니다.</p>
                     </div>
-                    <!-- Select Staff Filter -->
                     <div class="w-full sm:w-56">
                         <select id="adminSelectedStaff" onchange="renderAdminStaffCalendar()" class="w-full bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-sm font-bold text-amber-900 focus:outline-none">
                             <option value="">알바생을 선택하세요</option>
@@ -349,7 +383,9 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
-            document.getElementById('adminMonthPicker').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            document.getElementById('adminMonthPicker').value = currentMonthStr;
+            document.getElementById('staffMonthPicker').value = currentMonthStr;
             initRealtimeListeners();
         });
 
@@ -433,7 +469,7 @@
 
             if (!staff.password) {
                 db.collection('staffs').doc(staffId).update({ password: inputPw });
-                alert('비밀번호가 설정되었습니다.');
+                alert('비밀번호가 새로 설정되었습니다.');
             } else if (staff.password !== inputPw) {
                 return alert('비밀번호가 일치하지 않습니다.');
             }
@@ -476,7 +512,118 @@
             document.getElementById('adminPassword').value = '';
         }
 
-        // Staff functions
+        // ==========================================
+        // STAFF DASHBOARD FUNCTIONS
+        // ==========================================
+        function renderStaffDashboard() {
+            document.getElementById('staffNameDisplay').textContent = `${currentUser.name} 님`;
+            document.getElementById('staffWageDisplay').textContent = `${currentUser.wage.toLocaleString()}원`;
+
+            const selectedMonth = document.getElementById('staffMonthPicker').value; // YYYY-MM
+            const myRecords = attendanceList.filter(r => r.staffId === currentUser.id && r.startTime.startsWith(selectedMonth));
+
+            let totalMinutes = 0;
+            let totalPay = 0;
+            const workDatesMap = {};
+
+            myRecords.forEach(r => {
+                totalMinutes += r.minutes;
+                totalPay += r.pay;
+
+                const dateStr = r.startTime.split('T')[0];
+                if (!workDatesMap[dateStr]) {
+                    workDatesMap[dateStr] = { minutes: 0, pay: 0 };
+                }
+                workDatesMap[dateStr].minutes += r.minutes;
+                workDatesMap[dateStr].pay += r.pay;
+            });
+
+            document.getElementById('staffTotalHoursDisplay').textContent = `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`;
+            document.getElementById('staffTotalPayDisplay').textContent = `${totalPay.toLocaleString()}원`;
+
+            // Render Staff Calendar
+            renderStaffCalendar(selectedMonth, workDatesMap);
+
+            // Render Staff History Table
+            const tableBody = document.getElementById('staffAttendanceTable');
+            tableBody.innerHTML = '';
+
+            myRecords.sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="p-3">${formatDateTime(r.startTime)}</td>
+                    <td class="p-3">${formatDateTime(r.endTime)}</td>
+                    <td class="p-3 font-semibold">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
+                    <td class="p-3 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteAttendance('${r.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            renderStaffTodoList();
+        }
+
+        function renderStaffCalendar(selectedMonth, workDatesMap) {
+            const calendarGrid = document.getElementById('staffCalendarGrid');
+            calendarGrid.innerHTML = '';
+
+            const [yearStr, monthStr] = selectedMonth.split('-');
+            const year = parseInt(yearStr);
+            const month = parseInt(monthStr) - 1;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Empty cells
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "bg-white min-h-[70px] p-1";
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            // Month Day cells
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayStr = String(day).padStart(2, '0');
+                const fullDateStr = `${selectedMonth}-${dayStr}`;
+                const workInfo = workDatesMap[fullDateStr];
+
+                const dayCell = document.createElement('div');
+                dayCell.className = "bg-white min-h-[75px] p-1.5 flex flex-col justify-between text-left border border-gray-100 rounded cursor-pointer hover:border-amber-400 hover:shadow-sm transition";
+                dayCell.onclick = () => selectCalendarDate(fullDateStr);
+
+                let contentHtml = `<span class="font-bold text-gray-700">${day}</span>`;
+
+                if (workInfo) {
+                    const hrs = Math.floor(workInfo.minutes / 60);
+                    const mins = workInfo.minutes % 60;
+                    contentHtml += `
+                        <div class="mt-1 bg-amber-100 text-amber-900 p-1 rounded text-[10px] leading-tight">
+                            <p class="font-bold">${hrs}시간 ${mins}분</p>
+                            <p class="text-amber-700 font-medium">${workInfo.pay.toLocaleString()}원</p>
+                        </div>
+                    `;
+                }
+
+                dayCell.innerHTML = contentHtml;
+                calendarGrid.appendChild(dayCell);
+            }
+        }
+
+        // Calendar Click Handler for Staff
+        function selectCalendarDate(dateStr) {
+            // Default shift start 09:00, end 18:00
+            document.getElementById('workStart').value = `${dateStr}T09:00`;
+            document.getElementById('workEnd').value = `${dateStr}T18:00`;
+            
+            document.getElementById('selectedDateNotice').textContent = `📅 선택된 날짜: ${dateStr} (출퇴근 시각을 확인한 후 아래 제출 버튼을 누르세요)`;
+            calculateWorkDuration();
+            
+            document.getElementById('inputFormCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
         function calculateWorkDuration() {
             const startVal = document.getElementById('workStart').value;
             const endVal = document.getElementById('workEnd').value;
@@ -535,43 +682,8 @@
                 document.getElementById('workEnd').value = '';
                 document.getElementById('calculatedTimeText').textContent = "0시간 0분";
                 document.getElementById('calculatedPayText').textContent = "0원";
+                document.getElementById('selectedDateNotice').textContent = "날짜를 선택하거나 출퇴근 시각을 입력해 주세요.";
             });
-        }
-
-        function renderStaffDashboard() {
-            document.getElementById('staffNameDisplay').textContent = `${currentUser.name} 님`;
-            document.getElementById('staffWageDisplay').textContent = `${currentUser.wage.toLocaleString()}원`;
-
-            const myRecords = attendanceList.filter(r => r.staffId === currentUser.id);
-
-            let totalMinutes = 0;
-            let totalPay = 0;
-
-            const tableBody = document.getElementById('staffAttendanceTable');
-            tableBody.innerHTML = '';
-
-            myRecords.sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).forEach(r => {
-                totalMinutes += r.minutes;
-                totalPay += r.pay;
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50";
-                tr.innerHTML = `
-                    <td class="p-3">${formatDateTime(r.startTime)}</td>
-                    <td class="p-3">${formatDateTime(r.endTime)}</td>
-                    <td class="p-3 font-semibold">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
-                    <td class="p-3 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
-                    <td class="p-3 text-center">
-                        <button onclick="deleteAttendance('${r.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
-
-            document.getElementById('staffTotalHoursDisplay').textContent = `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`;
-            document.getElementById('staffTotalPayDisplay').textContent = `${totalPay.toLocaleString()}원`;
-
-            renderStaffTodoList();
         }
 
         function renderStaffTodoList() {
@@ -611,7 +723,9 @@
             db.collection('todos').doc(todoId).update({ completedBy });
         }
 
-        // Admin functions
+        // ==========================================
+        // ADMIN DASHBOARD FUNCTIONS
+        // ==========================================
         function renderAdminDashboard() {
             const selectedMonth = document.getElementById('adminMonthPicker').value;
             
@@ -660,7 +774,7 @@
 
         function renderAdminStaffCalendar() {
             const selectedStaffId = document.getElementById('adminSelectedStaff').value;
-            const selectedMonth = document.getElementById('adminMonthPicker').value; // YYYY-MM
+            const selectedMonth = document.getElementById('adminMonthPicker').value;
             
             const detailCard = document.getElementById('staffDetailCard');
             const calendarGrid = document.getElementById('adminCalendarGrid');
@@ -679,12 +793,11 @@
             detailCard.classList.remove('hidden');
             document.getElementById('detailStaffWage').textContent = `${staff.wage.toLocaleString()}원`;
 
-            // Filter Records for this staff & month
             const monthRecords = attendanceList.filter(r => r.staffId === selectedStaffId && r.startTime.startsWith(selectedMonth));
 
             let totalMinutes = 0;
             let totalPay = 0;
-            const workDatesMap = {}; // 'YYYY-MM-DD' => { minutes, pay, records: [] }
+            const workDatesMap = {};
 
             monthRecords.forEach(r => {
                 totalMinutes += r.minutes;
@@ -692,17 +805,15 @@
 
                 const dateStr = r.startTime.split('T')[0];
                 if (!workDatesMap[dateStr]) {
-                    workDatesMap[dateStr] = { minutes: 0, pay: 0, records: [] };
+                    workDatesMap[dateStr] = { minutes: 0, pay: 0 };
                 }
                 workDatesMap[dateStr].minutes += r.minutes;
                 workDatesMap[dateStr].pay += r.pay;
-                workDatesMap[dateStr].records.push(r);
             });
 
             document.getElementById('detailStaffHours').textContent = `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`;
             document.getElementById('detailStaffPay').textContent = `${totalPay.toLocaleString()}원`;
 
-            // Render Calendar
             const [yearStr, monthStr] = selectedMonth.split('-');
             const year = parseInt(yearStr);
             const month = parseInt(monthStr) - 1;
@@ -714,14 +825,12 @@
 
             calendarGrid.innerHTML = '';
 
-            // Empty cells before month start
             for (let i = 0; i < firstDayIndex; i++) {
                 const emptyCell = document.createElement('div');
                 emptyCell.className = "bg-white min-h-[70px] p-1";
                 calendarGrid.appendChild(emptyCell);
             }
 
-            // Month Day cells
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayStr = String(day).padStart(2, '0');
                 const fullDateStr = `${selectedMonth}-${dayStr}`;
@@ -747,7 +856,6 @@
                 calendarGrid.appendChild(dayCell);
             }
 
-            // Render Individual Detailed Logs Table
             detailTable.innerHTML = '';
             monthRecords.sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).forEach(r => {
                 const tr = document.createElement('tr');
