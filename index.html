@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>더크래프트버거 - 알바생 관리 및 근태/급여/매뉴얼 시스템</title>
+    <title>더크래프트버거 - 알바생 관리 및 근태/급여/계약서 시스템</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -16,9 +16,9 @@
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body { font-family: 'Pretendard', sans-serif; -webkit-tap-highlight-color: transparent; }
-        /* Mobile Horizontal Scroll Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        canvas { touch-action: none; } /* 모바일 스크롤 방지 및 터치 서명 원활화 */
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800 antialiased selection:bg-amber-500 selection:text-white">
@@ -28,7 +28,7 @@
         <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-burger text-amber-500 text-2xl"></i>
-                <h1 class="text-lg sm:text-xl font-bold tracking-tight">더크래프트버거 <span class="text-xs text-amber-400 font-normal ml-1">근태/급여</span></h1>
+                <h1 class="text-lg sm:text-xl font-bold tracking-tight">더크래프트버거 <span class="text-xs text-amber-400 font-normal ml-1">통합관리</span></h1>
             </div>
             <div id="userInfoHeader" class="hidden flex items-center space-x-2 sm:space-x-3">
                 <span id="loggedInBadge" class="bg-amber-500 text-slate-900 text-[11px] sm:text-xs font-bold px-2 py-1 sm:px-2.5 sm:py-1 rounded-full"></span>
@@ -96,6 +96,22 @@
         <!-- 2. STAFF DASHBOARD                         -->
         <!-- ========================================== -->
         <div id="staffDashboard" class="hidden space-y-4 sm:space-y-6">
+            <!-- Pending Contract Alert Banner -->
+            <div id="staffContractAlert" class="hidden bg-red-50 border-l-4 border-red-500 p-3.5 sm:p-4 rounded-r-xl shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-start">
+                        <i class="fa-solid fa-file-signature text-red-500 text-base sm:text-lg mr-2.5 mt-0.5"></i>
+                        <div>
+                            <h4 class="text-xs font-bold text-red-800">서명 대기 중인 근로계약서가 있습니다</h4>
+                            <p class="text-[11px] sm:text-xs text-red-700 mt-0.5">사장님이 작성한 근로계약서를 확인하고 터치스크린으로 직접 서명해 주세요.</p>
+                        </div>
+                    </div>
+                    <button onclick="openStaffContractModal()" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow transition whitespace-nowrap">
+                        계약서 서명하기
+                    </button>
+                </div>
+            </div>
+
             <!-- Modified Attendance Alert Banner -->
             <div id="staffEditAlertBanner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-3.5 sm:p-4 rounded-r-xl shadow-sm">
                 <div class="flex items-start">
@@ -141,7 +157,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                    <!-- 출근시 -->
                     <div class="bg-amber-50/60 rounded-xl p-3.5 sm:p-4 border border-amber-200/70">
                         <div class="flex items-center space-x-2 border-b border-amber-200 pb-2 mb-2.5">
                             <span class="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-sun"></i></span>
@@ -149,7 +164,6 @@
                         </div>
                         <div id="manualStartList" class="space-y-1.5"></div>
                     </div>
-                    <!-- 근무중 -->
                     <div class="bg-blue-50/60 rounded-xl p-3.5 sm:p-4 border border-blue-200/70">
                         <div class="flex items-center space-x-2 border-b border-blue-200 pb-2 mb-2.5">
                             <span class="w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-beer-mug-empty"></i></span>
@@ -157,7 +171,6 @@
                         </div>
                         <div id="manualMidList" class="space-y-1.5"></div>
                     </div>
-                    <!-- 퇴근 마감 -->
                     <div class="bg-slate-100 rounded-xl p-3.5 sm:p-4 border border-slate-200">
                         <div class="flex items-center space-x-2 border-b border-slate-300 pb-2 mb-2.5">
                             <span class="w-5 h-5 rounded-full bg-slate-700 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-moon"></i></span>
@@ -183,7 +196,6 @@
                     </div>
                 </div>
 
-                <!-- Calendar Grid -->
                 <div>
                     <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-1.5 sm:py-2 rounded-t-lg border border-gray-200">
                         <span class="text-red-500">일</span>
@@ -257,7 +269,7 @@
             <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                     <h2 class="text-lg sm:text-xl font-bold">관리자 전용 대시보드</h2>
-                    <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">알바생별 근무 현황 관리 및 근태 기록 즉시 수정</p>
+                    <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">알바생별 근태, 전자 근로계약서 및 급여 통합 관리</p>
                 </div>
                 <div class="flex items-center space-x-2 self-end sm:self-auto">
                     <label class="text-xs text-gray-300">조회 월:</label>
@@ -265,11 +277,11 @@
                 </div>
             </div>
 
-            <!-- Overall Summary Table -->
+            <!-- Overall Summary Table with Contract Status -->
             <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
                 <div class="flex justify-between items-center mb-3 sm:mb-4">
                     <h3 class="text-base font-bold text-gray-900 flex items-center">
-                        <i class="fa-solid fa-users text-amber-500 mr-2"></i>전체 알바생 월별 급여 요약
+                        <i class="fa-solid fa-users text-amber-500 mr-2"></i>전체 알바생 월별 급여 & 근로계약서 현황
                     </h3>
                     <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
                         + 신규 알바생
@@ -277,13 +289,14 @@
                 </div>
 
                 <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left text-xs whitespace-nowrap min-w-[500px]">
+                    <table class="w-full text-left text-xs whitespace-nowrap min-w-[650px]">
                         <thead class="bg-gray-50 text-gray-500 border-b">
                             <tr>
                                 <th class="p-2.5">이름</th>
                                 <th class="p-2.5">설정 시급</th>
                                 <th class="p-2.5">이달 총 근무시간</th>
                                 <th class="p-2.5">이달 지급 예정 급여</th>
+                                <th class="p-2.5 text-center">근로계약서 작성/확인</th>
                                 <th class="p-2.5 text-center">비번 초기화</th>
                                 <th class="p-2.5 text-center">삭제</th>
                             </tr>
@@ -295,24 +308,6 @@
                 <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center text-xs sm:text-sm font-bold text-gray-900">
                     <span>전체 알바생 지급 예정액 합계</span>
                     <span id="adminTotalMonthPay" class="text-amber-600 text-base sm:text-lg">0원</span>
-                </div>
-            </div>
-
-            <!-- Manual Editor for Admin -->
-            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
-                <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center">
-                    <i class="fa-solid fa-pen-to-square text-amber-500 mr-2"></i>알바 매뉴얼 항목 추가
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                    <select id="newManualCategory" class="border border-gray-300 rounded-lg p-2.5 text-xs font-bold bg-gray-50">
-                        <option value="start">출근시</option>
-                        <option value="mid">근무중</option>
-                        <option value="end">퇴근 마감</option>
-                    </select>
-                    <input type="text" id="newManualInput" placeholder="추가할 업무 내용 입력..." class="sm:col-span-2 border border-gray-300 rounded-lg p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
-                    <button onclick="addManualItem()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 rounded-lg text-xs transition">
-                        매뉴얼 추가
-                    </button>
                 </div>
             </div>
 
@@ -332,7 +327,6 @@
                     </div>
                 </div>
 
-                <!-- Individual Summary Stat Cards -->
                 <div id="staffDetailCard" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
                         <p class="text-[11px] text-gray-500 font-semibold">설정 시급</p>
@@ -348,7 +342,6 @@
                     </div>
                 </div>
 
-                <!-- Monthly Attendance Calendar Grid -->
                 <div>
                     <h4 id="calendarTitle" class="text-xs sm:text-sm font-bold text-gray-800 mb-2.5">근무 달력</h4>
                     <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-1.5 rounded-t-lg border border-gray-200">
@@ -363,7 +356,6 @@
                     <div id="adminCalendarGrid" class="grid grid-cols-7 gap-1 bg-gray-200 p-1 rounded-b-lg border border-t-0 border-gray-200 text-xs"></div>
                 </div>
 
-                <!-- Individual Detailed History Logs -->
                 <div>
                     <h4 class="text-xs sm:text-sm font-bold text-gray-800 mb-2">선택 알바생 이달의 상세 근태 기록</h4>
                     <div class="overflow-x-auto custom-scrollbar">
@@ -388,7 +380,150 @@
 
     </div>
 
-    <!-- MODALS -->
+    <!-- ========================================== -->
+    <!-- MODALS & CONTRACT FORMS                    -->
+    <!-- ========================================== -->
+
+    <!-- 1. CREATE CONTRACT MODAL (ADMIN) -->
+    <div id="createContractModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-base sm:text-lg font-bold text-gray-900 flex items-center">
+                    <i class="fa-solid fa-file-contract text-amber-500 mr-2"></i>표준 근로계약서 작성 및 사장 서명
+                </h3>
+                <button onclick="closeCreateContractModal()" class="text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <input type="hidden" id="contractStaffId">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">근로자 이름</label>
+                    <input type="text" id="contractStaffName" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 font-bold">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">근로자 주소</label>
+                    <input type="text" id="contractStaffAddress" placeholder="예: 세종특별자치시 다정동" class="w-full border border-gray-300 rounded-lg p-2.5">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">근무 시작일</label>
+                    <input type="date" id="contractStartDate" class="w-full border border-gray-300 rounded-lg p-2.5">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">근무 종료일 (기한 없음 시 생략가능)</label>
+                    <input type="date" id="contractEndDate" class="w-full border border-gray-300 rounded-lg p-2.5">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">약정 시급 (원)</label>
+                    <input type="number" id="contractWage" class="w-full border border-gray-300 rounded-lg p-2.5 font-bold text-amber-600">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">소정 근무시간/휴게</label>
+                    <input type="text" id="contractWorkHours" value="일 8시간 (휴게시간 30분)" class="w-full border border-gray-300 rounded-lg p-2.5">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block font-semibold text-gray-700 mb-1">근무 장소 및 업무 내용</label>
+                    <input type="text" id="contractWorkPlace" value="더크래프트버거 세종도담점 (홀 서빙, 주방 보조 및 매장 관리)" class="w-full border border-gray-300 rounded-lg p-2.5">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">주휴일</label>
+                    <input type="text" id="contractRestDay" value="매주 토요일 (매장 정기휴무)" class="w-full border border-gray-300 rounded-lg p-2.5">
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">급여 지급일</label>
+                    <input type="text" id="contractPayDay" value="매월 말일 지급" class="w-full border border-gray-300 rounded-lg p-2.5">
+                </div>
+            </div>
+
+            <!-- Owner Signature Canvas -->
+            <div class="border-t pt-3">
+                <label class="block text-xs font-bold text-gray-800 mb-1">사업주(사장님) 전자 서명</label>
+                <div class="border border-gray-300 rounded-lg bg-gray-50 relative">
+                    <canvas id="ownerCanvas" class="w-full h-28 cursor-crosshair rounded-lg"></canvas>
+                    <button onclick="clearCanvas('ownerCanvas')" class="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[10px] px-2 py-1 rounded">지우기</button>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-1">* 박스 안에 마우스나 손가락으로 서명해 주세요.</p>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t">
+                <button onclick="closeCreateContractModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg">취소</button>
+                <button onclick="saveContractByOwner()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">계약서 발송 및 서명저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. VIEW & SIGN CONTRACT MODAL (STAFF / ADMIN VIEW) -->
+    <div id="viewContractModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-base sm:text-lg font-bold text-gray-900 flex items-center">
+                    <i class="fa-solid fa-file-shield text-amber-500 mr-2"></i>표준 근로계약서
+                </h3>
+                <button onclick="closeViewContractModal()" class="text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Contract Standard Paper Layout -->
+            <div id="contractPrintArea" class="bg-gray-50 p-4 sm:p-6 rounded-xl border border-gray-200 text-xs leading-relaxed space-y-3 text-gray-800">
+                <h2 class="text-center font-extrabold text-base sm:text-lg mb-2 text-gray-900">표 준 근 로 계 약 서</h2>
+                
+                <p class="text-justify">
+                    <strong id="docOwnerName">더크래프트버거</strong>(이하 "사업주"라 함)와(과) 
+                    <strong id="docStaffName">근로자</strong>(이하 "근로자"라 함)는 다음과 같이 근로계약을 체결한다.
+                </p>
+
+                <div class="bg-white p-3.5 rounded-lg border border-gray-200 space-y-1.5 text-[11px] sm:text-xs">
+                    <p><strong>1. 근로계약기간:</strong> <span id="docPeriod"></span></p>
+                    <p><strong>2. 근무장소 및 업무:</strong> <span id="docWorkPlace"></span></p>
+                    <p><strong>3. 소정근무시간:</strong> <span id="docWorkHours"></span></p>
+                    <p><strong>4. 주휴일:</strong> <span id="docRestDay"></span></p>
+                    <p><strong>5. 임금(시급):</strong> <strong id="docWage" class="text-amber-700"></strong>원 (분 단위 산출)</p>
+                    <p><strong>6. 지급일:</strong> <span id="docPayDay"></span></p>
+                </div>
+
+                <p class="text-[11px] text-gray-500">본 계약서에 명시되지 않은 사항은 근로기준법령에 따릅니다.</p>
+
+                <!-- Signatures Display -->
+                <div class="grid grid-cols-2 gap-4 border-t pt-4 mt-4">
+                    <div class="text-center space-y-2">
+                        <p class="font-bold text-gray-700">사업주 (사장님)</p>
+                        <p class="text-[11px]">상호: 더크래프트버거 세종도담점</p>
+                        <div class="h-20 border border-gray-200 bg-white rounded flex items-center justify-center p-1">
+                            <img id="docOwnerSignImg" class="max-h-full max-w-full object-contain">
+                        </div>
+                    </div>
+                    <div class="text-center space-y-2">
+                        <p class="font-bold text-gray-700">근로자 (알바생)</p>
+                        <p id="docStaffSubText" class="text-[11px]">성명: </p>
+                        <div class="h-20 border border-gray-200 bg-white rounded flex items-center justify-center p-1 relative">
+                            <img id="docStaffSignImg" class="max-h-full max-w-full object-contain hidden">
+                            <span id="docPendingSignNotice" class="text-red-500 font-bold text-xs">서명 대기 중</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff Signature Pad (Visible only when staff needs to sign) -->
+            <div id="staffSignSection" class="hidden border-t pt-3 space-y-2">
+                <label class="block text-xs font-bold text-red-600">✍️ 알바생 스마트폰 터치 서명</label>
+                <div class="border-2 border-red-300 rounded-lg bg-gray-50 relative">
+                    <canvas id="staffCanvas" class="w-full h-32 cursor-crosshair rounded-lg"></canvas>
+                    <button onclick="clearCanvas('staffCanvas')" class="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[10px] px-2 py-1 rounded">지우기</button>
+                </div>
+                <p class="text-[10px] text-gray-400">* 상단 서명란 박스 안에 손가락으로 서명한 후 아래 [서명 완료] 버튼을 누르세요.</p>
+                <button onclick="saveStaffSignature()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl text-sm shadow transition">
+                    근로계약서 터치 서명 완료하기
+                </button>
+            </div>
+
+            <div class="flex justify-between items-center pt-2 border-t">
+                <button onclick="window.print()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg">
+                    <i class="fa-solid fa-print mr-1"></i>인쇄 / PDF 저장
+                </button>
+                <button onclick="closeViewContractModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-lg">닫기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Edit Attendance Modal for Admin -->
     <div id="editAttendanceModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4">
@@ -462,6 +597,8 @@
         let staffList = [];
         let attendanceList = [];
         let manualList = [];
+        let contractList = [];
+        let currentActiveContract = null;
 
         const defaultManuals = [
             { category: 'start', text: '컵 닦기 & 컵 냉장고에 넣기' },
@@ -484,6 +621,8 @@
             document.getElementById('adminMonthPicker').value = currentMonthStr;
             document.getElementById('staffMonthPicker').value = currentMonthStr;
             initRealtimeListeners();
+            setupCanvasDrawing('ownerCanvas');
+            setupCanvasDrawing('staffCanvas');
         });
 
         function initRealtimeListeners() {
@@ -514,6 +653,12 @@
                     manualList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     if (currentUser && currentUser.role === 'staff') renderManualLists();
                 }
+            });
+
+            db.collection("contracts").onSnapshot(snapshot => {
+                contractList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentUser && currentUser.role === 'staff') checkStaffContractAlert();
+                if (currentUser && currentUser.role === 'admin') renderAdminDashboard();
             });
         }
 
@@ -602,6 +747,7 @@
             if (currentUser.role === 'staff') {
                 document.getElementById('staffDashboard').classList.remove('hidden');
                 renderStaffDashboard();
+                checkStaffContractAlert();
             } else {
                 document.getElementById('adminDashboard').classList.remove('hidden');
                 renderAdminDashboard();
@@ -616,6 +762,27 @@
             document.getElementById('adminDashboard').classList.add('hidden');
             document.getElementById('staffPassword').value = '';
             document.getElementById('adminPassword').value = '';
+        }
+
+        // ==========================================
+        // STAFF CONTRACT & DASHBOARD
+        // ==========================================
+        function checkStaffContractAlert() {
+            if (!currentUser || currentUser.role !== 'staff') return;
+            const myContract = contractList.find(c => c.staffId === currentUser.id);
+            const alertEl = document.getElementById('staffContractAlert');
+            
+            if (myContract && !myContract.isStaffSigned) {
+                alertEl.classList.remove('hidden');
+            } else {
+                alertEl.classList.add('hidden');
+            }
+        }
+
+        function openStaffContractModal() {
+            const myContract = contractList.find(c => c.staffId === currentUser.id);
+            if (!myContract) return alert('작성된 근로계약서가 없습니다.');
+            openViewContractModal(myContract.id, true);
         }
 
         function renderStaffDashboard() {
@@ -834,6 +1001,9 @@
             db.collection('manuals').doc(manualId).update({ completedBy });
         }
 
+        // ==========================================
+        // ADMIN DASHBOARD
+        // ==========================================
         function renderAdminDashboard() {
             const selectedMonth = document.getElementById('adminMonthPicker').value;
             const staffTable = document.getElementById('adminStaffPayTable');
@@ -854,6 +1024,17 @@
 
                 overallPaySum += staffPay;
 
+                // Contract status
+                const contract = contractList.find(c => c.staffId === staff.id);
+                let contractBtnHtml = '';
+                if (!contract) {
+                    contractBtnHtml = `<button onclick="openCreateContractModal('${staff.id}')" class="bg-amber-500 hover:bg-amber-600 text-white text-[11px] px-2.5 py-1 rounded font-bold">+ 계약서 작성</button>`;
+                } else if (!contract.isStaffSigned) {
+                    contractBtnHtml = `<button onclick="openViewContractModal('${contract.id}')" class="bg-red-100 text-red-700 text-[11px] px-2.5 py-1 rounded font-bold">알바서명 대기중</button>`;
+                } else {
+                    contractBtnHtml = `<button onclick="openViewContractModal('${contract.id}')" class="bg-emerald-100 text-emerald-800 text-[11px] px-2.5 py-1 rounded font-bold"><i class="fa-solid fa-check mr-1"></i>계약 완료 (보기)</button>`;
+                }
+
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50";
                 tr.innerHTML = `
@@ -863,6 +1044,7 @@
                     </td>
                     <td class="p-2.5">${Math.floor(staffMinutes/60)}시간 ${staffMinutes%60}분</td>
                     <td class="p-2.5 font-bold text-amber-600">${staffPay.toLocaleString()}원</td>
+                    <td class="p-2.5 text-center">${contractBtnHtml}</td>
                     <td class="p-2.5 text-center">
                         <button onclick="resetStaffPassword('${staff.id}')" class="text-[11px] bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded text-gray-600">초기화</button>
                     </td>
@@ -987,6 +1169,190 @@
             });
         }
 
+        // ==========================================
+        // CANVAS SIGNATURE LOGIC
+        // ==========================================
+        function setupCanvasDrawing(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let isDrawing = false;
+
+            function resizeCanvas() {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#000000';
+            }
+            resizeCanvas();
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: clientX - rect.left, y: clientY - rect.top };
+            }
+
+            function startDraw(e) {
+                isDrawing = true;
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            }
+
+            function draw(e) {
+                if (!isDrawing) return;
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            }
+
+            function stopDraw() { isDrawing = false; }
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseleave', stopDraw);
+
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, { passive: false });
+            canvas.addEventListener('touchend', stopDraw);
+        }
+
+        function clearCanvas(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // CONTRACT FUNCTIONS
+        function openCreateContractModal(staffId) {
+            const staff = staffList.find(s => s.id === staffId);
+            if (!staff) return;
+
+            document.getElementById('contractStaffId').value = staff.id;
+            document.getElementById('contractStaffName').value = staff.name;
+            document.getElementById('contractWage').value = staff.wage;
+            
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            document.getElementById('contractStartDate').value = todayStr;
+
+            clearCanvas('ownerCanvas');
+            document.getElementById('createContractModal').classList.remove('hidden');
+            document.getElementById('createContractModal').classList.add('flex');
+            setTimeout(() => setupCanvasDrawing('ownerCanvas'), 100);
+        }
+
+        function closeCreateContractModal() {
+            document.getElementById('createContractModal').classList.add('hidden');
+            document.getElementById('createContractModal').classList.remove('flex');
+        }
+
+        function saveContractByOwner() {
+            const staffId = document.getElementById('contractStaffId').value;
+            const staffName = document.getElementById('contractStaffName').value;
+            const address = document.getElementById('contractStaffAddress').value.trim();
+            const startDate = document.getElementById('contractStartDate').value;
+            const endDate = document.getElementById('contractEndDate').value;
+            const wage = Number(document.getElementById('contractWage').value);
+            const workHours = document.getElementById('contractWorkHours').value;
+            const workPlace = document.getElementById('contractWorkPlace').value;
+            const restDay = document.getElementById('contractRestDay').value;
+            const payDay = document.getElementById('contractPayDay').value;
+
+            const ownerCanvas = document.getElementById('ownerCanvas');
+            const ownerSignImgData = ownerCanvas.toDataURL();
+
+            if (!startDate) return alert('근무 시작일을 지정해주세요.');
+
+            const contractData = {
+                staffId,
+                staffName,
+                address,
+                startDate,
+                endDate: endDate || '기한 없음',
+                wage,
+                workHours,
+                workPlace,
+                restDay,
+                payDay,
+                ownerSignImgData,
+                staffSignImgData: '',
+                isStaffSigned: false,
+                createdAt: new Date().toISOString()
+            };
+
+            db.collection('contracts').doc(staffId).set(contractData).then(() => {
+                alert('전자 근로계약서가 성공적으로 발송 및 저장되었습니다.\n알바생 로그인 시 터치 서명을 진행할 수 있습니다.');
+                closeCreateContractModal();
+            });
+        }
+
+        function openViewContractModal(contractId, isStaffSigningMode = false) {
+            const contract = contractList.find(c => c.id === contractId);
+            if (!contract) return;
+            currentActiveContract = contract;
+
+            document.getElementById('docStaffName').textContent = contract.staffName;
+            document.getElementById('docPeriod').textContent = `${contract.startDate} ~ ${contract.endDate}`;
+            document.getElementById('docWorkPlace').textContent = contract.workPlace;
+            document.getElementById('docWorkHours').textContent = contract.workHours;
+            document.getElementById('docRestDay').textContent = contract.restDay;
+            document.getElementById('docWage').textContent = contract.wage.toLocaleString();
+            document.getElementById('docPayDay').textContent = contract.payDay;
+            document.getElementById('docStaffSubText').textContent = `성명: ${contract.staffName}`;
+
+            document.getElementById('docOwnerSignImg').src = contract.ownerSignImgData;
+
+            const staffSignImg = document.getElementById('docStaffSignImg');
+            const pendingNotice = document.getElementById('docPendingSignNotice');
+
+            if (contract.isStaffSigned) {
+                staffSignImg.src = contract.staffSignImgData;
+                staffSignImg.classList.remove('hidden');
+                pendingNotice.classList.add('hidden');
+            } else {
+                staffSignImg.classList.add('hidden');
+                pendingNotice.classList.remove('hidden');
+            }
+
+            const staffSignSection = document.getElementById('staffSignSection');
+            if (isStaffSigningMode && !contract.isStaffSigned) {
+                staffSignSection.classList.remove('hidden');
+                clearCanvas('staffCanvas');
+                setTimeout(() => setupCanvasDrawing('staffCanvas'), 100);
+            } else {
+                staffSignSection.classList.add('hidden');
+            }
+
+            document.getElementById('viewContractModal').classList.remove('hidden');
+            document.getElementById('viewContractModal').classList.add('flex');
+        }
+
+        function closeViewContractModal() {
+            document.getElementById('viewContractModal').classList.add('hidden');
+            document.getElementById('viewContractModal').classList.remove('flex');
+        }
+
+        function saveStaffSignature() {
+            if (!currentActiveContract) return;
+
+            const staffCanvas = document.getElementById('staffCanvas');
+            const staffSignImgData = staffCanvas.toDataURL();
+
+            db.collection('contracts').doc(currentActiveContract.id).update({
+                staffSignImgData: staffSignImgData,
+                isStaffSigned: true,
+                signedAt: new Date().toISOString()
+            }).then(() => {
+                alert('근로계약서 서명이 성공적으로 완료되었습니다!');
+                closeViewContractModal();
+            });
+        }
+
+        // ATTENDANCE EDIT & BASIC MODALS
         function openEditAttendanceModal(recordId) {
             const record = attendanceList.find(r => r.id === recordId);
             if (!record) return;
@@ -1091,22 +1457,8 @@
         function deleteStaff(staffId) {
             if (confirm('알바생 정보를 삭제하시겠습니까?')) {
                 db.collection('staffs').doc(staffId).delete();
+                db.collection('contracts').doc(staffId).delete();
             }
-        }
-
-        function addManualItem() {
-            const category = document.getElementById('newManualCategory').value;
-            const text = document.getElementById('newManualInput').value.trim();
-            if (!text) return alert('매뉴얼 내용을 입력하세요.');
-
-            db.collection('manuals').add({
-                category: category,
-                text: text,
-                completedBy: []
-            }).then(() => {
-                document.getElementById('newManualInput').value = '';
-                alert('새 매뉴얼이 추가되었습니다.');
-            });
         }
 
         function openAddStaffModal() {
