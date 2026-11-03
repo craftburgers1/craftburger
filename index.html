@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>더크래프트버거 - 알바생 관리 및 근태/급여/매뉴얼 시스템</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,42 +15,45 @@
     
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-        body { font-family: 'Pretendard', sans-serif; }
+        body { font-family: 'Pretendard', sans-serif; -webkit-tap-highlight-color: transparent; }
+        /* Mobile Horizontal Scroll Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800">
+<body class="bg-gray-100 min-h-screen text-gray-800 antialiased selection:bg-amber-500 selection:text-white">
 
     <!-- Top Navigation Bar -->
     <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-burger text-amber-500 text-2xl"></i>
-                <h1 class="text-xl font-bold tracking-tight">더크래프트버거 <span class="text-xs text-amber-400 font-normal ml-1">근태/급여</span></h1>
+                <h1 class="text-lg sm:text-xl font-bold tracking-tight">더크래프트버거 <span class="text-xs text-amber-400 font-normal ml-1">근태/급여</span></h1>
             </div>
-            <div id="userInfoHeader" class="hidden flex items-center space-x-3">
-                <span id="loggedInBadge" class="bg-amber-500 text-slate-900 text-xs font-bold px-2.5 py-1 rounded-full"></span>
-                <button onclick="logout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-gray-300 px-3 py-1.5 rounded transition">
-                    <i class="fa-solid fa-right-from-bracket mr-1"></i>로그아웃
+            <div id="userInfoHeader" class="hidden flex items-center space-x-2 sm:space-x-3">
+                <span id="loggedInBadge" class="bg-amber-500 text-slate-900 text-[11px] sm:text-xs font-bold px-2 py-1 sm:px-2.5 sm:py-1 rounded-full"></span>
+                <button onclick="logout()" class="text-[11px] sm:text-xs bg-slate-800 hover:bg-slate-700 text-gray-300 px-2.5 py-1.5 sm:px-3 rounded transition">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i><span class="hidden sm:inline">로그아웃</span>
                 </button>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+    <div class="max-w-5xl mx-auto px-3 py-4 sm:p-6 space-y-4 sm:space-y-6">
 
         <!-- ========================================== -->
         <!-- 1. LOGIN SECTION                           -->
         <!-- ========================================== -->
-        <div id="loginSection" class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-md mx-auto my-12 border border-gray-100">
-            <div class="text-center mb-6">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-amber-100 text-amber-600 rounded-full mb-3">
-                    <i class="fa-solid fa-users-gear text-2xl"></i>
+        <div id="loginSection" class="bg-white rounded-2xl shadow-xl p-5 sm:p-8 max-w-md mx-auto my-6 sm:my-12 border border-gray-100">
+            <div class="text-center mb-5 sm:mb-6">
+                <div class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-amber-100 text-amber-600 rounded-full mb-3">
+                    <i class="fa-solid fa-users-gear text-xl sm:text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-900">시스템 로그인</h2>
-                <p class="text-sm text-gray-500 mt-1">알바생 및 관리자 전용 공간입니다.</p>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">시스템 로그인</h2>
+                <p class="text-xs sm:text-sm text-gray-500 mt-1">알바생 및 관리자 전용 공간입니다.</p>
             </div>
 
-            <div class="flex border-b border-gray-200 mb-6">
+            <div class="flex border-b border-gray-200 mb-5">
                 <button id="tabStaffBtn" onclick="switchLoginTab('staff')" class="flex-1 py-2.5 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-sm">
                     알바생 접속
                 </button>
@@ -63,16 +66,16 @@
             <div id="staffLoginForm" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">이름 선택 (개인정보 보호)</label>
-                    <select id="staffSelect" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    <select id="staffSelect" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                         <option value="">알바생을 선택하세요</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">비밀번호</label>
-                    <input type="password" id="staffPassword" placeholder="비밀번호 입력" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    <input type="password" id="staffPassword" placeholder="비밀번호 입력" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                     <p class="text-[11px] text-gray-400 mt-1">* 첫 로그인 시 입력한 비밀번호가 자동 등록됩니다.</p>
                 </div>
-                <button onclick="loginStaff()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg shadow-md transition">
+                <button onclick="loginStaff()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold py-3.5 rounded-xl shadow-md transition">
                     알바생 로그인
                 </button>
             </div>
@@ -81,9 +84,9 @@
             <div id="adminLoginForm" class="space-y-4 hidden">
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">관리자 비밀번호</label>
-                    <input type="password" id="adminPassword" placeholder="비밀번호를 입력하세요" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    <input type="password" id="adminPassword" placeholder="비밀번호를 입력하세요" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                 </div>
-                <button onclick="loginAdmin()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-md transition">
+                <button onclick="loginAdmin()" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold py-3.5 rounded-xl shadow-md transition">
                     관리자 로그인
                 </button>
             </div>
@@ -92,99 +95,97 @@
         <!-- ========================================== -->
         <!-- 2. STAFF DASHBOARD                         -->
         <!-- ========================================== -->
-        <div id="staffDashboard" class="hidden space-y-6">
+        <div id="staffDashboard" class="hidden space-y-4 sm:space-y-6">
             <!-- Modified Attendance Alert Banner -->
-            <div id="staffEditAlertBanner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-sm">
+            <div id="staffEditAlertBanner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-3.5 sm:p-4 rounded-r-xl shadow-sm">
                 <div class="flex items-start">
-                    <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg mr-3 mt-0.5"></i>
+                    <i class="fa-solid fa-triangle-exclamation text-amber-500 text-base sm:text-lg mr-2.5 mt-0.5"></i>
                     <div>
                         <h4 class="text-xs font-bold text-amber-800">관리자 근태 기록 수정 안내</h4>
-                        <p class="text-xs text-amber-700 mt-0.5">관리자에 의해 근태 기록(시간/급여)이 수정된 항목이 존재합니다. 하단 근무 기록표에서 <strong>[관리자 수정됨]</strong> 태그를 확인해 주세요.</p>
+                        <p class="text-[11px] sm:text-xs text-amber-700 mt-0.5">관리자에 의해 수정된 항목이 있습니다. 하단 목록의 <strong>[관리자 수정됨]</strong> 태그를 눌러 사유를 확인해 주세요.</p>
                     </div>
                 </div>
             </div>
 
             <!-- Header Summary Card -->
-            <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-6 text-white shadow-lg">
+            <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-amber-100 text-xs font-medium">반갑습니다!</p>
-                        <h2 id="staffNameDisplay" class="text-2xl font-bold mt-0.5"></h2>
+                        <p class="text-amber-100 text-[11px] sm:text-xs font-medium">반갑습니다!</p>
+                        <h2 id="staffNameDisplay" class="text-xl sm:text-2xl font-bold mt-0.5"></h2>
                     </div>
                     <div class="text-right">
-                        <p class="text-amber-100 text-xs">시급</p>
-                        <p id="staffWageDisplay" class="text-xl font-bold mt-0.5">0원</p>
+                        <p class="text-amber-100 text-[11px] sm:text-xs">시급</p>
+                        <p id="staffWageDisplay" class="text-lg sm:text-xl font-bold mt-0.5">0원</p>
                     </div>
                 </div>
-                <div class="mt-6 pt-4 border-t border-amber-400/40 flex justify-between items-end">
+                <div class="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-amber-400/40 flex justify-between items-end">
                     <div>
-                        <p class="text-amber-100 text-xs">선택 월 예상 급여</p>
-                        <p id="staffTotalPayDisplay" class="text-3xl font-extrabold mt-1">0원</p>
+                        <p class="text-amber-100 text-[11px] sm:text-xs">선택 월 예상 급여</p>
+                        <p id="staffTotalPayDisplay" class="text-2xl sm:text-3xl font-extrabold mt-0.5">0원</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-amber-100 text-xs">선택 월 총 근무시간</p>
-                        <p id="staffTotalHoursDisplay" class="text-sm font-semibold mt-1">0시간 0분</p>
+                        <p class="text-amber-100 text-[11px] sm:text-xs">선택 월 총 근무시간</p>
+                        <p id="staffTotalHoursDisplay" class="text-xs sm:text-sm font-semibold mt-0.5">0시간 0분</p>
                     </div>
                 </div>
             </div>
 
             <!-- WORK MANUAL (알바 매뉴얼) -->
-            <div class="bg-white rounded-2xl p-6 shadow-md border border-amber-200">
-                <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h3 class="text-lg font-extrabold text-slate-900 flex items-center">
-                            <i class="fa-solid fa-book-open text-amber-500 mr-2"></i>더크래프트버거 알바 매뉴얼
-                        </h3>
-                        <p class="text-xs text-gray-500 mt-0.5">상황별 필수 업무 체크리스트입니다.</p>
-                    </div>
+            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200">
+                <div class="mb-3 sm:mb-4">
+                    <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center">
+                        <i class="fa-solid fa-book-open text-amber-500 mr-2"></i>더크래프트버거 알바 매뉴얼
+                    </h3>
+                    <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">상황별 필수 업무 체크리스트입니다. 완료된 항목을 터치하세요.</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                     <!-- 출근시 -->
-                    <div class="bg-amber-50/60 rounded-xl p-4 border border-amber-200/70">
-                        <div class="flex items-center space-x-2 border-b border-amber-200 pb-2.5 mb-3">
-                            <span class="w-6 h-6 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center font-bold"><i class="fa-solid fa-sun"></i></span>
-                            <h4 class="font-bold text-amber-900 text-sm">출근시</h4>
+                    <div class="bg-amber-50/60 rounded-xl p-3.5 sm:p-4 border border-amber-200/70">
+                        <div class="flex items-center space-x-2 border-b border-amber-200 pb-2 mb-2.5">
+                            <span class="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-sun"></i></span>
+                            <h4 class="font-bold text-amber-900 text-xs sm:text-sm">출근시</h4>
                         </div>
-                        <div id="manualStartList" class="space-y-2"></div>
+                        <div id="manualStartList" class="space-y-1.5"></div>
                     </div>
                     <!-- 근무중 -->
-                    <div class="bg-blue-50/60 rounded-xl p-4 border border-blue-200/70">
-                        <div class="flex items-center space-x-2 border-b border-blue-200 pb-2.5 mb-3">
-                            <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold"><i class="fa-solid fa-beer-mug-empty"></i></span>
-                            <h4 class="font-bold text-blue-900 text-sm">근무중</h4>
+                    <div class="bg-blue-50/60 rounded-xl p-3.5 sm:p-4 border border-blue-200/70">
+                        <div class="flex items-center space-x-2 border-b border-blue-200 pb-2 mb-2.5">
+                            <span class="w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-beer-mug-empty"></i></span>
+                            <h4 class="font-bold text-blue-900 text-xs sm:text-sm">근무중</h4>
                         </div>
-                        <div id="manualMidList" class="space-y-2"></div>
+                        <div id="manualMidList" class="space-y-1.5"></div>
                     </div>
                     <!-- 퇴근 마감 -->
-                    <div class="bg-slate-100 rounded-xl p-4 border border-slate-200">
-                        <div class="flex items-center space-x-2 border-b border-slate-300 pb-2.5 mb-3">
-                            <span class="w-6 h-6 rounded-full bg-slate-700 text-white text-xs flex items-center justify-center font-bold"><i class="fa-solid fa-moon"></i></span>
-                            <h4 class="font-bold text-slate-900 text-sm">퇴근 마감</h4>
+                    <div class="bg-slate-100 rounded-xl p-3.5 sm:p-4 border border-slate-200">
+                        <div class="flex items-center space-x-2 border-b border-slate-300 pb-2 mb-2.5">
+                            <span class="w-5 h-5 rounded-full bg-slate-700 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-moon"></i></span>
+                            <h4 class="font-bold text-slate-900 text-xs sm:text-sm">퇴근 마감</h4>
                         </div>
-                        <div id="manualEndList" class="space-y-2"></div>
+                        <div id="manualEndList" class="space-y-1.5"></div>
                     </div>
                 </div>
             </div>
 
             <!-- Staff Interactive Calendar -->
-            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100 space-y-4">
+            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-3 sm:space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
                     <div>
                         <h3 class="text-base font-bold text-gray-900 flex items-center">
                             <i class="fa-solid fa-calendar-days text-amber-500 mr-2"></i>내 근무 달력
                         </h3>
-                        <p class="text-xs text-gray-500 mt-0.5">달력의 날짜를 클릭하면 해당 날짜로 바로 출퇴근 시간을 입력할 수 있습니다.</p>
+                        <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">달력 날짜를 누르면 해당 날짜로 입력창에 세팅됩니다.</p>
                     </div>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
                         <label class="text-xs text-gray-500 font-semibold">조회 월:</label>
-                        <input type="month" id="staffMonthPicker" onchange="renderStaffDashboard()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs rounded-lg p-2 focus:outline-none font-bold">
+                        <input type="month" id="staffMonthPicker" onchange="renderStaffDashboard()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs rounded-lg p-1.5 focus:outline-none font-bold">
                     </div>
                 </div>
 
                 <!-- Calendar Grid -->
                 <div>
-                    <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-2 rounded-t-lg border border-gray-200">
+                    <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-1.5 sm:py-2 rounded-t-lg border border-gray-200">
                         <span class="text-red-500">일</span>
                         <span>월</span>
                         <span>화</span>
@@ -198,48 +199,48 @@
             </div>
 
             <!-- Input Work Record -->
-            <div id="inputFormCard" class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+            <div id="inputFormCard" class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
                 <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center">
                     <i class="fa-regular fa-clock text-amber-500 mr-2"></i>근무 시간 등록
                 </h3>
-                <p id="selectedDateNotice" class="text-xs text-amber-600 font-semibold mb-4">날짜를 선택하거나 출퇴근 시각을 입력해 주세요.</p>
+                <p id="selectedDateNotice" class="text-[11px] sm:text-xs text-amber-600 font-semibold mb-3 sm:mb-4">날짜를 선택하거나 출퇴근 시각을 입력해 주세요.</p>
                 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
-                        <input type="datetime-local" id="workStart" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <input type="datetime-local" id="workStart" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
-                        <input type="datetime-local" id="workEnd" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <input type="datetime-local" id="workEnd" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-amber-50 rounded-lg flex justify-between items-center text-xs sm:text-sm text-amber-900">
+                <div class="mt-3 sm:mt-4 p-3 bg-amber-50 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-amber-900 gap-1">
                     <span>계산된 근무시간: <strong id="calculatedTimeText" class="text-amber-700">0시간 0분</strong></span>
                     <span>예상 산출 급여: <strong id="calculatedPayText" class="text-amber-700">0원</strong></span>
                 </div>
 
-                <button onclick="saveAttendanceRecord()" class="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow transition">
+                <button onclick="saveAttendanceRecord()" class="w-full mt-3 sm:mt-4 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold py-3 sm:py-3.5 rounded-xl shadow transition text-sm">
                     근태 기록 제출하기
                 </button>
             </div>
 
             <!-- History Table -->
-            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
-                <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center">
+            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
+                <h3 class="text-base font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                     <i class="fa-solid fa-list text-amber-500 mr-2"></i>선택 월 상세 근무 기록
                 </h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs sm:text-sm">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs whitespace-nowrap min-w-[550px]">
                         <thead class="bg-gray-50 text-gray-500 border-b">
                             <tr>
-                                <th class="p-3">출근시간</th>
-                                <th class="p-3">퇴근시간</th>
-                                <th class="p-3">근무시간</th>
-                                <th class="p-3 text-right">급여</th>
-                                <th class="p-3 text-center">비고/수정이력</th>
-                                <th class="p-3 text-center">삭제</th>
+                                <th class="p-2.5">출근시간</th>
+                                <th class="p-2.5">퇴근시간</th>
+                                <th class="p-2.5">근무시간</th>
+                                <th class="p-2.5 text-right">급여</th>
+                                <th class="p-2.5 text-center">비고/수정이력</th>
+                                <th class="p-2.5 text-center">삭제</th>
                             </tr>
                         </thead>
                         <tbody id="staffAttendanceTable" class="divide-y divide-gray-100"></tbody>
@@ -251,54 +252,54 @@
         <!-- ========================================== -->
         <!-- 3. ADMIN DASHBOARD                         -->
         <!-- ========================================== -->
-        <div id="adminDashboard" class="hidden space-y-6">
+        <div id="adminDashboard" class="hidden space-y-4 sm:space-y-6">
             <!-- Header & Month Filter -->
-            <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h2 class="text-xl font-bold">관리자 전용 대시보드</h2>
-                    <p class="text-xs text-gray-400 mt-0.5">알바생별 근무 현황 관리 및 근태 기록 즉시 수정</p>
+                    <h2 class="text-lg sm:text-xl font-bold">관리자 전용 대시보드</h2>
+                    <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">알바생별 근무 현황 관리 및 근태 기록 즉시 수정</p>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-2 self-end sm:self-auto">
                     <label class="text-xs text-gray-300">조회 월:</label>
-                    <input type="month" id="adminMonthPicker" onchange="renderAdminDashboard()" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg p-2 focus:outline-none">
+                    <input type="month" id="adminMonthPicker" onchange="renderAdminDashboard()" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg p-1.5 focus:outline-none">
                 </div>
             </div>
 
             <!-- Overall Summary Table -->
-            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
-                <div class="flex justify-between items-center mb-4">
+            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
+                <div class="flex justify-between items-center mb-3 sm:mb-4">
                     <h3 class="text-base font-bold text-gray-900 flex items-center">
                         <i class="fa-solid fa-users text-amber-500 mr-2"></i>전체 알바생 월별 급여 요약
                     </h3>
-                    <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-3 py-2 rounded-lg transition">
-                        + 신규 알바생 등록
+                    <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
+                        + 신규 알바생
                     </button>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs sm:text-sm">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs whitespace-nowrap min-w-[500px]">
                         <thead class="bg-gray-50 text-gray-500 border-b">
                             <tr>
-                                <th class="p-3">이름</th>
-                                <th class="p-3">설정 시급</th>
-                                <th class="p-3">이달 총 근무시간</th>
-                                <th class="p-3">이달 지급 예정 급여</th>
-                                <th class="p-3 text-center">비번 초기화</th>
-                                <th class="p-3 text-center">삭제</th>
+                                <th class="p-2.5">이름</th>
+                                <th class="p-2.5">설정 시급</th>
+                                <th class="p-2.5">이달 총 근무시간</th>
+                                <th class="p-2.5">이달 지급 예정 급여</th>
+                                <th class="p-2.5 text-center">비번 초기화</th>
+                                <th class="p-2.5 text-center">삭제</th>
                             </tr>
                         </thead>
                         <tbody id="adminStaffPayTable" class="divide-y divide-gray-100"></tbody>
                     </table>
                 </div>
 
-                <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm font-bold text-gray-900">
+                <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center text-xs sm:text-sm font-bold text-gray-900">
                     <span>전체 알바생 지급 예정액 합계</span>
-                    <span id="adminTotalMonthPay" class="text-amber-600 text-lg">0원</span>
+                    <span id="adminTotalMonthPay" class="text-amber-600 text-base sm:text-lg">0원</span>
                 </div>
             </div>
 
             <!-- Manual Editor for Admin -->
-            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
                 <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center">
                     <i class="fa-solid fa-pen-to-square text-amber-500 mr-2"></i>알바 매뉴얼 항목 추가
                 </h3>
@@ -316,41 +317,41 @@
             </div>
 
             <!-- Staff Detailed View with Calendar -->
-            <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100 space-y-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-4 sm:space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 sm:pb-4">
                     <div>
                         <h3 class="text-base font-bold text-gray-900 flex items-center">
-                            <i class="fa-solid fa-calendar-check text-amber-500 mr-2"></i>알바생별 상세 근태 & 달력 조회 (수정 기능 지원)
+                            <i class="fa-solid fa-calendar-check text-amber-500 mr-2"></i>알바생별 상세 근태 & 달력 조회
                         </h3>
-                        <p class="text-xs text-gray-500 mt-1">알바생을 선택해 달력을 확인하고, 근태 시각이 잘못된 경우 바로 수정할 수 있습니다.</p>
+                        <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">알바생을 선택해 달력을 확인하고, 근태 시각을 바로 수정할 수 있습니다.</p>
                     </div>
-                    <div class="w-full sm:w-56">
-                        <select id="adminSelectedStaff" onchange="renderAdminStaffCalendar()" class="w-full bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-sm font-bold text-amber-900 focus:outline-none">
+                    <div class="w-full sm:w-52">
+                        <select id="adminSelectedStaff" onchange="renderAdminStaffCalendar()" class="w-full bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-xs sm:text-sm font-bold text-amber-900 focus:outline-none">
                             <option value="">알바생을 선택하세요</option>
                         </select>
                     </div>
                 </div>
 
                 <!-- Individual Summary Stat Cards -->
-                <div id="staffDetailCard" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <p class="text-xs text-gray-500 font-semibold">설정 시급</p>
-                        <p id="detailStaffWage" class="text-lg font-bold text-gray-800 mt-1">0원</p>
+                <div id="staffDetailCard" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                        <p class="text-[11px] text-gray-500 font-semibold">설정 시급</p>
+                        <p id="detailStaffWage" class="text-base sm:text-lg font-bold text-gray-800 mt-0.5">0원</p>
                     </div>
-                    <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
-                        <p class="text-xs text-amber-700 font-semibold">선택 월 총 근무시간</p>
-                        <p id="detailStaffHours" class="text-lg font-bold text-amber-900 mt-1">0시간 0분</p>
+                    <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-100">
+                        <p class="text-[11px] text-amber-700 font-semibold">선택 월 총 근무시간</p>
+                        <p id="detailStaffHours" class="text-base sm:text-lg font-bold text-amber-900 mt-0.5">0시간 0분</p>
                     </div>
-                    <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                        <p class="text-xs text-emerald-700 font-semibold">선택 월 지급 예정 급여</p>
-                        <p id="detailStaffPay" class="text-xl font-extrabold text-emerald-800 mt-1">0원</p>
+                    <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-100">
+                        <p class="text-[11px] text-emerald-700 font-semibold">선택 월 지급 예정 급여</p>
+                        <p id="detailStaffPay" class="text-lg sm:text-xl font-extrabold text-emerald-800 mt-0.5">0원</p>
                     </div>
                 </div>
 
                 <!-- Monthly Attendance Calendar Grid -->
                 <div>
-                    <h4 id="calendarTitle" class="text-sm font-bold text-gray-800 mb-3">근무 달력</h4>
-                    <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-2 rounded-t-lg border border-gray-200">
+                    <h4 id="calendarTitle" class="text-xs sm:text-sm font-bold text-gray-800 mb-2.5">근무 달력</h4>
+                    <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-1.5 rounded-t-lg border border-gray-200">
                         <span class="text-red-500">일</span>
                         <span>월</span>
                         <span>화</span>
@@ -364,9 +365,9 @@
 
                 <!-- Individual Detailed History Logs -->
                 <div>
-                    <h4 class="text-sm font-bold text-gray-800 mb-2">선택 알바생 이달의 상세 근태 기록 (수정/이력)</h4>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
+                    <h4 class="text-xs sm:text-sm font-bold text-gray-800 mb-2">선택 알바생 이달의 상세 근태 기록</h4>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs whitespace-nowrap min-w-[600px]">
                             <thead class="bg-gray-50 text-gray-500 border-b">
                                 <tr>
                                     <th class="p-2.5">출근시각</th>
@@ -390,8 +391,8 @@
     <!-- MODALS -->
     <!-- Edit Attendance Modal for Admin -->
     <div id="editAttendanceModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 class="text-lg font-bold text-gray-900 flex items-center">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4">
+            <h3 class="text-base sm:text-lg font-bold text-gray-900 flex items-center">
                 <i class="fa-solid fa-clock-rotate-left text-amber-500 mr-2"></i>근태 기록 수정
             </h3>
             <input type="hidden" id="editRecordId">
@@ -399,11 +400,11 @@
 
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
-                <input type="datetime-local" id="editWorkStart" onchange="calculateEditDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+                <input type="datetime-local" id="editWorkStart" onchange="calculateEditDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
-                <input type="datetime-local" id="editWorkEnd" onchange="calculateEditDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+                <input type="datetime-local" id="editWorkEnd" onchange="calculateEditDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
             </div>
 
             <div class="p-3 bg-amber-50 rounded-lg flex justify-between items-center text-xs text-amber-900">
@@ -412,32 +413,32 @@
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">수정 사유 (알바생이 볼 수 있습니다)</label>
-                <input type="text" id="editReason" placeholder="예: 알바생 퇴근 시간 오입력 수정" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+                <label class="block text-xs font-semibold text-gray-600 mb-1">수정 사유 (알바생에게 노출됩니다)</label>
+                <input type="text" id="editReason" placeholder="예: 알바생 퇴근 시간 오입력 수정" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
             </div>
 
             <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="closeEditAttendanceModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg">취소</button>
-                <button onclick="saveAttendanceEdit()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">수정 저장</button>
+                <button onclick="closeEditAttendanceModal()" class="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg">취소</button>
+                <button onclick="saveAttendanceEdit()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">수정 저장</button>
             </div>
         </div>
     </div>
 
     <!-- Add Staff Modal -->
     <div id="addStaffModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
-            <h3 class="text-lg font-bold text-gray-900">신규 알바생 등록</h3>
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 sm:p-6 shadow-2xl space-y-4">
+            <h3 class="text-base sm:text-lg font-bold text-gray-900">신규 알바생 등록</h3>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">알바생 이름</label>
-                <input type="text" id="newStaffName" placeholder="예: 김철수" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+                <input type="text" id="newStaffName" placeholder="예: 김철수" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">기본 시급 (원)</label>
-                <input type="number" id="newStaffWage" value="10030" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+                <input type="number" id="newStaffWage" value="10030" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
             </div>
             <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="closeAddStaffModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg">취소</button>
-                <button onclick="saveNewStaff()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">등록</button>
+                <button onclick="closeAddStaffModal()" class="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg">취소</button>
+                <button onclick="saveNewStaff()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">등록</button>
             </div>
         </div>
     </div>
@@ -516,7 +517,6 @@
             });
         }
 
-        // Masking Name Helper (홍길동 -> 홍*동, 김철 -> 김*)
         function maskName(name) {
             if (!name) return '';
             if (name.length <= 2) return name[0] + '*';
@@ -543,7 +543,7 @@
             staffList.forEach(staff => {
                 const opt = document.createElement('option');
                 opt.value = staff.id;
-                opt.textContent = staff.name; // Admin sees full name
+                opt.textContent = staff.name;
                 select.appendChild(opt);
             });
             select.value = currentVal;
@@ -618,9 +618,6 @@
             document.getElementById('adminPassword').value = '';
         }
 
-        // ==========================================
-        // STAFF DASHBOARD
-        // ==========================================
         function renderStaffDashboard() {
             document.getElementById('staffNameDisplay').textContent = `${currentUser.name} 님`;
             document.getElementById('staffWageDisplay').textContent = `${currentUser.wage.toLocaleString()}원`;
@@ -628,7 +625,6 @@
             const selectedMonth = document.getElementById('staffMonthPicker').value;
             const myRecords = attendanceList.filter(r => r.staffId === currentUser.id && r.startTime.startsWith(selectedMonth));
 
-            // Check modified records alert
             const modifiedCount = myRecords.filter(r => r.isEdited).length;
             const alertBanner = document.getElementById('staffEditAlertBanner');
             if (modifiedCount > 0) alertBanner.classList.remove('hidden');
@@ -670,12 +666,12 @@
                 }
 
                 tr.innerHTML = `
-                    <td class="p-3">${formatDateTime(r.startTime)}</td>
-                    <td class="p-3">${formatDateTime(r.endTime)}</td>
-                    <td class="p-3 font-semibold">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
-                    <td class="p-3 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
-                    <td class="p-3 text-center">${historyTag}</td>
-                    <td class="p-3 text-center">
+                    <td class="p-2.5">${formatDateTime(r.startTime)}</td>
+                    <td class="p-2.5">${formatDateTime(r.endTime)}</td>
+                    <td class="p-2.5 font-semibold">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
+                    <td class="p-2.5 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
+                    <td class="p-2.5 text-center">${historyTag}</td>
+                    <td class="p-2.5 text-center">
                         <button onclick="deleteAttendance('${r.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
@@ -696,7 +692,7 @@
 
             for (let i = 0; i < firstDayIndex; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = "bg-white min-h-[70px] p-1";
+                emptyCell.className = "bg-white min-h-[55px] sm:min-h-[70px] p-1";
                 calendarGrid.appendChild(emptyCell);
             }
 
@@ -706,18 +702,18 @@
                 const workInfo = workDatesMap[fullDateStr];
 
                 const dayCell = document.createElement('div');
-                dayCell.className = "bg-white min-h-[75px] p-1.5 flex flex-col justify-between text-left border border-gray-100 rounded cursor-pointer hover:border-amber-400 hover:shadow-sm transition";
+                dayCell.className = "bg-white min-h-[55px] sm:min-h-[70px] p-1 flex flex-col justify-between text-left border border-gray-100 rounded cursor-pointer hover:border-amber-400 transition";
                 dayCell.onclick = () => selectCalendarDate(fullDateStr);
 
-                let contentHtml = `<span class="font-bold text-gray-700">${day}</span>`;
+                let contentHtml = `<span class="font-bold text-gray-700 text-[11px] sm:text-xs">${day}</span>`;
 
                 if (workInfo) {
                     const hrs = Math.floor(workInfo.minutes / 60);
                     const mins = workInfo.minutes % 60;
                     contentHtml += `
-                        <div class="mt-1 bg-amber-100 text-amber-900 p-1 rounded text-[10px] leading-tight">
-                            <p class="font-bold">${hrs}시간 ${mins}분</p>
-                            <p class="text-amber-700 font-medium">${workInfo.pay.toLocaleString()}원</p>
+                        <div class="mt-0.5 bg-amber-100 text-amber-900 p-0.5 sm:p-1 rounded text-[9px] sm:text-[10px] leading-tight">
+                            <p class="font-bold">${hrs}h ${mins}m</p>
+                            <p class="text-amber-700 hidden sm:block font-medium">${workInfo.pay.toLocaleString()}원</p>
                         </div>
                     `;
                 }
@@ -808,14 +804,14 @@
             manualList.forEach(m => {
                 const isChecked = m.completedBy && m.completedBy.includes(currentUser.id);
                 const itemEl = document.createElement('div');
-                itemEl.className = "flex items-start space-x-2.5 p-2 bg-white rounded-lg border border-gray-100 hover:border-gray-300 transition cursor-pointer";
+                itemEl.className = "flex items-start space-x-2 p-1.5 sm:p-2 bg-white rounded-lg border border-gray-100 hover:border-gray-300 transition cursor-pointer";
                 itemEl.onclick = (e) => {
                     if(e.target.tagName !== 'INPUT') toggleManualCheck(m.id, !isChecked);
                 };
 
                 itemEl.innerHTML = `
-                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleManualCheck('${m.id}', this.checked)" class="mt-0.5 w-4 h-4 text-amber-500 rounded border-gray-300 focus:ring-amber-400">
-                    <span class="text-xs font-medium ${isChecked ? 'line-through text-gray-400' : 'text-gray-800'} leading-relaxed">${m.text}</span>
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleManualCheck('${m.id}', this.checked)" class="mt-0.5 w-3.5 h-3.5 text-amber-500 rounded border-gray-300 focus:ring-amber-400">
+                    <span class="text-[11px] sm:text-xs font-medium ${isChecked ? 'line-through text-gray-400' : 'text-gray-800'} leading-relaxed">${m.text}</span>
                 `;
 
                 if (m.category === 'start') startContainer.appendChild(itemEl);
@@ -838,9 +834,6 @@
             db.collection('manuals').doc(manualId).update({ completedBy });
         }
 
-        // ==========================================
-        // ADMIN DASHBOARD & EDIT FUNCTIONS
-        // ==========================================
         function renderAdminDashboard() {
             const selectedMonth = document.getElementById('adminMonthPicker').value;
             const staffTable = document.getElementById('adminStaffPayTable');
@@ -864,16 +857,16 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50";
                 tr.innerHTML = `
-                    <td class="p-3 font-bold">${staff.name}</td>
-                    <td class="p-3">
-                        <input type="number" value="${staff.wage}" onchange="updateStaffWage('${staff.id}', this.value)" class="w-20 border rounded px-1.5 py-0.5 text-xs"> 원
+                    <td class="p-2.5 font-bold">${staff.name}</td>
+                    <td class="p-2.5">
+                        <input type="number" value="${staff.wage}" onchange="updateStaffWage('${staff.id}', this.value)" class="w-16 sm:w-20 border rounded px-1 py-0.5 text-xs"> 원
                     </td>
-                    <td class="p-3">${Math.floor(staffMinutes/60)}시간 ${staffMinutes%60}분</td>
-                    <td class="p-3 font-bold text-amber-600">${staffPay.toLocaleString()}원</td>
-                    <td class="p-3 text-center">
-                        <button onclick="resetStaffPassword('${staff.id}')" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded text-gray-600">초기화</button>
+                    <td class="p-2.5">${Math.floor(staffMinutes/60)}시간 ${staffMinutes%60}분</td>
+                    <td class="p-2.5 font-bold text-amber-600">${staffPay.toLocaleString()}원</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="resetStaffPassword('${staff.id}')" class="text-[11px] bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded text-gray-600">초기화</button>
                     </td>
-                    <td class="p-3 text-center">
+                    <td class="p-2.5 text-center">
                         <button onclick="deleteStaff('${staff.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
@@ -894,7 +887,7 @@
 
             if (!selectedStaffId || !selectedMonth) {
                 detailCard.classList.add('hidden');
-                calendarGrid.innerHTML = '<div class="col-span-7 p-8 text-center text-gray-400 bg-white">상단 드롭다운에서 알바생을 선택하면 근무 달력이 표시됩니다.</div>';
+                calendarGrid.innerHTML = '<div class="col-span-7 p-6 text-center text-xs text-gray-400 bg-white">상단 드롭다운에서 알바생을 선택하면 근무 달력이 표시됩니다.</div>';
                 detailTable.innerHTML = '';
                 return;
             }
@@ -938,7 +931,7 @@
 
             for (let i = 0; i < firstDayIndex; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = "bg-white min-h-[70px] p-1";
+                emptyCell.className = "bg-white min-h-[55px] sm:min-h-[70px] p-1";
                 calendarGrid.appendChild(emptyCell);
             }
 
@@ -948,17 +941,17 @@
                 const workInfo = workDatesMap[fullDateStr];
 
                 const dayCell = document.createElement('div');
-                dayCell.className = "bg-white min-h-[70px] p-1.5 flex flex-col justify-between text-left border border-gray-100 rounded";
+                dayCell.className = "bg-white min-h-[55px] sm:min-h-[70px] p-1 flex flex-col justify-between text-left border border-gray-100 rounded";
 
-                let contentHtml = `<span class="font-bold text-gray-700">${day}</span>`;
+                let contentHtml = `<span class="font-bold text-gray-700 text-[11px] sm:text-xs">${day}</span>`;
 
                 if (workInfo) {
                     const hrs = Math.floor(workInfo.minutes / 60);
                     const mins = workInfo.minutes % 60;
                     contentHtml += `
-                        <div class="mt-1 bg-amber-100 text-amber-900 p-1 rounded text-[10px] leading-tight">
-                            <p class="font-bold">${hrs}시간 ${mins}분</p>
-                            <p class="text-amber-700 font-medium">${workInfo.pay.toLocaleString()}원</p>
+                        <div class="mt-0.5 bg-amber-100 text-amber-900 p-0.5 sm:p-1 rounded text-[9px] sm:text-[10px] leading-tight">
+                            <p class="font-bold">${hrs}h ${mins}m</p>
+                            <p class="text-amber-700 hidden sm:block font-medium">${workInfo.pay.toLocaleString()}원</p>
                         </div>
                     `;
                 }
@@ -984,7 +977,7 @@
                     <td class="p-2.5 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
                     <td class="p-2.5 text-center">${editTag}</td>
                     <td class="p-2.5 text-center">
-                        <button onclick="openEditAttendanceModal('${r.id}')" class="bg-slate-800 text-white hover:bg-slate-700 px-2.5 py-1 rounded text-[11px] font-bold">수정</button>
+                        <button onclick="openEditAttendanceModal('${r.id}')" class="bg-slate-800 text-white hover:bg-slate-700 px-2 py-0.5 rounded text-[11px] font-bold">수정</button>
                     </td>
                     <td class="p-2.5 text-center">
                         <button onclick="deleteAttendance('${r.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
@@ -994,7 +987,6 @@
             });
         }
 
-        // EDIT ATTENDANCE MODAL LOGIC
         function openEditAttendanceModal(recordId) {
             const record = attendanceList.find(r => r.id === recordId);
             if (!record) return;
@@ -1006,7 +998,6 @@
             document.getElementById('editReason').value = '';
 
             calculateEditDuration();
-
             document.getElementById('editAttendanceModal').classList.remove('hidden');
             document.getElementById('editAttendanceModal').classList.add('flex');
         }
@@ -1082,7 +1073,7 @@
                 isEdited: true,
                 editHistory: updatedHistory
             }).then(() => {
-                alert('근태 기록 및 수정 이력이 성공적으로 저장되었습니다.');
+                alert('근태 기록 및 수정 이력이 저장되었습니다.');
                 closeEditAttendanceModal();
             });
         }
