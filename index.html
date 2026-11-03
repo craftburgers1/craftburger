@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>더크래프트버거 - 알바생 관리 및 근태/급여 시스템</title>
+    <title>더크래프트버거 - 알바생 관리 및 근태/급여/매뉴얼 시스템</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (v9 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     
@@ -25,7 +25,7 @@
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-burger text-amber-500 text-2xl"></i>
-                <h1 class="text-xl font-bold tracking-tight">더크래프트버거 <span class="text-xs text-amber-400 font-normal ml-1">세종도담점</span></h1>
+                <h1 class="text-xl font-bold tracking-tight">더크래프트버거 <span class="text-xs text-amber-400 font-normal ml-1">근태/급여</span></h1>
             </div>
             <div id="userInfoHeader" class="hidden flex items-center space-x-3">
                 <span id="loggedInBadge" class="bg-amber-500 text-slate-900 text-xs font-bold px-2.5 py-1 rounded-full"></span>
@@ -62,7 +62,7 @@
             <!-- Staff Login Form -->
             <div id="staffLoginForm" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">이름 선택 (개인정보 보호 마스킹 적용)</label>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">이름 선택 (개인정보 보호)</label>
                     <select id="staffSelect" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                         <option value="">알바생을 선택하세요</option>
                     </select>
@@ -80,8 +80,8 @@
             <!-- Admin Login Form -->
             <div id="adminLoginForm" class="space-y-4 hidden">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">관리자 암호</label>
-                    <input type="password" id="adminPassword" placeholder="관리자 비밀번호 입력" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">관리자 비밀번호</label>
+                    <input type="password" id="adminPassword" placeholder="비밀번호를 입력하세요" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                 </div>
                 <button onclick="loginAdmin()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-md transition">
                     관리자 로그인
@@ -93,13 +93,14 @@
         <!-- 2. STAFF DASHBOARD                         -->
         <!-- ========================================== -->
         <div id="staffDashboard" class="hidden space-y-6">
-
-            <!-- Modification Notification Banner -->
-            <div id="staffEditNoticeBanner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl shadow-sm flex items-start space-x-3">
-                <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg mt-0.5"></i>
-                <div class="flex-1">
-                    <h4 class="text-sm font-bold text-amber-900">근태 기록 수정 안내</h4>
-                    <p id="staffEditNoticeText" class="text-xs text-amber-800 mt-0.5">관리자에 의해 수정된 근태 기록이 있습니다.</p>
+            <!-- Modified Attendance Alert Banner -->
+            <div id="staffEditAlertBanner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-sm">
+                <div class="flex items-start">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg mr-3 mt-0.5"></i>
+                    <div>
+                        <h4 class="text-xs font-bold text-amber-800">관리자 근태 기록 수정 안내</h4>
+                        <p class="text-xs text-amber-700 mt-0.5">관리자에 의해 근태 기록(시간/급여)이 수정된 항목이 존재합니다. 하단 근무 기록표에서 <strong>[관리자 수정됨]</strong> 태그를 확인해 주세요.</p>
+                    </div>
                 </div>
             </div>
 
@@ -127,14 +128,14 @@
                 </div>
             </div>
 
-            <!-- WORK MANUAL -->
+            <!-- WORK MANUAL (알바 매뉴얼) -->
             <div class="bg-white rounded-2xl p-6 shadow-md border border-amber-200">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h3 class="text-lg font-extrabold text-slate-900 flex items-center">
                             <i class="fa-solid fa-book-open text-amber-500 mr-2"></i>더크래프트버거 알바 매뉴얼
                         </h3>
-                        <p class="text-xs text-gray-500 mt-0.5">상황별 필수 확인 업무입니다. 완료된 항목을 터치해 체크하세요.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">상황별 필수 업무 체크리스트입니다.</p>
                     </div>
                 </div>
 
@@ -147,7 +148,6 @@
                         </div>
                         <div id="manualStartList" class="space-y-2"></div>
                     </div>
-
                     <!-- 근무중 -->
                     <div class="bg-blue-50/60 rounded-xl p-4 border border-blue-200/70">
                         <div class="flex items-center space-x-2 border-b border-blue-200 pb-2.5 mb-3">
@@ -156,7 +156,6 @@
                         </div>
                         <div id="manualMidList" class="space-y-2"></div>
                     </div>
-
                     <!-- 퇴근 마감 -->
                     <div class="bg-slate-100 rounded-xl p-4 border border-slate-200">
                         <div class="flex items-center space-x-2 border-b border-slate-300 pb-2.5 mb-3">
@@ -183,6 +182,7 @@
                     </div>
                 </div>
 
+                <!-- Calendar Grid -->
                 <div>
                     <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-2 rounded-t-lg border border-gray-200">
                         <span class="text-red-500">일</span>
@@ -238,7 +238,7 @@
                                 <th class="p-3">퇴근시간</th>
                                 <th class="p-3">근무시간</th>
                                 <th class="p-3 text-right">급여</th>
-                                <th class="p-3 text-center">상태</th>
+                                <th class="p-3 text-center">비고/수정이력</th>
                                 <th class="p-3 text-center">삭제</th>
                             </tr>
                         </thead>
@@ -256,7 +256,7 @@
             <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 class="text-xl font-bold">관리자 전용 대시보드</h2>
-                    <p class="text-xs text-gray-400 mt-0.5">알바생별 근무 현황, 근태 수정 및 기록 감사</p>
+                    <p class="text-xs text-gray-400 mt-0.5">알바생별 근무 현황 관리 및 근태 기록 즉시 수정</p>
                 </div>
                 <div class="flex items-center space-x-2">
                     <label class="text-xs text-gray-300">조회 월:</label>
@@ -320,9 +320,9 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
                     <div>
                         <h3 class="text-base font-bold text-gray-900 flex items-center">
-                            <i class="fa-solid fa-calendar-check text-amber-500 mr-2"></i>알바생별 상세 근태 & 달력 조회
+                            <i class="fa-solid fa-calendar-check text-amber-500 mr-2"></i>알바생별 상세 근태 & 달력 조회 (수정 기능 지원)
                         </h3>
-                        <p class="text-xs text-gray-500 mt-1">원하는 알바생을 선택하면 근무일자와 시급/급여 내역을 달력으로 볼 수 있습니다.</p>
+                        <p class="text-xs text-gray-500 mt-1">알바생을 선택해 달력을 확인하고, 근태 시각이 잘못된 경우 바로 수정할 수 있습니다.</p>
                     </div>
                     <div class="w-full sm:w-56">
                         <select id="adminSelectedStaff" onchange="renderAdminStaffCalendar()" class="w-full bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-sm font-bold text-amber-900 focus:outline-none">
@@ -362,9 +362,9 @@
                     <div id="adminCalendarGrid" class="grid grid-cols-7 gap-1 bg-gray-200 p-1 rounded-b-lg border border-t-0 border-gray-200 text-xs"></div>
                 </div>
 
-                <!-- Individual Detailed History Logs with EDIT Button -->
+                <!-- Individual Detailed History Logs -->
                 <div>
-                    <h4 class="text-sm font-bold text-gray-800 mb-2">선택 알바생 이달의 상세 근태 기록 (관리자 수정 가능)</h4>
+                    <h4 class="text-sm font-bold text-gray-800 mb-2">선택 알바생 이달의 상세 근태 기록 (수정/이력)</h4>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs">
                             <thead class="bg-gray-50 text-gray-500 border-b">
@@ -373,8 +373,9 @@
                                     <th class="p-2.5">퇴근시각</th>
                                     <th class="p-2.5">근무시간</th>
                                     <th class="p-2.5 text-right">급여</th>
-                                    <th class="p-2.5 text-center">수정이력</th>
-                                    <th class="p-2.5 text-center">관리</th>
+                                    <th class="p-2.5 text-center">수정 상태</th>
+                                    <th class="p-2.5 text-center">근태 수정</th>
+                                    <th class="p-2.5 text-center">삭제</th>
                                 </tr>
                             </thead>
                             <tbody id="detailAttendanceTable" class="divide-y divide-gray-100"></tbody>
@@ -386,7 +387,42 @@
 
     </div>
 
-    <!-- Modals -->
+    <!-- MODALS -->
+    <!-- Edit Attendance Modal for Admin -->
+    <div id="editAttendanceModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                <i class="fa-solid fa-clock-rotate-left text-amber-500 mr-2"></i>근태 기록 수정
+            </h3>
+            <input type="hidden" id="editRecordId">
+            <input type="hidden" id="editStaffWage">
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
+                <input type="datetime-local" id="editWorkStart" onchange="calculateEditDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
+                <input type="datetime-local" id="editWorkEnd" onchange="calculateEditDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+            </div>
+
+            <div class="p-3 bg-amber-50 rounded-lg flex justify-between items-center text-xs text-amber-900">
+                <span>수정후 근무시간: <strong id="editCalcTime" class="text-amber-700">0시간 0분</strong></span>
+                <span>수정후 급여: <strong id="editCalcPay" class="text-amber-700">0원</strong></span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">수정 사유 (알바생이 볼 수 있습니다)</label>
+                <input type="text" id="editReason" placeholder="예: 알바생 퇴근 시간 오입력 수정" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeEditAttendanceModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg">취소</button>
+                <button onclick="saveAttendanceEdit()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">수정 저장</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Staff Modal -->
     <div id="addStaffModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
@@ -402,53 +438,6 @@
             <div class="flex justify-end space-x-2 pt-2">
                 <button onclick="closeAddStaffModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg">취소</button>
                 <button onclick="saveNewStaff()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">등록</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Attendance Modal for Manager -->
-    <div id="editAttendanceModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-base font-bold text-gray-900">근태 기록 수정 (관리자)</h3>
-                <button onclick="closeEditAttendanceModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <input type="hidden" id="editRecordId">
-            <input type="hidden" id="editStaffWage">
-
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
-                <input type="datetime-local" id="editStartTime" onchange="calcModalWorkDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
-                <input type="datetime-local" id="editEndTime" onchange="calcModalWorkDuration()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
-            </div>
-            <div class="p-3 bg-amber-50 rounded-lg text-xs space-y-1 text-amber-900 font-semibold">
-                <div class="flex justify-between"><span>수정 후 근무시간:</span><span id="editModalDurationText" class="text-amber-700">0시간 0분</span></div>
-                <div class="flex justify-between"><span>수정 후 급여:</span><span id="editModalPayText" class="text-amber-700">0원</span></div>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">수정 사유 (선택사항)</label>
-                <input type="text" id="editReason" placeholder="예: 알바생 입력 누락 수정, 오타 수정 등" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
-            </div>
-            <div class="flex justify-end space-x-2 pt-2 border-t">
-                <button onclick="closeEditAttendanceModal()" class="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg">취소</button>
-                <button onclick="saveAttendanceEdit()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">수정 완료</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- History View Modal -->
-    <div id="historyViewModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-base font-bold text-gray-900">근태 기록 수정 이력</h3>
-                <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="historyListContent" class="space-y-3 max-h-80 overflow-y-auto text-xs"></div>
-            <div class="flex justify-end pt-2 border-t">
-                <button onclick="closeHistoryModal()" class="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg">확인</button>
             </div>
         </div>
     </div>
@@ -487,15 +476,6 @@
             { category: 'end', text: '맥주 트레이 깨끗하게 청소 및 정돈' },
             { category: 'end', text: '자연 건조된 컵 냉장고에 가지런히 넣기' }
         ];
-
-        // Mask Name Helper function (e.g. 홍길동 -> 홍*동, 김철 -> 김*)
-        function maskName(name) {
-            if (!name) return '';
-            const str = name.trim();
-            if (str.length <= 1) return str;
-            if (str.length === 2) return str[0] + '*';
-            return str[0] + '*'.repeat(str.length - 2) + str[str.length - 1];
-        }
 
         window.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
@@ -536,6 +516,13 @@
             });
         }
 
+        // Masking Name Helper (홍길동 -> 홍*동, 김철 -> 김*)
+        function maskName(name) {
+            if (!name) return '';
+            if (name.length <= 2) return name[0] + '*';
+            return name[0] + '*'.repeat(name.length - 2) + name[name.length - 1];
+        }
+
         function renderStaffDropdown() {
             const select = document.getElementById('staffSelect');
             const currentVal = select.value;
@@ -556,7 +543,7 @@
             staffList.forEach(staff => {
                 const opt = document.createElement('option');
                 opt.value = staff.id;
-                opt.textContent = staff.name; // Full name in Admin view
+                opt.textContent = staff.name; // Admin sees full name
                 select.appendChild(opt);
             });
             select.value = currentVal;
@@ -610,7 +597,7 @@
         function showDashboard() {
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('userInfoHeader').classList.remove('hidden');
-            document.getElementById('loggedInBadge').textContent = `${currentUser.role === 'admin' ? '관리자' : maskName(currentUser.name)}`;
+            document.getElementById('loggedInBadge').textContent = `${currentUser.name} (${currentUser.role === 'admin' ? '관리자' : '알바'})`;
 
             if (currentUser.role === 'staff') {
                 document.getElementById('staffDashboard').classList.remove('hidden');
@@ -632,7 +619,7 @@
         }
 
         // ==========================================
-        // STAFF DASHBOARD FUNCTIONS
+        // STAFF DASHBOARD
         // ==========================================
         function renderStaffDashboard() {
             document.getElementById('staffNameDisplay').textContent = `${currentUser.name} 님`;
@@ -641,15 +628,11 @@
             const selectedMonth = document.getElementById('staffMonthPicker').value;
             const myRecords = attendanceList.filter(r => r.staffId === currentUser.id && r.startTime.startsWith(selectedMonth));
 
-            // Check for edited records to notify staff
-            const editedRecords = myRecords.filter(r => r.isEdited);
-            const noticeBanner = document.getElementById('staffEditNoticeBanner');
-            if (editedRecords.length > 0) {
-                noticeBanner.classList.remove('hidden');
-                document.getElementById('staffEditNoticeText').textContent = `관리자(점장)에 의해 수정된 근태 기록이 ${editedRecords.length}건 있습니다. 상세 표에서 확인하실 수 있습니다.`;
-            } else {
-                noticeBanner.classList.add('hidden');
-            }
+            // Check modified records alert
+            const modifiedCount = myRecords.filter(r => r.isEdited).length;
+            const alertBanner = document.getElementById('staffEditAlertBanner');
+            if (modifiedCount > 0) alertBanner.classList.remove('hidden');
+            else alertBanner.classList.add('hidden');
 
             let totalMinutes = 0;
             let totalPay = 0;
@@ -679,10 +662,11 @@
             myRecords.sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).forEach(r => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50";
-                
-                let editTagHtml = '<span class="text-gray-400 text-xs">-</span>';
-                if (r.isEdited) {
-                    editTagHtml = `<button onclick="viewRecordHistory('${r.id}')" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-2 py-0.5 rounded text-[11px] font-bold"><i class="fa-solid fa-file-pen mr-1"></i>수정됨 이력보기</button>`;
+
+                let historyTag = '<span class="text-gray-400 text-[11px]">-</span>';
+                if (r.isEdited && r.editHistory && r.editHistory.length > 0) {
+                    const lastEdit = r.editHistory[r.editHistory.length - 1];
+                    historyTag = `<button onclick="alert('수정 사유: ${lastEdit.reason}\\n이전출근: ${formatDateTime(lastEdit.prevStart)}\\n이전퇴근: ${formatDateTime(lastEdit.prevEnd)}')" class="bg-amber-100 text-amber-800 text-[11px] px-2 py-0.5 rounded font-bold hover:bg-amber-200">[관리자 수정됨]</button>`;
                 }
 
                 tr.innerHTML = `
@@ -690,7 +674,7 @@
                     <td class="p-3">${formatDateTime(r.endTime)}</td>
                     <td class="p-3 font-semibold">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
                     <td class="p-3 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
-                    <td class="p-3 text-center">${editTagHtml}</td>
+                    <td class="p-3 text-center">${historyTag}</td>
                     <td class="p-3 text-center">
                         <button onclick="deleteAttendance('${r.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
@@ -754,7 +738,6 @@
         function calculateWorkDuration() {
             const startVal = document.getElementById('workStart').value;
             const endVal = document.getElementById('workEnd').value;
-
             if (!startVal || !endVal) return;
 
             const start = new Date(startVal);
@@ -770,7 +753,6 @@
             const diffMinutes = Math.floor((end - start) / (1000 * 60));
             const hours = Math.floor(diffMinutes / 60);
             const minutes = diffMinutes % 60;
-
             const minuteWage = currentUser.wage / 60;
             const totalPay = Math.floor(diffMinutes * minuteWage);
 
@@ -781,7 +763,6 @@
         function saveAttendanceRecord() {
             const startVal = document.getElementById('workStart').value;
             const endVal = document.getElementById('workEnd').value;
-
             if (!startVal || !endVal) return alert('출퇴근 시간을 설정해 주세요.');
 
             const start = new Date(startVal);
@@ -857,24 +838,8 @@
             db.collection('manuals').doc(manualId).update({ completedBy });
         }
 
-        function addManualItem() {
-            const category = document.getElementById('newManualCategory').value;
-            const text = document.getElementById('newManualInput').value.trim();
-
-            if (!text) return alert('매뉴얼 업무 내용을 입력하세요.');
-
-            db.collection('manuals').add({
-                category: category,
-                text: text,
-                completedBy: []
-            }).then(() => {
-                document.getElementById('newManualInput').value = '';
-                alert('새 매뉴얼 항목이 등록되었습니다.');
-            });
-        }
-
         // ==========================================
-        // ADMIN DASHBOARD FUNCTIONS & EDIT LOGIC
+        // ADMIN DASHBOARD & EDIT FUNCTIONS
         // ==========================================
         function renderAdminDashboard() {
             const selectedMonth = document.getElementById('adminMonthPicker').value;
@@ -1007,9 +972,9 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50";
 
-                let editTagHtml = '<span class="text-gray-400 text-xs">수정 없음</span>';
+                let editTag = '<span class="text-gray-400 text-[11px]">-</span>';
                 if (r.isEdited) {
-                    editTagHtml = `<button onclick="viewRecordHistory('${r.id}')" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-2 py-0.5 rounded text-[11px] font-bold"><i class="fa-solid fa-clock-rotate-left mr-1"></i>이력 ${r.editHistory ? r.editHistory.length : 0}건</button>`;
+                    editTag = `<span class="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded font-bold">수정됨 (${r.editHistory?.length || 1}회)</span>`;
                 }
 
                 tr.innerHTML = `
@@ -1017,28 +982,30 @@
                     <td class="p-2.5">${formatDateTime(r.endTime)}</td>
                     <td class="p-2.5 font-semibold">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
                     <td class="p-2.5 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
-                    <td class="p-2.5 text-center">${editTagHtml}</td>
-                    <td class="p-2.5 text-center space-x-1">
-                        <button onclick="openEditAttendanceModal('${r.id}')" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded font-bold">수정</button>
-                        <button onclick="deleteAttendance('${r.id}')" class="text-gray-400 hover:text-red-500 px-1 py-1"><i class="fa-solid fa-trash-can"></i></button>
+                    <td class="p-2.5 text-center">${editTag}</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="openEditAttendanceModal('${r.id}')" class="bg-slate-800 text-white hover:bg-slate-700 px-2.5 py-1 rounded text-[11px] font-bold">수정</button>
+                    </td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="deleteAttendance('${r.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
                 detailTable.appendChild(tr);
             });
         }
 
-        // Attendance Edit Modal Functions (Admin)
+        // EDIT ATTENDANCE MODAL LOGIC
         function openEditAttendanceModal(recordId) {
             const record = attendanceList.find(r => r.id === recordId);
             if (!record) return;
 
             document.getElementById('editRecordId').value = record.id;
-            document.getElementById('editStartTime').value = record.startTime;
-            document.getElementById('editEndTime').value = record.endTime;
-            document.getElementById('editStaffWage').value = record.wageAtTime || 10030;
+            document.getElementById('editStaffWage').value = record.wageAtTime;
+            document.getElementById('editWorkStart').value = record.startTime;
+            document.getElementById('editWorkEnd').value = record.endTime;
             document.getElementById('editReason').value = '';
 
-            calcModalWorkDuration();
+            calculateEditDuration();
 
             document.getElementById('editAttendanceModal').classList.remove('hidden');
             document.getElementById('editAttendanceModal').classList.add('flex');
@@ -1049,10 +1016,10 @@
             document.getElementById('editAttendanceModal').classList.remove('flex');
         }
 
-        function calcModalWorkDuration() {
-            const startVal = document.getElementById('editStartTime').value;
-            const endVal = document.getElementById('editEndTime').value;
-            const wage = Number(document.getElementById('editStaffWage').value) || 10030;
+        function calculateEditDuration() {
+            const startVal = document.getElementById('editWorkStart').value;
+            const endVal = document.getElementById('editWorkEnd').value;
+            const wage = Number(document.getElementById('editStaffWage').value);
 
             if (!startVal || !endVal) return;
 
@@ -1060,103 +1027,64 @@
             const end = new Date(endVal);
 
             if (end <= start) {
-                document.getElementById('editModalDurationText').textContent = "시간 오류";
-                document.getElementById('editModalPayText').textContent = "0원";
+                document.getElementById('editCalcTime').textContent = "0시간 0분";
+                document.getElementById('editCalcPay').textContent = "0원";
                 return;
             }
 
             const diffMinutes = Math.floor((end - start) / (1000 * 60));
             const hours = Math.floor(diffMinutes / 60);
             const minutes = diffMinutes % 60;
-            const totalPay = Math.floor(diffMinutes * (wage / 60));
+            const pay = Math.floor(diffMinutes * (wage / 60));
 
-            document.getElementById('editModalDurationText').textContent = `${hours}시간 ${minutes}분`;
-            document.getElementById('editModalPayText').textContent = `${totalPay.toLocaleString()}원`;
+            document.getElementById('editCalcTime').textContent = `${hours}시간 ${minutes}분`;
+            document.getElementById('editCalcPay').textContent = `${pay.toLocaleString()}원`;
         }
 
         function saveAttendanceEdit() {
             const recordId = document.getElementById('editRecordId').value;
-            const startVal = document.getElementById('editStartTime').value;
-            const endVal = document.getElementById('editEndTime').value;
+            const startVal = document.getElementById('editWorkStart').value;
+            const endVal = document.getElementById('editWorkEnd').value;
             const reason = document.getElementById('editReason').value.trim();
-            const wage = Number(document.getElementById('editStaffWage').value) || 10030;
+            const wage = Number(document.getElementById('editStaffWage').value);
 
-            if (!startVal || !endVal) return alert('출퇴근 시간을 올바르게 입력해주세요.');
+            if (!startVal || !endVal) return alert('출퇴근 시간을 입력해주세요.');
+            if (!reason) return alert('수정 사유를 작성해주세요.');
 
             const start = new Date(startVal);
             const end = new Date(endVal);
-            if (end <= start) return alert('퇴근 시각은 출근 시각보다 이후여야 합니다.');
+            if (end <= start) return alert('퇴근 시간을 확인해주세요.');
 
-            const record = attendanceList.find(r => r.id === recordId);
-            if (!record) return;
+            const originalRecord = attendanceList.find(r => r.id === recordId);
+            if (!originalRecord) return;
 
             const diffMinutes = Math.floor((end - start) / (1000 * 60));
-            const newPay = Math.floor(diffMinutes * (wage / 60));
+            const pay = Math.floor(diffMinutes * (wage / 60));
 
-            // Create Audit History Log entry
-            const historyLog = {
+            const newHistoryItem = {
                 editedAt: new Date().toISOString(),
-                editedBy: '관리자',
-                previousStart: record.startTime,
-                previousEnd: record.endTime,
-                previousMinutes: record.minutes,
-                previousPay: record.pay,
+                prevStart: originalRecord.startTime,
+                prevEnd: originalRecord.endTime,
+                prevMinutes: originalRecord.minutes,
+                prevPay: originalRecord.pay,
                 newStart: startVal,
                 newEnd: endVal,
-                newMinutes: diffMinutes,
-                newPay: newPay,
-                reason: reason || '관리자 수정'
+                reason: reason
             };
 
-            const existingHistory = record.editHistory || [];
-            existingHistory.push(historyLog);
+            const updatedHistory = originalRecord.editHistory ? [...originalRecord.editHistory, newHistoryItem] : [newHistoryItem];
 
             db.collection('attendance').doc(recordId).update({
                 startTime: startVal,
                 endTime: endVal,
                 minutes: diffMinutes,
-                pay: newPay,
+                pay: pay,
                 isEdited: true,
-                editHistory: existingHistory
+                editHistory: updatedHistory
             }).then(() => {
-                alert('근태 기록이 수정 및 반영되었습니다.');
+                alert('근태 기록 및 수정 이력이 성공적으로 저장되었습니다.');
                 closeEditAttendanceModal();
             });
-        }
-
-        // View Edit History Modal Function
-        function viewRecordHistory(recordId) {
-            const record = attendanceList.find(r => r.id === recordId);
-            if (!record || !record.editHistory) return;
-
-            const container = document.getElementById('historyListContent');
-            container.innerHTML = '';
-
-            record.editHistory.forEach((log, idx) => {
-                const dateText = new Date(log.editedAt).toLocaleString('ko-KR');
-                const div = document.createElement('div');
-                div.className = "p-3 bg-gray-50 border border-gray-200 rounded-lg space-y-1";
-                div.innerHTML = `
-                    <div class="flex justify-between font-bold text-gray-700">
-                        <span>#${idx + 1}차 수정 (${log.editedBy || '관리자'})</span>
-                        <span class="text-gray-400 font-normal">${dateText}</span>
-                    </div>
-                    <div class="text-gray-500">
-                        <p><span class="line-through">이전: ${formatDateTime(log.previousStart)} ~ ${formatDateTime(log.previousEnd)} (${Math.floor(log.previousMinutes/60)}시간 ${log.previousMinutes%60}분)</span></p>
-                        <p class="text-amber-700 font-bold">변경: ${formatDateTime(log.newStart)} ~ ${formatDateTime(log.newEnd)} (${Math.floor(log.newMinutes/60)}시간 ${log.newMinutes%60}분)</p>
-                    </div>
-                    ${log.reason ? `<p class="text-gray-600 bg-white p-1 rounded border border-gray-100 mt-1">사유: ${log.reason}</p>` : ''}
-                `;
-                container.appendChild(div);
-            });
-
-            document.getElementById('historyViewModal').classList.remove('hidden');
-            document.getElementById('historyViewModal').classList.add('flex');
-        }
-
-        function closeHistoryModal() {
-            document.getElementById('historyViewModal').classList.add('hidden');
-            document.getElementById('historyViewModal').classList.remove('flex');
         }
 
         function updateStaffWage(staffId, newWage) {
@@ -1173,6 +1101,21 @@
             if (confirm('알바생 정보를 삭제하시겠습니까?')) {
                 db.collection('staffs').doc(staffId).delete();
             }
+        }
+
+        function addManualItem() {
+            const category = document.getElementById('newManualCategory').value;
+            const text = document.getElementById('newManualInput').value.trim();
+            if (!text) return alert('매뉴얼 내용을 입력하세요.');
+
+            db.collection('manuals').add({
+                category: category,
+                text: text,
+                completedBy: []
+            }).then(() => {
+                document.getElementById('newManualInput').value = '';
+                alert('새 매뉴얼이 추가되었습니다.');
+            });
         }
 
         function openAddStaffModal() {
