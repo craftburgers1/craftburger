@@ -16,15 +16,14 @@
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body { font-family: 'Pretendard', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .custom-scrollbar::-webkit-scrollbar { height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         canvas { touch-action: none; }
         
-        /* 인쇄 및 PDF 저장 전용 스타일 */
         @media print {
             body * { visibility: hidden; }
             #contractPrintArea, #contractPrintArea * { visibility: visible; }
-            #contractPrintArea { position: absolute; left: 0; top: 0; width: 100%; font-size: 11pt; border: none !important; bg: white !important; }
+            #contractPrintArea { position: absolute; left: 0; top: 0; width: 100%; font-size: 11pt; border: none !important; }
             .no-print { display: none !important; }
         }
     </style>
@@ -33,7 +32,7 @@
 
     <!-- Top Navigation Bar -->
     <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-burger text-amber-500 text-2xl"></i>
                 <h1 class="text-lg sm:text-xl font-bold tracking-tight">더크래프트버거 <span class="text-xs text-amber-400 font-normal ml-1">통합관리</span></h1>
@@ -47,7 +46,7 @@
         </div>
     </nav>
 
-    <div class="max-w-5xl mx-auto px-3 py-4 sm:p-6 space-y-4 sm:space-y-6">
+    <div class="max-w-6xl mx-auto px-3 py-4 sm:p-6 space-y-4 sm:space-y-6">
 
         <!-- ========================================== -->
         <!-- 1. LOGIN SECTION                           -->
@@ -155,7 +154,7 @@
                 </div>
             </div>
 
-            <!-- WORK MANUAL (알바 매뉴얼) -->
+            <!-- WORK MANUAL -->
             <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200">
                 <div class="mb-3 sm:mb-4">
                     <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center">
@@ -392,127 +391,180 @@
     <!-- MODALS & CONTRACT FORMS                    -->
     <!-- ========================================== -->
 
-    <!-- 1. CREATE CONTRACT MODAL (ADMIN) -->
-    <div id="createContractModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
-        <div class="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b pb-3">
+    <!-- 1. CREATE CONTRACT MODAL (ADMIN) - REALTIME FULL TEXT PREVIEW -->
+    <div id="createContractModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-5xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] flex flex-col">
+            <div class="flex justify-between items-center border-b pb-3 flex-shrink-0">
                 <h3 class="text-base sm:text-lg font-bold text-gray-900 flex items-center">
-                    <i class="fa-solid fa-file-contract text-amber-500 mr-2"></i>표준 근로계약서 작성 (사장님)
+                    <i class="fa-solid fa-pen-nib text-amber-500 mr-2"></i>표준 근로계약서 실시간 확인 & 사장님 서명
                 </h3>
                 <button onclick="closeCreateContractModal()" class="text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <input type="hidden" id="contractStaffId">
 
-            <!-- 사업장 구분 선택 -->
-            <div class="bg-amber-50/80 p-3.5 rounded-xl border border-amber-200">
-                <label class="block font-bold text-gray-800 text-xs mb-2">1. 사업장 규모 구분 (법정 항목 자동적용)</label>
-                <div class="flex items-center space-x-4 text-xs">
-                    <label class="flex items-center space-x-1.5 cursor-pointer">
-                        <input type="radio" name="companyType" value="under5" checked class="w-4 h-4 text-amber-500 focus:ring-amber-400">
-                        <span class="font-bold text-gray-800">상시근로자 5인 미만 사업장</span>
-                    </label>
-                    <label class="flex items-center space-x-1.5 cursor-pointer">
-                        <input type="radio" name="companyType" value="over5" class="w-4 h-4 text-amber-500 focus:ring-amber-400">
-                        <span class="font-bold text-gray-800">상시근로자 5인 이상 사업장</span>
-                    </label>
+            <!-- Split View Grid: Left Form, Right Document Live Preview -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-y-auto custom-scrollbar pr-1 flex-1">
+                
+                <!-- Left Input Form Area (5 cols) -->
+                <div class="lg:col-span-5 space-y-3 bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 text-xs">
+                    <div class="bg-amber-100/70 p-2.5 rounded-lg border border-amber-200">
+                        <label class="block font-bold text-amber-900 mb-1.5">1. 사업장 규모 구분</label>
+                        <div class="flex items-center space-x-3">
+                            <label class="flex items-center space-x-1 cursor-pointer">
+                                <input type="radio" name="companyType" value="under5" checked onchange="updateContractPreview()" class="w-3.5 h-3.5 text-amber-500">
+                                <span class="font-bold text-gray-800">5인 미만 사업장</span>
+                            </label>
+                            <label class="flex items-center space-x-1 cursor-pointer">
+                                <input type="radio" name="companyType" value="over5" onchange="updateContractPreview()" class="w-3.5 h-3.5 text-amber-500">
+                                <span class="font-bold text-gray-800">5인 이상 사업장</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-0.5">근로자(알바생) 성명</label>
+                            <input type="text" id="contractStaffName" readonly class="w-full bg-gray-200 border border-gray-300 rounded p-2 font-bold">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">근무 시작일</label>
+                                <input type="date" id="contractStartDate" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">근무 종료일</label>
+                                <input type="date" id="contractEndDate" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="flex items-center space-x-1.5 cursor-pointer">
+                                <input type="checkbox" id="contractNoEndDate" onchange="toggleEndDateInput(this.checked); updateContractPreview();" class="w-3.5 h-3.5 text-amber-500 rounded">
+                                <span class="font-bold text-gray-700">기간의 정함 없음</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-0.5">사업장명 & 주소</label>
+                            <input type="text" id="contractShopName" value="더크래프트버거 세종도담점" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2 mb-1">
+                            <input type="text" id="contractShopAddress" value="세종특별자치시 보듬3로 8-20 (도담동)" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-0.5">담당 업무 내용</label>
+                            <input type="text" id="contractTask" value="수제버거 홀 서빙, 주방 보조, 맥주 추출 및 매장 위생 청소 관리" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">근무 요일</label>
+                                <input type="text" id="contractWorkDays" value="월, 화, 수, 목, 금, 일 (주 5일)" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">주휴일</label>
+                                <input type="text" id="contractRestDay" value="매주 토요일 (정기 휴무)" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">출근 시각</label>
+                                <input type="time" id="contractStartTime" value="10:00" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">퇴근 시각</label>
+                                <input type="time" id="contractEndTime" value="19:00" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">휴게 시간</label>
+                                <input type="text" id="contractBreakTime" value="15:00 ~ 16:00 (1시간)" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">1일 / 1주 근로시간</label>
+                                <input type="text" id="contractDailyHours" value="1일 8시간 / 1주 40시간" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">약정 시급 (원)</label>
+                                <input type="number" id="contractWage" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2 font-bold text-amber-600">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">기본급 (월급제일 경우)</label>
+                                <input type="text" id="contractMonthlyBase" value="해당없음 (시급제)" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">임금 지급일</label>
+                                <input type="text" id="contractPayDay" value="매월 말일 지급" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">지급 방법</label>
+                                <select id="contractPayMethod" onchange="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                                    <option value="계좌이체">계좌이체</option>
+                                    <option value="직접 지급">직접 지급</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Right Contract Full Text Live Preview (7 cols) -->
+                <div class="lg:col-span-7 bg-white p-4 sm:p-5 rounded-xl border-2 border-slate-800 text-xs leading-relaxed space-y-3 flex flex-col justify-between">
+                    <div>
+                        <h2 id="prevHeaderTitle" class="text-center font-extrabold text-base sm:text-lg pb-2 border-b-2 border-slate-900 mb-3 text-slate-900">표 준 근 로 계 약 서</h2>
+                        
+                        <p class="text-justify font-medium">
+                            <strong id="prevShopName">더크래프트버거 세종도담점</strong>(이하 "사용자"라 함)와(과) 
+                            <strong id="prevStaffName">근로자</strong>(이하 "근로자"라 함)는 다음과 같이 근로계약을 체결하고 신의성실 원칙에 따라 이행할 것을 약정한다.
+                        </p>
+
+                        <div class="space-y-1.5 font-medium text-[11px] sm:text-xs mt-2 border-t pt-2">
+                            <p><strong>1. 근로계약기간:</strong> <span id="prevPeriod" class="text-amber-700 font-bold"></span></p>
+                            <p><strong>2. 근무 장소:</strong> <span id="prevWorkPlace"></span></p>
+                            <p><strong>3. 업무 내용:</strong> <span id="prevTask"></span></p>
+                            <p><strong>4. 근로일 및 근로시간</strong><br>
+                               - 근무 요일: <span id="prevWorkDays"></span><br>
+                               - 출퇴근 시각: <span id="prevWorkHours"></span> (휴게시간: <span id="prevBreakTime"></span>)<br>
+                               - 소정 근로시간: <span id="prevDailyHours"></span>
+                            </p>
+                            <p><strong>5. 근무일 및 휴일</strong><br>
+                               - 주휴일: <span id="prevRestDay"></span><br>
+                               <span id="prevHolidaysClause"></span>
+                               - 주휴수당: 주 15시간 이상 근무하고 소정근로일을 개근하는 등 법정 요건 충족 시 지급
+                            </p>
+                            <p><strong>6. 임금</strong><br>
+                               - 시급: <strong id="prevWage" class="text-amber-700"></strong>원 (기본급: <span id="prevMonthlyBase"></span>)<br>
+                               - 임금 지급일: <span id="prevPayDay"></span> (지급 방법: <span id="prevPayMethod"></span>)
+                            </p>
+                            <div id="prevExtraClauseSection"></div>
+                        </div>
+
+                        <p class="text-center font-bold text-gray-800 mt-3 pt-2 border-t text-[11px]">
+                            계약 체결일: <span id="prevContractDate"></span>
+                        </p>
+                    </div>
+
+                    <!-- Owner Canvas Sign Section inside Preview -->
+                    <div class="border-t-2 border-dashed border-gray-300 pt-3 mt-3">
+                        <label class="block text-xs font-bold text-slate-900 mb-1">✍️ 사용자(사장님) 전자 서명</label>
+                        <div class="border-2 border-amber-400 rounded-lg bg-amber-50/30 relative">
+                            <canvas id="ownerCanvas" class="w-full h-24 cursor-crosshair rounded-lg"></canvas>
+                            <button onclick="clearCanvas('ownerCanvas')" class="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[10px] px-2 py-1 rounded font-bold">지우기</button>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">* 계약서 전체 내용을 확인하신 후 위 박스 안에 손가락이나 마우스로 서명해 주세요.</p>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- 세부 항목 입력 폼 -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">근로자(알바생) 이름</label>
-                    <input type="text" id="contractStaffName" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 font-bold">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">근무 시작일</label>
-                    <input type="date" id="contractStartDate" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">근무 종료일</label>
-                    <input type="date" id="contractEndDate" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div class="flex items-center pt-5">
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="contractNoEndDate" onchange="toggleEndDateInput(this.checked)" class="w-4 h-4 text-amber-500 rounded">
-                        <span class="font-bold text-gray-700">기간의 정함 없음</span>
-                    </label>
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">사업장명</label>
-                    <input type="text" id="contractShopName" value="더크래프트버거 세종도담점" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">사업장 주소</label>
-                    <input type="text" id="contractShopAddress" value="세종특별자치시 보듬3로 8-20 (도담동)" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div class="sm:col-span-2">
-                    <label class="block font-semibold text-gray-700 mb-1">업무 내용</label>
-                    <input type="text" id="contractTask" value="수제버거 홀 서빙, 주방 보조, 맥주 추출 및 매장 위생 청소 관리" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">근무 요일</label>
-                    <input type="text" id="contractWorkDays" value="월, 화, 수, 목, 금, 일 (주 5일)" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">주휴일</label>
-                    <input type="text" id="contractRestDay" value="매주 토요일 (정기 휴무)" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">출근 시각</label>
-                    <input type="time" id="contractStartTime" value="10:00" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">퇴근 시각</label>
-                    <input type="time" id="contractEndTime" value="19:00" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">휴게시간</label>
-                    <input type="text" id="contractBreakTime" value="15:00 ~ 16:00 (1시간)" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">1일 / 1주 근로시간</label>
-                    <input type="text" id="contractDailyHours" value="1일 8시간 / 1주 40시간" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">약정 시급 (원)</label>
-                    <input type="number" id="contractWage" class="w-full border border-gray-300 rounded-lg p-2.5 font-bold text-amber-600">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">기본급 (월급제일 경우)</label>
-                    <input type="text" id="contractMonthlyBase" value="해당없음 (시급제)" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">임금 지급일</label>
-                    <input type="text" id="contractPayDay" value="매월 말일 지급" class="w-full border border-gray-300 rounded-lg p-2.5">
-                </div>
-                <div>
-                    <label class="block font-semibold text-gray-700 mb-1">지급 방법</label>
-                    <select id="contractPayMethod" class="w-full border border-gray-300 rounded-lg p-2.5">
-                        <option value="계좌이체">계좌이체</option>
-                        <option value="직접 지급">직접 지급</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Owner Signature Canvas -->
-            <div class="border-t pt-3">
-                <label class="block text-xs font-bold text-gray-800 mb-1">사용자(사업주) 전자 서명</label>
-                <div class="border border-gray-300 rounded-lg bg-gray-50 relative">
-                    <canvas id="ownerCanvas" class="w-full h-28 cursor-crosshair rounded-lg"></canvas>
-                    <button onclick="clearCanvas('ownerCanvas')" class="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[10px] px-2 py-1 rounded">지우기</button>
-                </div>
-            </div>
-
-            <div class="flex justify-end space-x-2 pt-2 border-t">
-                <button onclick="closeCreateContractModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg">취소</button>
-                <button onclick="saveContractByOwner()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">계약서 발송 및 서명저장</button>
+            <div class="flex justify-end space-x-2 pt-2 border-t flex-shrink-0">
+                <button onclick="closeCreateContractModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl">취소</button>
+                <button onclick="saveContractByOwner()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow">계약서 확인완료 및 알바생 발송</button>
             </div>
         </div>
     </div>
 
-    <!-- 2. VIEW & DOWNLOAD CONTRACT MODAL -->
+    <!-- 2. VIEW & DOWNLOAD CONTRACT MODAL (STAFF / ADMIN VIEW) -->
     <div id="viewContractModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3 no-print">
@@ -1322,6 +1374,68 @@
             }
         }
 
+        // REALTIME PREVIEW UPDATE
+        function updateContractPreview() {
+            const companyTypeEl = document.querySelector('input[name="companyType"]:checked');
+            const companyType = companyTypeEl ? companyTypeEl.value : 'under5';
+
+            const headerTitle = companyType === 'over5' 
+                ? "표 준 근 로 계 약 서 (상시근로자 5인 이상 사업장)" 
+                : "표 준 근 로 계 약 서 (상시근로자 5인 미만 사업장)";
+            document.getElementById('prevHeaderTitle').textContent = headerTitle;
+
+            const shopName = document.getElementById('contractShopName').value || "더크래프트버거 세종도담점";
+            const shopAddress = document.getElementById('contractShopAddress').value || "세종특별자치시 보듬3로 8-20 (도담동)";
+            const staffName = document.getElementById('contractStaffName').value || "근로자";
+
+            const startDate = document.getElementById('contractStartDate').value || "____년 __월 __일";
+            const isNoEndDate = document.getElementById('contractNoEndDate').checked;
+            const endDate = isNoEndDate ? "기간의 정함 없음" : (document.getElementById('contractEndDate').value || "____년 __월 __일");
+
+            document.getElementById('prevShopName').textContent = shopName;
+            document.getElementById('prevStaffName').textContent = staffName;
+            document.getElementById('prevPeriod').textContent = `${startDate} ~ ${endDate}`;
+            document.getElementById('prevWorkPlace').textContent = `${shopName} (${shopAddress})`;
+            document.getElementById('prevTask').textContent = document.getElementById('contractTask').value;
+            document.getElementById('prevWorkDays').textContent = document.getElementById('contractWorkDays').value;
+            
+            const startT = document.getElementById('contractStartTime').value || "__:__";
+            const endT = document.getElementById('contractEndTime').value || "__:__";
+            document.getElementById('prevWorkHours').textContent = `${startT} ~ ${endT}`;
+            document.getElementById('prevBreakTime').textContent = document.getElementById('contractBreakTime').value;
+            document.getElementById('prevDailyHours').textContent = document.getElementById('contractDailyHours').value;
+            document.getElementById('prevRestDay').textContent = document.getElementById('contractRestDay').value;
+            
+            const wage = Number(document.getElementById('contractWage').value) || 0;
+            document.getElementById('prevWage').textContent = wage.toLocaleString();
+            document.getElementById('prevMonthlyBase').textContent = document.getElementById('contractMonthlyBase').value || '해당없음';
+            document.getElementById('prevPayDay').textContent = document.getElementById('contractPayDay').value;
+            document.getElementById('prevPayMethod').textContent = document.getElementById('contractPayMethod').value;
+            document.getElementById('prevContractDate').textContent = startDate;
+
+            const holidaysClause = document.getElementById('prevHolidaysClause');
+            const extraClause = document.getElementById('prevExtraClauseSection');
+
+            if (companyType === 'over5') {
+                holidaysClause.innerHTML = `- 관공서 공휴일 및 대체공휴일: 유급휴일<br>`;
+                extraClause.innerHTML = `
+                    <p class="mt-1"><strong>7. 연차유급휴가:</strong> 근로기준법 제60조에 따라 부여한다.</p>
+                    <p><strong>8. 연장·야간·휴일근로:</strong> 연장근로(50% 가산), 야간근로(22:00~06:00, 50% 가산), 휴일근로(8시간 이내 50%, 8시간 초과 100% 가산)</p>
+                    <p><strong>9. 기타 사항:</strong> 최저임금 이상 지급, 휴게시간(근로기준법 제54조), 사회보험 가입, 근로자의 날(5월 1일) 유급휴일 부여.</p>
+                `;
+            } else {
+                holidaysClause.innerHTML = '';
+                extraClause.innerHTML = `
+                    <p class="mt-1"><strong>7. 기타 사항:</strong><br>
+                    - 최저임금은 법정 기준 이상으로 지급한다.<br>
+                    - 연장·야간·휴일근로에 대한 가산수당은 법정 적용 대상이 아니나 실제 근로 시간에 대한 임금은 지급한다.<br>
+                    - 법정 연차유급휴가 및 관공서 공휴일 유급휴일 규정은 적용되지 않는다.<br>
+                    - 근로자의 날(5월 1일)은 유급휴일로 한다.<br>
+                    - 휴게시간 및 사회보험은 관계 법령에 따른다.</p>
+                `;
+            }
+        }
+
         // CONTRACT FUNCTIONS
         function openCreateContractModal(staffId) {
             const staff = staffList.find(s => s.id === staffId);
@@ -1338,6 +1452,8 @@
             clearCanvas('ownerCanvas');
             document.getElementById('createContractModal').classList.remove('hidden');
             document.getElementById('createContractModal').classList.add('flex');
+            
+            updateContractPreview();
             setTimeout(() => setupCanvasDrawing('ownerCanvas'), 100);
         }
 
@@ -1349,7 +1465,7 @@
         function saveContractByOwner() {
             const staffId = document.getElementById('contractStaffId').value;
             const staffName = document.getElementById('contractStaffName').value;
-            const companyType = document.querySelector('input[name="companyType"]:checked').value; // 'under5' or 'over5'
+            const companyType = document.querySelector('input[name="companyType"]:checked').value;
             
             const startDate = document.getElementById('contractStartDate').value;
             const isNoEndDate = document.getElementById('contractNoEndDate').checked;
@@ -1433,7 +1549,6 @@
             document.getElementById('docContractDate').textContent = contract.contractDate || contract.startDate;
             document.getElementById('docStaffSubText').textContent = `성명: ${contract.staffName}`;
 
-            // 5인 미만 / 5인 이상 조항 출력 분기
             const holidayClause = document.getElementById('docHolidaysClause');
             const extraClause = document.getElementById('docExtraClauseSection');
 
