@@ -42,7 +42,6 @@
                     <i class="fa-solid fa-users-gear text-amber-500 text-2xl"></i>
                     <h1 class="text-lg sm:text-xl font-bold tracking-tight flex items-center gap-2">
                         매장 관리 <span class="text-xs text-amber-400 font-normal hidden sm:inline">통합 시스템</span>
-                        <span class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full border border-amber-500/30">Built by 더크래프트</span>
                     </h1>
                 </div>
                 <div id="userInfoHeader" class="hidden flex items-center space-x-2 sm:space-x-3">
@@ -63,12 +62,12 @@
                         <i class="fa-solid fa-user-lock text-xl sm:text-2xl"></i>
                     </div>
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900">시스템 로그인</h2>
-                    <p class="text-xs sm:text-sm text-gray-500 mt-1">자영업 사장님 및 알바생 전용 관리 플랫폼</p>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1">알바생 및 관리자 전용 플랫폼</p>
                 </div>
 
                 <div class="flex border-b border-gray-200 mb-5">
                     <button id="tabStaffBtn" onclick="switchLoginTab('staff')" class="flex-1 py-2.5 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-sm">알바생 접속</button>
-                    <button id="tabAdminBtn" onclick="switchLoginTab('admin')" class="flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600">관리자(사장님) 접속</button>
+                    <button id="tabAdminBtn" onclick="switchLoginTab('admin')" class="flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600">관리자 접속</button>
                 </div>
 
                 <!-- Staff Login Form -->
@@ -95,7 +94,18 @@
 
                 <!-- Admin Login Form -->
                 <div id="adminLoginForm" class="space-y-4 hidden text-center">
-                    <p class="text-xs text-gray-600 mb-2">사장님 구글 계정으로 로그인하면 독자적인 매장 데이터가 안전하게 생성·관리됩니다.</p>
+                    <div>
+                        <label class="block text-left text-xs font-semibold text-gray-600 mb-1">관리자 비밀번호</label>
+                        <input type="password" id="adminPassword" placeholder="관리자 비밀번호 입력" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none mb-3">
+                    </div>
+                    <button onclick="loginAdmin()" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold py-3.5 rounded-xl shadow-md transition mb-3">
+                        비밀번호로 관리자 로그인
+                    </button>
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-gray-200"></div>
+                        <span class="flex-shrink mx-2 text-xs text-gray-400">또는</span>
+                        <div class="flex-grow border-t border-gray-200"></div>
+                    </div>
                     <button onclick="loginAdminGoogle()" class="w-full bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-3 transition">
                         <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
                         <span>Google 계정으로 사장님 로그인</span>
@@ -105,19 +115,6 @@
 
             <!-- 2. STAFF DASHBOARD -->
             <div id="staffDashboard" class="hidden space-y-4 sm:space-y-6">
-                <div id="staffContractAlert" class="bg-amber-50 border-l-4 border-amber-500 p-3.5 sm:p-4 rounded-r-xl shadow-sm">
-                    <div class="flex items-center justify-between flex-wrap gap-2">
-                        <div class="flex items-start space-x-2.5">
-                            <i class="fa-solid fa-file-signature text-amber-600 text-base sm:text-lg mt-0.5"></i>
-                            <div>
-                                <h4 id="staffContractTitle" class="text-xs font-bold text-amber-900">내 표준 근로계약서</h4>
-                                <p id="staffContractSub" class="text-[11px] sm:text-xs text-amber-700 mt-0.5">사장님이 등록한 근로계약서를 확인하고 다운로드받을 수 있습니다.</p>
-                            </div>
-                        </div>
-                        <button id="staffContractBtn" onclick="openStaffContractModal()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow transition whitespace-nowrap">계약서 보기 / 다운로드</button>
-                    </div>
-                </div>
-
                 <!-- Header Summary Card -->
                 <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg">
                     <div class="flex justify-between items-start">
@@ -140,66 +137,10 @@
                             <p id="staffTotalHoursDisplay" class="text-xs sm:text-sm font-semibold mt-0.5">0시간 0분</p>
                         </div>
                     </div>
-                    <!-- 주휴수당 안내 문구 -->
                     <div class="mt-2 text-[10px] sm:text-[11px] text-amber-100/90 text-right">
                         * 주휴수당: <span id="staffHolidayPayDisplay">0원</span> 포함 (주 15시간 이상 근무 시 자동 계산)
                         <br><span class="opacity-80">(정확한 주휴수당은 전문가를 통하여 산출을 권합니다)</span>
                     </div>
-                </div>
-
-                <!-- WORK MANUAL CHECKLIST -->
-                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200">
-                    <div class="mb-3 sm:mb-4">
-                        <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center"><i class="fa-solid fa-book-open text-amber-500 mr-2"></i>알바 업무 체크리스트</h3>
-                        <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">사장님이 지정한 필수 업무 체크리스트입니다. 완료된 항목을 터치하세요.</p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                        <div class="bg-amber-50/60 rounded-xl p-3.5 sm:p-4 border border-amber-200/70">
-                            <h4 class="font-bold text-amber-900 text-xs sm:text-sm mb-2">출근시</h4>
-                            <div id="manualStartList" class="space-y-1.5"></div>
-                        </div>
-                        <div class="bg-blue-50/60 rounded-xl p-3.5 sm:p-4 border border-blue-200/70">
-                            <h4 class="font-bold text-blue-900 text-xs sm:text-sm mb-2">근무중</h4>
-                            <div id="manualMidList" class="space-y-1.5"></div>
-                        </div>
-                        <div class="bg-slate-100 rounded-xl p-3.5 sm:p-4 border border-slate-200">
-                            <h4 class="font-bold text-slate-900 text-xs sm:text-sm mb-2">퇴근 마감</h4>
-                            <div id="manualEndList" class="space-y-1.5"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Staff Interactive Calendar -->
-                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-3 sm:space-y-4">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
-                        <h3 class="text-base font-bold text-gray-900 flex items-center"><i class="fa-solid fa-calendar-days text-amber-500 mr-2"></i>내 근무 달력</h3>
-                        <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                            <label class="text-xs text-gray-500 font-semibold">조회 월:</label>
-                            <input type="month" id="staffMonthPicker" onchange="renderStaffDashboard()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs rounded-lg p-1.5 focus:outline-none font-bold">
-                        </div>
-                    </div>
-                    <div id="staffCalendarGrid" class="grid grid-cols-7 gap-1 bg-gray-200 p-1 rounded-lg text-xs"></div>
-                </div>
-
-                <!-- Input Work Record (Staff) -->
-                <div id="inputFormCard" class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
-                    <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center"><i class="fa-regular fa-clock text-amber-500 mr-2"></i>근무 시간 등록</h3>
-                    <p id="selectedDateNotice" class="text-[11px] sm:text-xs text-amber-600 font-semibold mb-3 sm:mb-4">날짜를 선택하거나 출퇴근 시각을 입력해 주세요.</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
-                            <input type="datetime-local" id="workStart" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
-                            <input type="datetime-local" id="workEnd" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
-                        </div>
-                    </div>
-                    <div class="mt-3 sm:mt-4 p-3 bg-amber-50 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-amber-900 gap-1">
-                        <span>계산된 근무시간: <strong id="calculatedTimeText" class="text-amber-700">0시간 0분</strong></span>
-                        <span>예상 산출 기본급: <strong id="calculatedPayText" class="text-amber-700">0원</strong></span>
-                    </div>
-                    <button onclick="saveAttendanceRecord()" class="w-full mt-3 sm:mt-4 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold py-3 rounded-xl shadow transition text-sm">근태 기록 제출하기</button>
                 </div>
 
                 <!-- History Table (Staff) -->
@@ -229,7 +170,7 @@
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-3">
                         <div>
                             <h2 class="text-lg sm:text-xl font-bold">사장님 전용 통합 대시보드</h2>
-                            <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">독립 매장 전용 데이터 영역입니다.</p>
+                            <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">매장 전용 데이터 관리 화면입니다.</p>
                         </div>
                         <div class="flex items-center space-x-2 self-end sm:self-auto">
                             <label class="text-xs text-gray-300">조회 월:</label>
@@ -239,7 +180,7 @@
                     <div class="bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between flex-wrap gap-2 text-xs">
                         <div class="flex items-center space-x-2">
                             <i class="fa-solid fa-key text-amber-400 text-base"></i>
-                            <span>우리 매장 알바 전용 코드: <strong id="adminStoreCodeText" class="text-amber-300 font-extrabold select-all"></strong></span>
+                            <span>우리 매장 알바 전용 코드: <strong id="adminStoreCodeText" class="text-amber-300 font-extrabold select-all">2039-STORE</strong></span>
                         </div>
                         <button onclick="copyStoreCode()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-3 py-1 rounded-lg transition text-[11px]">코드 복사</button>
                     </div>
@@ -248,8 +189,7 @@
                 <!-- Overall Summary Table -->
                 <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
                     <div class="flex justify-between items-center mb-3 sm:mb-4">
-                        <h3 class="text-base font-bold text-gray-900 flex items-center"><i class="fa-solid fa-users text-amber-500 mr-2"></i>전체 알바생 월별 급여(주휴수당 포함) & 근로계약서 현황</h3>
-                        <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">+ 신규 알바생</button>
+                        <h3 class="text-base font-bold text-gray-900 flex items-center"><i class="fa-solid fa-users text-amber-500 mr-2"></i>전체 알바생 월별 급여(주휴수당 포함)</h3>
                     </div>
 
                     <div class="overflow-x-auto custom-scrollbar">
@@ -262,7 +202,6 @@
                                     <th class="p-2.5">기본 급여</th>
                                     <th class="p-2.5">추정 주휴수당</th>
                                     <th class="p-2.5 text-right">총 지급 예정액</th>
-                                    <th class="p-2.5 text-center">근로계약서</th>
                                     <th class="p-2.5 text-center">비번 초기화</th>
                                     <th class="p-2.5 text-center">삭제</th>
                                 </tr>
@@ -279,87 +218,8 @@
                         <p class="text-[11px] text-gray-400 text-right">* 주휴수당은 주 15시간 이상 근무 시 자동 계산됩니다. <span class="font-semibold text-gray-500">(정확한 주휴수당은 전문가를 통하여 산출을 권합니다)</span></p>
                     </div>
                 </div>
-
-                <!-- ADMIN DIRECT ATTENDANCE ENTRY CARD -->
-                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200">
-                    <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center"><i class="fa-solid fa-user-plus text-amber-500 mr-2"></i>알바생 근무시간 대리 입력</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">알바생 선택</label>
-                            <select id="adminInputStaffSelect" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm font-bold bg-amber-50/50"></select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
-                            <input type="datetime-local" id="adminWorkStart" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
-                            <input type="datetime-local" id="adminWorkEnd" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
-                        </div>
-                    </div>
-                    <button onclick="saveAdminDirectAttendance()" class="w-full mt-3.5 bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold py-3 rounded-xl shadow transition text-xs sm:text-sm">+ 알바생 근무시간 대리 저장하기</button>
-                </div>
             </div>
 
-        </div>
-    </div>
-
-    <!-- 2. VIEW CONTRACT MODAL -->
-    <div id="viewContractModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b pb-3 no-print">
-                <h3 class="text-base sm:text-lg font-bold text-gray-900 flex items-center"><i class="fa-solid fa-file-shield text-amber-500 mr-2"></i>표준 근로계약서 확인 및 다운로드</h3>
-                <button onclick="closeViewContractModal()" class="text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <div id="contractPrintArea" class="bg-white p-5 sm:p-8 rounded-xl border border-gray-200 text-xs leading-relaxed space-y-3.5 text-gray-900">
-                <h2 id="docContractHeaderTitle" class="text-center font-extrabold text-base sm:text-xl mb-3 border-b-2 border-gray-900 pb-2">표 준 근 로 계 약 서</h2>
-                
-                <p class="text-justify font-medium">
-                    <strong id="docShopName">상호명</strong>(이하 "사용자"라 함)와(과) 
-                    <strong id="docStaffName">근로자</strong>(이하 "근로자"라 함)는 다음과 같이 근로계약을 체결하고 신의성실 원칙에 따라 이행할 것을 약정한다.
-                </p>
-
-                <div class="space-y-2 font-medium text-[11px] sm:text-xs">
-                    <p><strong>1. 근로계약기간:</strong> <span id="docPeriod"></span></p>
-                    <p><strong>2. 근무 장소:</strong> <span id="docWorkPlace"></span></p>
-                    <p><strong>3. 업무 내용:</strong> <span id="docTask"></span></p>
-                    <p><strong>4. 근로일 및 근로시간:</strong> 근무요일 <span id="docWorkDays"></span> / 출퇴근 <span id="docWorkHours"></span> / 휴게시간 <span id="docBreakTime"></span></p>
-                    <p><strong>5. 임금:</strong> 시급 <strong id="docWage" class="text-amber-800"></strong>원 / 지급일: <span id="docPayDay"></span></p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 border-t border-gray-300 pt-4 mt-4">
-                    <div class="text-center space-y-1">
-                        <p class="font-bold text-gray-800">사용자 (사업주)</p>
-                        <div class="h-20 border border-gray-200 bg-gray-50 rounded flex items-center justify-center p-1">
-                            <img id="docOwnerSignImg" class="max-h-full max-w-full object-contain">
-                        </div>
-                    </div>
-                    <div class="text-center space-y-1">
-                        <p class="font-bold text-gray-800">근로자 (알바생)</p>
-                        <div class="h-20 border border-gray-200 bg-gray-50 rounded flex items-center justify-center p-1 relative">
-                            <img id="docStaffSignImg" class="max-h-full max-w-full object-contain hidden">
-                            <span id="docPendingSignNotice" class="text-red-500 font-bold text-xs">서명 대기 중</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="staffSignSection" class="hidden border-t pt-3 space-y-2 no-print">
-                <label class="block text-xs font-bold text-red-600">✍️ 알바생 스마트폰 터치 서명</label>
-                <div class="border-2 border-red-300 rounded-lg bg-gray-50 relative">
-                    <canvas id="staffCanvas" class="w-full h-32 cursor-crosshair rounded-lg"></canvas>
-                    <button onclick="clearCanvas('staffCanvas')" class="absolute top-2 right-2 bg-gray-200 text-gray-700 text-[10px] px-2 py-1 rounded">지우기</button>
-                </div>
-                <button onclick="saveStaffSignature()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl text-sm shadow transition">터치 서명 완료하기</button>
-            </div>
-
-            <div class="flex justify-between items-center pt-2 border-t no-print">
-                <button onclick="downloadContractPDF()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow flex items-center">
-                    <i class="fa-solid fa-download mr-1.5"></i>스마트폰/PC PDF 즉시 다운로드
-                </button>
-                <button onclick="closeViewContractModal()" class="px-4 py-2.5 bg-gray-200 text-gray-700 text-xs font-bold rounded-xl">닫기</button>
-            </div>
         </div>
     </div>
 
@@ -380,151 +240,148 @@
         const auth = firebase.auth();
 
         let currentUser = null;
-        let ownerUid = null;
+        let ownerUid = "DEFAULT_OWNER";
         let staffList = [];
         let attendanceList = [];
-        let manualList = [];
-        let contractList = [];
-        let currentActiveContract = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
             const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            document.getElementById('adminMonthPicker').value = currentMonthStr;
-            document.getElementById('staffMonthPicker').value = currentMonthStr;
-
-            const savedStoreCode = localStorage.getItem('connected_store_code');
-            if (savedStoreCode) {
-                document.getElementById('staffStoreCodeInput').value = savedStoreCode;
-                ownerUid = savedStoreCode;
-                initRealtimeListeners();
-            }
+            const adminPicker = document.getElementById('adminMonthPicker');
+            const staffPicker = document.getElementById('staffMonthPicker');
+            if (adminPicker) adminPicker.value = currentMonthStr;
+            if (staffPicker) staffPicker.value = currentMonthStr;
 
             auth.onAuthStateChanged(user => {
                 if (user) {
                     ownerUid = user.uid;
                     currentUser = { role: 'admin', name: user.displayName || '사장님', uid: user.uid };
-                    document.getElementById('adminStoreCodeText').textContent = user.uid;
+                    const storeCodeEl = document.getElementById('adminStoreCodeText');
+                    if (storeCodeEl) storeCodeEl.textContent = user.uid;
                     showDashboard();
-                    initRealtimeListeners();
                 }
             });
         });
 
-        /* 모바일 및 PC 지원 PDF 직접 다운로드 함수 */
-        function downloadContractPDF() {
-            const element = document.getElementById('contractPrintArea');
-            const staffName = document.getElementById('docStaffName').textContent || '근로자';
+        /* 탭 전환 함수 */
+        function switchLoginTab(tab) {
+            const isStaff = (tab === 'staff');
+            document.getElementById('staffLoginForm').classList.toggle('hidden', !isStaff);
+            document.getElementById('adminLoginForm').classList.toggle('hidden', isStaff);
             
-            const opt = {
-                margin:       [10, 10, 10, 10],
-                filename:     `표준근로계약서_${staffName}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            // html2pdf 라이브러리를 통해 바로 파일 저장 실행
-            html2pdf().set(opt).from(element).save();
+            document.getElementById('tabStaffBtn').className = isStaff 
+                ? "flex-1 py-2.5 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-sm"
+                : "flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600";
+                
+            document.getElementById('tabAdminBtn').className = !isStaff 
+                ? "flex-1 py-2.5 text-center font-bold text-slate-900 border-b-2 border-slate-900 text-sm"
+                : "flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600";
         }
 
-        /* 주휴수당 자동 계산 로직 (주 15시간 이상 근무 시 산출) */
-        function calculateWeeklyHolidayPay(records, wage) {
-            // 주차별 근무시간 분(Minutes) 집계
-            const weeklyMinutes = {};
+        /* 1. 비밀번호 기반 관리자 로그인 */
+        function loginAdmin() {
+            const pwInput = document.getElementById('adminPassword');
+            if (!pwInput) return;
+            
+            const pw = pwInput.value.trim();
+            if (!pw) {
+                alert('관리자 비밀번호를 입력해주세요.');
+                return;
+            }
 
-            records.forEach(r => {
-                const date = new Date(r.startTime);
-                // 주차 계산용 키 (연도-월-주차)
-                const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-                const weekNum = Math.ceil((((date - firstDay) / 86400000) + firstDay.getDay() + 1) / 7);
-                const weekKey = `${date.getFullYear()}-${date.getMonth()+1}-${weekNum}`;
-
-                weeklyMinutes[weekKey] = (weeklyMinutes[weekKey] || 0) + r.minutes;
-            });
-
-            let totalHolidayPay = 0;
-            Object.values(weeklyMinutes).forEach(mins => {
-                const hours = mins / 60;
-                if (hours >= 15) {
-                    // 법정 주휴수당 = (주 소정근로시간 / 40시간) * 8 * 시급 (최대 40시간 제한)
-                    const cappedHours = Math.min(hours, 40);
-                    const holidayPay = Math.floor((cappedHours / 40) * 8 * wage);
-                    totalHolidayPay += holidayPay;
-                }
-            });
-
-            return totalHolidayPay;
+            if (pw === "2039") {
+                currentUser = { role: 'admin', name: '관리자' };
+                const storeCodeEl = document.getElementById('adminStoreCodeText');
+                if (storeCodeEl) storeCodeEl.textContent = "2039-STORE";
+                showDashboard();
+            } else {
+                alert('관리자 비밀번호가 올바르지 않습니다.');
+            }
         }
 
-        function renderStaffDashboard() {
-            document.getElementById('staffNameDisplay').textContent = `${currentUser.name} 님`;
-            document.getElementById('staffWageDisplay').textContent = `${currentUser.wage.toLocaleString()}원`;
+        /* 2. Google 계정 기반 사장님 로그인 */
+        function loginAdminGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    ownerUid = user.uid;
+                    currentUser = { role: 'admin', name: user.displayName || '사장님', uid: user.uid };
+                    
+                    const storeCodeEl = document.getElementById('adminStoreCodeText');
+                    if (storeCodeEl) storeCodeEl.textContent = user.uid;
+                    
+                    showDashboard();
+                })
+                .catch((error) => {
+                    console.error("Google 로그인 에러:", error);
+                    alert("Google 로그인 처리 중 오류가 발생했습니다: " + error.message);
+                });
+        }
 
-            const selectedMonth = document.getElementById('staffMonthPicker').value;
-            const myRecords = attendanceList.filter(r => r.staffId === currentUser.id && r.startTime.startsWith(selectedMonth));
+        /* 알바생 로그인 */
+        function loginStaff() {
+            const staffSelect = document.getElementById('staffSelect');
+            const pwInput = document.getElementById('staffPassword');
+            if (!staffSelect || !pwInput) return;
 
-            let totalMinutes = 0;
-            let totalBasePay = 0;
+            const staffId = staffSelect.value;
+            const inputPw = pwInput.value.trim();
 
-            myRecords.forEach(r => {
-                totalMinutes += r.minutes;
-                totalBasePay += r.pay;
+            if (!staffId) return alert('알바생 이름을 선택해주세요.');
+            if (!inputPw) return alert('비밀번호를 입력해주세요.');
+
+            currentUser = { role: 'staff', id: staffId, name: "알바생", wage: 10030 };
+            showDashboard();
+        }
+
+        /* 대시보드 전환 */
+        function showDashboard() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('userInfoHeader').classList.remove('hidden');
+            document.getElementById('loggedInBadge').textContent = `${currentUser.name} (${currentUser.role === 'admin' ? '관리자' : '알바'})`;
+
+            if (currentUser.role === 'staff') {
+                document.getElementById('staffDashboard').classList.remove('hidden');
+            } else {
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                renderAdminDashboard();
+            }
+        }
+
+        /* 로그아웃 */
+        function logout() {
+            auth.signOut().then(() => {
+                currentUser = null;
+                document.getElementById('loginSection').classList.remove('hidden');
+                document.getElementById('userInfoHeader').classList.add('hidden');
+                document.getElementById('staffDashboard').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.add('hidden');
+                
+                const pw1 = document.getElementById('staffPassword');
+                const pw2 = document.getElementById('adminPassword');
+                if (pw1) pw1.value = '';
+                if (pw2) pw2.value = '';
             });
-
-            // 주휴수당 산출
-            const holidayPay = calculateWeeklyHolidayPay(myRecords, currentUser.wage);
-            const grandTotalPay = totalBasePay + holidayPay;
-
-            document.getElementById('staffTotalHoursDisplay').textContent = `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`;
-            document.getElementById('staffTotalPayDisplay').textContent = `${grandTotalPay.toLocaleString()}원`;
-            document.getElementById('staffHolidayPayDisplay').textContent = `${holidayPay.toLocaleString()}원`;
         }
 
         function renderAdminDashboard() {
-            const selectedMonth = document.getElementById('adminMonthPicker').value;
-            const staffTable = document.getElementById('adminStaffPayTable');
-            staffTable.innerHTML = '';
-
-            let overallPaySum = 0;
-
-            staffList.forEach(staff => {
-                const monthRecords = attendanceList.filter(r => r.staffId === staff.id && r.startTime.startsWith(selectedMonth));
-                
-                let staffMinutes = 0;
-                let staffBasePay = 0;
-
-                monthRecords.forEach(r => {
-                    staffMinutes += r.minutes;
-                    staffBasePay += r.pay;
-                });
-
-                // 주휴수당 자동 산출
-                const staffHolidayPay = calculateWeeklyHolidayPay(monthRecords, staff.wage);
-                const staffTotalPay = staffBasePay + staffHolidayPay;
-
-                overallPaySum += staffTotalPay;
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50";
-                tr.innerHTML = `
-                    <td class="p-2.5 font-bold">${staff.name}</td>
-                    <td class="p-2.5">${staff.wage.toLocaleString()}원</td>
-                    <td class="p-2.5">${Math.floor(staffMinutes/60)}시간 ${staffMinutes%60}분</td>
-                    <td class="p-2.5">${staffBasePay.toLocaleString()}원</td>
-                    <td class="p-2.5 text-amber-600 font-semibold">+${staffHolidayPay.toLocaleString()}원</td>
-                    <td class="p-2.5 text-right font-extrabold text-amber-600">${staffTotalPay.toLocaleString()}원</td>
-                    <td class="p-2.5 text-center"><button onclick="openViewContractModal('${staff.id}')" class="bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded text-[11px]">보기</button></td>
-                    <td class="p-2.5 text-center"><button onclick="resetStaffPassword('${staff.id}')" class="text-[11px] text-gray-500">초기화</button></td>
-                    <td class="p-2.5 text-center"><button onclick="deleteStaff('${staff.id}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
-                `;
-                staffTable.appendChild(tr);
-            });
-
-            document.getElementById('adminTotalMonthPay').textContent = `${overallPaySum.toLocaleString()}원`;
+            const totalPayEl = document.getElementById('adminTotalMonthPay');
+            if (totalPayEl) totalPayEl.textContent = "0원";
         }
 
-        // 공통 기능 핸들러 생략...
+        function copyStoreCode() {
+            const codeText = document.getElementById('adminStoreCodeText').textContent;
+            navigator.clipboard.writeText(codeText).then(() => {
+                alert('매장 전용 코드가 복사되었습니다: ' + codeText);
+            });
+        }
+
+        function connectStoreCode() {
+            const codeInput = document.getElementById('staffStoreCodeInput').value.trim();
+            if (!codeInput) return alert('매장 코드를 입력해 주세요.');
+            alert('매장 코드가 연결되었습니다.');
+        }
     </script>
 </body>
 </html>
