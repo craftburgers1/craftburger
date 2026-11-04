@@ -161,8 +161,8 @@
                         <div>
                             <p class="text-amber-100 text-[11px] sm:text-xs">지정 기간 총 예상 급여 (기본급 + 주휴수당)</p>
                             <p id="staffTotalPayDisplay" class="text-2xl sm:text-3xl font-extrabold mt-0.5">0원</p>
-                            <button onclick="downloadStaffPayslipPDF()" class="mt-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition">
-                                <i class="fa-solid fa-file-invoice-dollar mr-1"></i>급여명세서 PDF 다운로드
+                            <button onclick="openStaffPayslipModal()" class="mt-2 bg-slate-900 hover:bg-slate-800 text-amber-300 font-bold text-xs px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-eye"></i>급여명세서 미리보기
                             </button>
                         </div>
                         <div class="text-right">
@@ -473,8 +473,8 @@
                                 <span>~</span>
                                 <input type="date" id="adminSettlementEnd" class="bg-slate-800 text-white border border-slate-700 p-1 rounded font-bold">
                             </div>
-                            <button onclick="calculateAdminSettlement()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-3 py-1.5 rounded-lg transition">
-                                정산 실행 및 급여명세서 발행
+                            <button onclick="openAdminPayslipModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-eye"></i>정산 / 급여명세서 미리보기
                             </button>
                         </div>
                     </div>
@@ -885,63 +885,95 @@
         </div>
     </div>
 
-    <!-- 3. PAYSLIP GENERATOR TEMPLATE (PRINT CONTAINER) -->
-    <div id="payslipPrintArea" class="bg-white p-6 rounded-xl border border-gray-300 text-xs text-gray-900 space-y-4 max-w-2xl mx-auto" style="position: fixed; top: -9999px; left: -9999px; width: 700px;">
-        <h2 id="psTitle" class="text-center font-extrabold text-xl border-b-2 border-gray-900 pb-2">급 여 명 세 서</h2>
-        
-        <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 text-[11px]">
-            <div><strong>정산 기간:</strong> <span id="psPeriod"></span></div>
-            <div><strong>지급 예정일:</strong> <span id="psPayDate"></span></div>
-            <div><strong>사업장명:</strong> <span id="psShopName"></span></div>
-            <div><strong>대표자:</strong> <span id="psOwnerName"></span></div>
-            <div><strong>근로자명:</strong> <span id="psStaffName"></span></div>
-            <div><strong>적용시급:</strong> <span id="psWage"></span>원</div>
-        </div>
+    <!-- 3. PAYSLIP PREVIEW & DOWNLOAD MODAL -->
+    <div id="payslipModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] flex flex-col">
+            <div class="flex justify-between items-center border-b pb-3 no-print flex-shrink-0">
+                <h3 class="text-base sm:text-lg font-bold text-gray-900 flex items-center">
+                    <i class="fa-solid fa-file-invoice-dollar text-amber-500 mr-2"></i>급여명세서 미리보기
+                </h3>
+                <button onclick="closePayslipModal()" class="text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
 
-        <table class="w-full border-collapse border border-gray-300 text-center text-xs">
-            <thead>
-                <tr class="bg-gray-100 border-b border-gray-300 font-bold">
-                    <th class="border border-gray-300 p-2">구분</th>
-                    <th class="border border-gray-300 p-2">근무시간 / 산출 기준</th>
-                    <th class="border border-gray-300 p-2">금액</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="border border-gray-300 p-2 font-semibold">기본급</td>
-                    <td id="psBaseHours" class="border border-gray-300 p-2">0시간 0분</td>
-                    <td id="psBasePay" class="border border-gray-300 p-2 font-bold text-right pr-3">0원</td>
-                </tr>
-                <tr>
-                    <td class="border border-gray-300 p-2 font-semibold">주휴수당</td>
-                    <td id="psAllowanceNote" class="border border-gray-300 p-2">주 15시간 이상 소정근로 산출분</td>
-                    <td id="psAllowancePay" class="border border-gray-300 p-2 font-bold text-right pr-3">0원</td>
-                </tr>
-                <tr class="bg-amber-50 font-extrabold text-amber-900">
-                    <td class="border border-gray-300 p-2" colspan="2">실 지급 차인 지급액 (합계)</td>
-                    <td id="psTotalPay" class="border border-gray-300 p-2 text-right pr-3 text-sm">0원</td>
-                </tr>
-            </tbody>
-        </table>
+            <!-- 안내 알림 박스 (지정 문구) -->
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-3 sm:p-4 rounded-r-xl no-print flex-shrink-0">
+                <div class="flex items-start space-x-2">
+                    <i class="fa-solid fa-circle-info text-amber-600 text-base mt-0.5"></i>
+                    <p id="payslipPeriodNoticeText" class="text-xs sm:text-sm font-bold text-amber-900 leading-relaxed">
+                        정산 기간은 00년 00월 00일 ~ 00년 00월 00일 까지 입니다. 수정을 원하시면 닫기를 누르고 기간을 다시 선택하세요.
+                    </p>
+                </div>
+            </div>
 
-        <div>
-            <h4 class="font-bold text-xs mb-1.5 text-gray-800">■ 정산 기간 내 상세 근무 내역</h4>
-            <table class="w-full border-collapse border border-gray-300 text-center text-[10px]">
-                <thead>
-                    <tr class="bg-gray-100 font-bold">
-                        <th class="border border-gray-300 p-1">출근시각</th>
-                        <th class="border border-gray-300 p-1">퇴근시각</th>
-                        <th class="border border-gray-300 p-1">근무시간</th>
-                        <th class="border border-gray-300 p-1">일 기본급</th>
-                    </tr>
-                </thead>
-                <tbody id="psDetailTableBody"></tbody>
-            </table>
-        </div>
+            <!-- PDF 미리보기 및 캡처 스냅샷 영역 -->
+            <div class="overflow-y-auto custom-scrollbar flex-1 p-1">
+                <div id="payslipPrintArea" class="bg-white p-5 sm:p-8 rounded-xl border border-gray-300 text-xs text-gray-900 space-y-4 max-w-full">
+                    <h2 id="psTitle" class="text-center font-extrabold text-lg sm:text-xl border-b-2 border-gray-900 pb-2">급 여 명 세 서</h2>
+                    
+                    <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 text-[11px]">
+                        <div><strong>정산 기간:</strong> <span id="psPeriod"></span></div>
+                        <div><strong>지급 예정일:</strong> <span id="psPayDate"></span></div>
+                        <div><strong>사업장명:</strong> <span id="psShopName"></span></div>
+                        <div><strong>대표자:</strong> <span id="psOwnerName"></span></div>
+                        <div><strong>근로자명:</strong> <span id="psStaffName"></span></div>
+                        <div><strong>적용시급:</strong> <span id="psWage"></span>원</div>
+                    </div>
 
-        <div class="text-[10px] text-gray-500 leading-relaxed space-y-0.5 border-t pt-2">
-            <p>* 본 급여명세서는 관련 법령에 명시된 주요 내역을 반영하여 전자 방식으로 발급되었습니다.</p>
-            <p>* 다음 정산 시에는 본 정산 종료일 다음 날부터 자동으로 정산 시작일이 설정됩니다.</p>
+                    <table class="w-full border-collapse border border-gray-300 text-center text-xs">
+                        <thead>
+                            <tr class="bg-gray-100 border-b border-gray-300 font-bold">
+                                <th class="border border-gray-300 p-2">구분</th>
+                                <th class="border border-gray-300 p-2">근무시간 / 산출 기준</th>
+                                <th class="border border-gray-300 p-2">금액</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="border border-gray-300 p-2 font-semibold">기본급</td>
+                                <td id="psBaseHours" class="border border-gray-300 p-2">0시간 0분</td>
+                                <td id="psBasePay" class="border border-gray-300 p-2 font-bold text-right pr-3">0원</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-300 p-2 font-semibold">주휴수당</td>
+                                <td id="psAllowanceNote" class="border border-gray-300 p-2">주 15시간 이상 소정근로 산출분</td>
+                                <td id="psAllowancePay" class="border border-gray-300 p-2 font-bold text-right pr-3">0원</td>
+                            </tr>
+                            <tr class="bg-amber-50 font-extrabold text-amber-900">
+                                <td class="border border-gray-300 p-2" colspan="2">실 지급 차인 지급액 (합계)</td>
+                                <td id="psTotalPay" class="border border-gray-300 p-2 text-right pr-3 text-sm">0원</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div>
+                        <h4 class="font-bold text-xs mb-1.5 text-gray-800">■ 정산 기간 내 상세 근무 내역</h4>
+                        <table class="w-full border-collapse border border-gray-300 text-center text-[10px]">
+                            <thead>
+                                <tr class="bg-gray-100 font-bold">
+                                    <th class="border border-gray-300 p-1">출근시각</th>
+                                    <th class="border border-gray-300 p-1">퇴근시각</th>
+                                    <th class="border border-gray-300 p-1">근무시간</th>
+                                    <th class="border border-gray-300 p-1">일 기본급</th>
+                                </tr>
+                            </thead>
+                            <tbody id="psDetailTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="text-[10px] text-gray-500 leading-relaxed space-y-0.5 border-t pt-2">
+                        <p>* 본 급여명세서는 관련 법령에 명시된 주요 내역을 반영하여 전자 방식으로 발급되었습니다.</p>
+                        <p>* 다음 정산 시에는 본 정산 종료일 다음 날부터 자동으로 정산 시작일이 설정됩니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 팝업 버튼 -->
+            <div class="flex justify-between items-center pt-3 border-t no-print flex-shrink-0">
+                <button onclick="closePayslipModal()" class="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-xl">닫기</button>
+                <button onclick="downloadPayslipPDFFromModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-download"></i>급여명세서 PDF 저장하기
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1031,6 +1063,7 @@
         let contractList = [];
         let currentActiveContract = null;
         let pendingUserObj = null;
+        let activePayslipData = null; // 미리보기 급여명세서 임시 데이터
 
         const defaultManuals = [
             { category: 'start', text: '매장 환기 및 테이블 청결 상태 확인', order: 1 },
@@ -1286,7 +1319,6 @@
                     nextDay.setDate(nextDay.getDate() + 1);
                     document.getElementById('staffSettlementStart').value = nextDay.toISOString().split('T')[0];
                 } else {
-                    // 최초 정산 시 당월 1일로 설정
                     const firstDayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
                     document.getElementById('staffSettlementStart').value = firstDayStr;
                 }
@@ -1535,7 +1567,6 @@
             const startDate = document.getElementById('staffSettlementStart').value;
             const endDate = document.getElementById('staffSettlementEnd').value;
 
-            // 기간 필터링
             const myRecords = attendanceList.filter(r => {
                 if (r.staffId !== currentUser.id) return false;
                 const recordDate = r.startTime.split('T')[0];
@@ -1824,12 +1855,6 @@
             document.getElementById('staffDetailCard').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function calculateAdminSettlement() {
-            renderAdminStaffCalendar();
-            const staffId = document.getElementById('adminSelectedStaff').value;
-            if (staffId) downloadAdminStaffPayslipPDF(staffId);
-        }
-
         function renderAdminStaffCalendar() {
             const selectedStaffId = document.getElementById('adminSelectedStaff').value;
             const selectedMonth = document.getElementById('adminMonthPicker').value;
@@ -1848,7 +1873,6 @@
             const staff = staffList.find(s => s.id === selectedStaffId);
             if (!staff) return;
 
-            // 정산 기간 기본 날짜 세팅 (이전 정산일의 다음 날 ~ 오늘)
             const startInput = document.getElementById('adminSettlementStart');
             const endInput = document.getElementById('adminSettlementEnd');
             
@@ -2118,11 +2142,9 @@
             document.getElementById('contractStaffName').value = staff.name;
             document.getElementById('contractWage').value = staff.wage;
 
-            // 알바생 주소/연락처
             document.getElementById('contractStaffAddress').value = staff.address || '';
             document.getElementById('contractStaffPhone').value = staff.phone || '';
 
-            // 사장님 정보 불러오기
             const savedShopName = localStorage.getItem('default_shop_name') || '';
             const savedShopAddr = localStorage.getItem('default_shop_address') || '';
             const savedTask = localStorage.getItem('default_shop_task') || '';
@@ -2263,7 +2285,6 @@
             document.getElementById('docPayMethod').textContent = contract.payMethod;
             document.getElementById('docContractDate').textContent = contract.contractDate || contract.startDate;
 
-            // 하단 인적사항 세팅
             document.getElementById('docOwnerSubText').textContent = `사업장명: ${contract.shopName || '-'}`;
             document.getElementById('docOwnerNameText').textContent = `대표자명: ${contract.ownerName || '-'}`;
             document.getElementById('docOwnerPhoneText').textContent = `연락처: ${contract.ownerPhone || '-'}`;
@@ -2345,8 +2366,15 @@
         }
 
         // ==========================================
-        // 4. PAYSLIP GENERATION LOGIC (기간 선택 기반)
+        // 4. PAYSLIP MODAL & GENERATION LOGIC (미리보기 팝업 구현)
         // ==========================================
+        function formatDateKorean(dateStr) {
+            if (!dateStr) return "00년 00월 00일";
+            const parts = dateStr.split('-');
+            if (parts.length < 3) return dateStr;
+            return `${parts[0].slice(2)}년 ${parts[1]}월 ${parts[2]}일`;
+        }
+
         function generatePayslipDataByPeriod(staffId, startDate, endDate) {
             const staff = staffList.find(s => s.id === staffId);
             if (!staff) return null;
@@ -2384,30 +2412,53 @@
                 basePay: totalBasePay,
                 allowancePay: weeklyAllowance,
                 totalPay: totalPay,
-                records: records.sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+                records: records.sort((a, b) => new Date(a.startTime) - new Date(a.startTime))
             };
         }
 
-        function downloadStaffPayslipPDF() {
+        function openStaffPayslipModal() {
             const startDate = document.getElementById('staffSettlementStart').value;
             const endDate = document.getElementById('staffSettlementEnd').value;
             const data = generatePayslipDataByPeriod(currentUser.id, startDate, endDate);
             
             if (!data) return alert('급여 데이터를 불러올 수 없습니다.');
             
+            activePayslipData = data;
             renderPayslipDOM(data);
-            triggerPayslipPDF(data.staffName, data.startDate, data.endDate);
+            openPayslipModalUI(data.startDate, data.endDate);
         }
 
-        function downloadAdminStaffPayslipPDF(staffId) {
+        function openAdminPayslipModal() {
+            const staffId = document.getElementById('adminSelectedStaff').value;
+            if (!staffId) return alert('알바생을 먼저 선택해주세요.');
+
             const startDate = document.getElementById('adminSettlementStart').value;
             const endDate = document.getElementById('adminSettlementEnd').value;
             const data = generatePayslipDataByPeriod(staffId, startDate, endDate);
             
             if (!data) return alert('급여 데이터를 불러올 수 없습니다.');
 
+            activePayslipData = data;
             renderPayslipDOM(data);
-            triggerPayslipPDF(data.staffName, data.startDate, data.endDate);
+            openPayslipModalUI(data.startDate, data.endDate);
+        }
+
+        function openPayslipModalUI(startDate, endDate) {
+            const startKor = formatDateKorean(startDate);
+            const endKor = formatDateKorean(endDate);
+            
+            document.getElementById('payslipPeriodNoticeText').textContent = 
+                `정산 기간은 ${startKor} ~ ${endKor} 까지 입니다. 수정을 원하시면 닫기를 누르고 기간을 다시 선택하세요.`;
+
+            const modal = document.getElementById('payslipModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closePayslipModal() {
+            const modal = document.getElementById('payslipModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         function renderPayslipDOM(data) {
@@ -2441,8 +2492,13 @@
             }
         }
 
-        function triggerPayslipPDF(staffName, startDate, endDate) {
+        function downloadPayslipPDFFromModal() {
+            if (!activePayslipData) return;
+
             const element = document.getElementById('payslipPrintArea');
+            const staffName = activePayslipData.staffName;
+            const startDate = activePayslipData.startDate;
+            const endDate = activePayslipData.endDate;
 
             const opt = {
                 margin:       [10, 10, 10, 10],
@@ -2453,10 +2509,8 @@
             };
 
             html2pdf().set(opt).from(element).save().then(() => {
-                // 마지막 정산 종료일 저장 (다음 정산 시 다음 날부터 자동 셋업)
-                if (endDate) {
-                    const staffId = currentUser.role === 'staff' ? currentUser.id : document.getElementById('adminSelectedStaff').value;
-                    if (staffId) localStorage.setItem(`last_settlement_end_${staffId}`, endDate);
+                if (endDate && activePayslipData.staffId) {
+                    localStorage.setItem(`last_settlement_end_${activePayslipData.staffId}`, endDate);
                 }
             });
         }
@@ -2490,7 +2544,7 @@
                 return alert('백업할 근무 기록이 없습니다.');
             }
 
-            let csvContent = "\uFEFF"; // UTF-8 BOM (한글 엑셀 깨짐 방지)
+            let csvContent = "\uFEFF"; // UTF-8 BOM
             csvContent += "알바생이름,출근시간,퇴근시간,근무시간(분),산출금액(원),수정여부,등록자\n";
 
             recordsToExport.forEach(r => {
