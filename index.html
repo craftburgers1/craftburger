@@ -29,445 +29,462 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800 antialiased selection:bg-amber-500 selection:text-white">
+<body class="bg-gray-100 min-h-screen text-gray-800 antialiased selection:bg-amber-500 selection:text-white flex flex-col justify-between">
 
-    <!-- Top Navigation Bar -->
-    <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-users-gear text-amber-500 text-2xl"></i>
-                <h1 class="text-lg sm:text-xl font-bold tracking-tight flex items-center gap-2">
-                    매장 관리 <span class="text-xs text-amber-400 font-normal hidden sm:inline">통합 시스템</span>
-                    <span class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full border border-amber-500/30">Built by 더크래프트</span>
-                </h1>
-            </div>
-            <div id="userInfoHeader" class="hidden flex items-center space-x-2 sm:space-x-3">
-                <span id="loggedInBadge" class="bg-amber-500 text-slate-900 text-[11px] sm:text-xs font-bold px-2 py-1 sm:px-2.5 sm:py-1 rounded-full"></span>
-                <button onclick="logout()" class="text-[11px] sm:text-xs bg-slate-800 hover:bg-slate-700 text-gray-300 px-2.5 py-1.5 sm:px-3 rounded transition">
-                    <i class="fa-solid fa-right-from-bracket mr-1"></i><span class="hidden sm:inline">로그아웃</span>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <div class="max-w-6xl mx-auto px-3 py-4 sm:p-6 space-y-4 sm:space-y-6">
-
-        <!-- ========================================== -->
-        <!-- 1. LOGIN SECTION                           -->
-        <!-- ========================================== -->
-        <div id="loginSection" class="bg-white rounded-2xl shadow-xl p-5 sm:p-8 max-w-md mx-auto my-6 sm:my-12 border border-gray-100">
-            <div class="text-center mb-5 sm:mb-6">
-                <div class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-amber-100 text-amber-600 rounded-full mb-3">
-                    <i class="fa-solid fa-user-lock text-xl sm:text-2xl"></i>
+    <div>
+        <!-- Top Navigation Bar -->
+        <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-users-gear text-amber-500 text-2xl"></i>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight flex items-center gap-2">
+                        매장 관리 <span class="text-xs text-amber-400 font-normal hidden sm:inline">통합 시스템</span>
+                        <span class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full border border-amber-500/30">Built by 더크래프트</span>
+                    </h1>
                 </div>
-                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">시스템 로그인</h2>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1">자영업 사장님 및 알바생 전용 관리 플랫폼</p>
+                <div id="userInfoHeader" class="hidden flex items-center space-x-2 sm:space-x-3">
+                    <span id="loggedInBadge" class="bg-amber-500 text-slate-900 text-[11px] sm:text-xs font-bold px-2 py-1 sm:px-2.5 sm:py-1 rounded-full"></span>
+                    <button onclick="logout()" class="text-[11px] sm:text-xs bg-slate-800 hover:bg-slate-700 text-gray-300 px-2.5 py-1.5 sm:px-3 rounded transition">
+                        <i class="fa-solid fa-right-from-bracket mr-1"></i><span class="hidden sm:inline">로그아웃</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-6xl mx-auto px-3 py-4 sm:p-6 space-y-4 sm:space-y-6">
+
+            <!-- ========================================== -->
+            <!-- 1. LOGIN SECTION                           -->
+            <!-- ========================================== -->
+            <div id="loginSection" class="bg-white rounded-2xl shadow-xl p-5 sm:p-8 max-w-md mx-auto my-6 sm:my-12 border border-gray-100">
+                <div class="text-center mb-5 sm:mb-6">
+                    <div class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-amber-100 text-amber-600 rounded-full mb-3">
+                        <i class="fa-solid fa-user-lock text-xl sm:text-2xl"></i>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">시스템 로그인</h2>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1">자영업 사장님 및 알바생 전용 관리 플랫폼</p>
+                </div>
+
+                <div class="flex border-b border-gray-200 mb-5">
+                    <button id="tabStaffBtn" onclick="switchLoginTab('staff')" class="flex-1 py-2.5 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-sm">
+                        알바생 접속
+                    </button>
+                    <button id="tabAdminBtn" onclick="switchLoginTab('admin')" class="flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600">
+                        관리자(사장님) 접속
+                    </button>
+                </div>
+
+                <!-- Staff Login Form -->
+                <div id="staffLoginForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">매장 연결 코드</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="staffStoreCodeInput" placeholder="사장님께 안내받은 코드 입력" class="flex-1 bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            <button onclick="connectStoreCode()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 rounded-xl transition">
+                                조회
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1">* 한 번 조회하면 휴대폰에 매장 코드가 자동 보관됩니다.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">이름 선택</label>
+                        <select id="staffSelect" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            <option value="">먼저 매장 코드를 입력 및 조회하세요</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">비밀번호</label>
+                        <input type="password" id="staffPassword" placeholder="비밀번호 입력" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <p class="text-[11px] text-gray-400 mt-1">* 첫 로그인 시 입력한 비밀번호가 자동 등록됩니다.</p>
+                    </div>
+                    <button onclick="loginStaff()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold py-3.5 rounded-xl shadow-md transition">
+                        알바생 로그인
+                    </button>
+                </div>
+
+                <!-- Admin Login Form -->
+                <div id="adminLoginForm" class="space-y-4 hidden text-center">
+                    <p class="text-xs text-gray-600 mb-2">사장님 구글 계정으로 로그인하면 독자적인 매장 데이터가 안전하게 생성·관리됩니다.</p>
+                    <button onclick="loginAdminGoogle()" class="w-full bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-3 transition">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                        <span>Google 계정으로 사장님 로그인</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="flex border-b border-gray-200 mb-5">
-                <button id="tabStaffBtn" onclick="switchLoginTab('staff')" class="flex-1 py-2.5 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-sm">
-                    알바생 접속
-                </button>
-                <button id="tabAdminBtn" onclick="switchLoginTab('admin')" class="flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600">
-                    관리자(사장님) 접속
-                </button>
-            </div>
-
-            <!-- Staff Login Form -->
-            <div id="staffLoginForm" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">매장 연결 코드</label>
-                    <div class="flex space-x-2">
-                        <input type="text" id="staffStoreCodeInput" placeholder="사장님께 안내받은 코드 입력" class="flex-1 bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                        <button onclick="connectStoreCode()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 rounded-xl transition">
-                            조회
+            <!-- ========================================== -->
+            <!-- 2. STAFF DASHBOARD                         -->
+            <!-- ========================================== -->
+            <div id="staffDashboard" class="hidden space-y-4 sm:space-y-6">
+                <!-- Contract Alert Banner -->
+                <div id="staffContractAlert" class="bg-amber-50 border-l-4 border-amber-500 p-3.5 sm:p-4 rounded-r-xl shadow-sm">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-start space-x-2.5">
+                            <i class="fa-solid fa-file-signature text-amber-600 text-base sm:text-lg mt-0.5"></i>
+                            <div>
+                                <h4 id="staffContractTitle" class="text-xs font-bold text-amber-900">내 표준 근로계약서</h4>
+                                <p id="staffContractSub" class="text-[11px] sm:text-xs text-amber-700 mt-0.5">사장님이 등록한 근로계약서를 확인하고 다운로드받을 수 있습니다.</p>
+                            </div>
+                        </div>
+                        <button id="staffContractBtn" onclick="openStaffContractModal()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow transition whitespace-nowrap">
+                            계약서 보기 / 다운로드
                         </button>
                     </div>
-                    <p class="text-[11px] text-gray-400 mt-1">* 한 번 조회하면 휴대폰에 매장 코드가 자동 보관됩니다.</p>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">이름 선택</label>
-                    <select id="staffSelect" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                        <option value="">먼저 매장 코드를 입력 및 조회하세요</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">비밀번호</label>
-                    <input type="password" id="staffPassword" placeholder="비밀번호 입력" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                    <p class="text-[11px] text-gray-400 mt-1">* 첫 로그인 시 입력한 비밀번호가 자동 등록됩니다.</p>
-                </div>
-                <button onclick="loginStaff()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold py-3.5 rounded-xl shadow-md transition">
-                    알바생 로그인
-                </button>
-            </div>
 
-            <!-- Admin Login Form -->
-            <div id="adminLoginForm" class="space-y-4 hidden text-center">
-                <p class="text-xs text-gray-600 mb-2">사장님 구글 계정으로 로그인하면 독자적인 매장 데이터가 안전하게 생성·관리됩니다.</p>
-                <button onclick="loginAdminGoogle()" class="w-full bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-3 transition">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                    <span>Google 계정으로 사장님 로그인</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- 2. STAFF DASHBOARD                         -->
-        <!-- ========================================== -->
-        <div id="staffDashboard" class="hidden space-y-4 sm:space-y-6">
-            <!-- Contract Alert Banner -->
-            <div id="staffContractAlert" class="bg-amber-50 border-l-4 border-amber-500 p-3.5 sm:p-4 rounded-r-xl shadow-sm">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                    <div class="flex items-start space-x-2.5">
-                        <i class="fa-solid fa-file-signature text-amber-600 text-base sm:text-lg mt-0.5"></i>
+                <!-- Header Summary Card -->
+                <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg">
+                    <div class="flex justify-between items-start">
                         <div>
-                            <h4 id="staffContractTitle" class="text-xs font-bold text-amber-900">내 표준 근로계약서</h4>
-                            <p id="staffContractSub" class="text-[11px] sm:text-xs text-amber-700 mt-0.5">사장님이 등록한 근로계약서를 확인하고 다운로드받을 수 있습니다.</p>
+                            <p class="text-amber-100 text-[11px] sm:text-xs font-medium">반갑습니다!</p>
+                            <h2 id="staffNameDisplay" class="text-xl sm:text-2xl font-bold mt-0.5"></h2>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-amber-100 text-[11px] sm:text-xs">시급</p>
+                            <p id="staffWageDisplay" class="text-lg sm:text-xl font-bold mt-0.5">0원</p>
                         </div>
                     </div>
-                    <button id="staffContractBtn" onclick="openStaffContractModal()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow transition whitespace-nowrap">
-                        계약서 보기 / 다운로드
-                    </button>
+                    <div class="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-amber-400/40 flex justify-between items-end">
+                        <div>
+                            <p class="text-amber-100 text-[11px] sm:text-xs">선택 월 예상 급여</p>
+                            <p id="staffTotalPayDisplay" class="text-2xl sm:text-3xl font-extrabold mt-0.5">0원</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-amber-100 text-[11px] sm:text-xs">선택 월 총 근무시간</p>
+                            <p id="staffTotalHoursDisplay" class="text-xs sm:text-sm font-semibold mt-0.5">0시간 0분</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Header Summary Card -->
-            <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-amber-100 text-[11px] sm:text-xs font-medium">반갑습니다!</p>
-                        <h2 id="staffNameDisplay" class="text-xl sm:text-2xl font-bold mt-0.5"></h2>
+                <!-- WORK MANUAL CHECKLIST -->
+                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200">
+                    <div class="mb-3 sm:mb-4">
+                        <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center">
+                            <i class="fa-solid fa-book-open text-amber-500 mr-2"></i>알바 업무 체크리스트
+                        </h3>
+                        <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">사장님이 지정한 필수 업무 체크리스트입니다. 완료된 항목을 터치하세요.</p>
                     </div>
-                    <div class="text-right">
-                        <p class="text-amber-100 text-[11px] sm:text-xs">시급</p>
-                        <p id="staffWageDisplay" class="text-lg sm:text-xl font-bold mt-0.5">0원</p>
-                    </div>
-                </div>
-                <div class="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-amber-400/40 flex justify-between items-end">
-                    <div>
-                        <p class="text-amber-100 text-[11px] sm:text-xs">선택 월 예상 급여</p>
-                        <p id="staffTotalPayDisplay" class="text-2xl sm:text-3xl font-extrabold mt-0.5">0원</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-amber-100 text-[11px] sm:text-xs">선택 월 총 근무시간</p>
-                        <p id="staffTotalHoursDisplay" class="text-xs sm:text-sm font-semibold mt-0.5">0시간 0분</p>
-                    </div>
-                </div>
-            </div>
 
-            <!-- WORK MANUAL CHECKLIST -->
-            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200">
-                <div class="mb-3 sm:mb-4">
-                    <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center">
-                        <i class="fa-solid fa-book-open text-amber-500 mr-2"></i>알바 업무 체크리스트
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+                        <div class="bg-amber-50/60 rounded-xl p-3.5 sm:p-4 border border-amber-200/70">
+                            <div class="flex items-center space-x-2 border-b border-amber-200 pb-2 mb-2.5">
+                                <span class="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-sun"></i></span>
+                                <h4 class="font-bold text-amber-900 text-xs sm:text-sm">출근시</h4>
+                            </div>
+                            <div id="manualStartList" class="space-y-1.5"></div>
+                        </div>
+                        <div class="bg-blue-50/60 rounded-xl p-3.5 sm:p-4 border border-blue-200/70">
+                            <div class="flex items-center space-x-2 border-b border-blue-200 pb-2 mb-2.5">
+                                <span class="w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-briefcase"></i></span>
+                                <h4 class="font-bold text-blue-900 text-xs sm:text-sm">근무중</h4>
+                            </div>
+                            <div id="manualMidList" class="space-y-1.5"></div>
+                        </div>
+                        <div class="bg-slate-100 rounded-xl p-3.5 sm:p-4 border border-slate-200">
+                            <div class="flex items-center space-x-2 border-b border-slate-300 pb-2 mb-2.5">
+                                <span class="w-5 h-5 rounded-full bg-slate-700 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-moon"></i></span>
+                                <h4 class="font-bold text-slate-900 text-xs sm:text-sm">퇴근 마감</h4>
+                            </div>
+                            <div id="manualEndList" class="space-y-1.5"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Staff Interactive Calendar -->
+                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-3 sm:space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900 flex items-center">
+                                <i class="fa-solid fa-calendar-days text-amber-500 mr-2"></i>내 근무 달력
+                            </h3>
+                            <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">달력 날짜를 누르면 해당 날짜로 입력창에 세팅됩니다.</p>
+                        </div>
+                        <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                            <label class="text-xs text-gray-500 font-semibold">조회 월:</label>
+                            <input type="month" id="staffMonthPicker" onchange="renderStaffDashboard()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs rounded-lg p-1.5 focus:outline-none font-bold">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-1.5 sm:py-2 rounded-t-lg border border-gray-200">
+                            <span class="text-red-500">일</span>
+                            <span>월</span>
+                            <span>화</span>
+                            <span>수</span>
+                            <span>목</span>
+                            <span>금</span>
+                            <span class="text-blue-500">토</span>
+                        </div>
+                        <div id="staffCalendarGrid" class="grid grid-cols-7 gap-1 bg-gray-200 p-1 rounded-b-lg border border-t-0 border-gray-200 text-xs"></div>
+                    </div>
+                </div>
+
+                <!-- Input Work Record (Staff) -->
+                <div id="inputFormCard" class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
+                    <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center">
+                        <i class="fa-regular fa-clock text-amber-500 mr-2"></i>근무 시간 등록
                     </h3>
-                    <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">사장님이 지정한 필수 업무 체크리스트입니다. 완료된 항목을 터치하세요.</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                    <div class="bg-amber-50/60 rounded-xl p-3.5 sm:p-4 border border-amber-200/70">
-                        <div class="flex items-center space-x-2 border-b border-amber-200 pb-2 mb-2.5">
-                            <span class="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-sun"></i></span>
-                            <h4 class="font-bold text-amber-900 text-xs sm:text-sm">출근시</h4>
+                    <p id="selectedDateNotice" class="text-[11px] sm:text-xs text-amber-600 font-semibold mb-3 sm:mb-4">날짜를 선택하거나 출퇴근 시각을 입력해 주세요.</p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
+                            <input type="datetime-local" id="workStart" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                         </div>
-                        <div id="manualStartList" class="space-y-1.5"></div>
-                    </div>
-                    <div class="bg-blue-50/60 rounded-xl p-3.5 sm:p-4 border border-blue-200/70">
-                        <div class="flex items-center space-x-2 border-b border-blue-200 pb-2 mb-2.5">
-                            <span class="w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-briefcase"></i></span>
-                            <h4 class="font-bold text-blue-900 text-xs sm:text-sm">근무중</h4>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
+                            <input type="datetime-local" id="workEnd" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                         </div>
-                        <div id="manualMidList" class="space-y-1.5"></div>
                     </div>
-                    <div class="bg-slate-100 rounded-xl p-3.5 sm:p-4 border border-slate-200">
-                        <div class="flex items-center space-x-2 border-b border-slate-300 pb-2 mb-2.5">
-                            <span class="w-5 h-5 rounded-full bg-slate-700 text-white text-[10px] flex items-center justify-center font-bold"><i class="fa-solid fa-moon"></i></span>
-                            <h4 class="font-bold text-slate-900 text-xs sm:text-sm">퇴근 마감</h4>
-                        </div>
-                        <div id="manualEndList" class="space-y-1.5"></div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Staff Interactive Calendar -->
-            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-3 sm:space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
-                    <div>
-                        <h3 class="text-base font-bold text-gray-900 flex items-center">
-                            <i class="fa-solid fa-calendar-days text-amber-500 mr-2"></i>내 근무 달력
-                        </h3>
-                        <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">달력 날짜를 누르면 해당 날짜로 입력창에 세팅됩니다.</p>
+                    <div class="mt-3 sm:mt-4 p-3 bg-amber-50 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-amber-900 gap-1">
+                        <span>계산된 근무시간: <strong id="calculatedTimeText" class="text-amber-700">0시간 0분</strong></span>
+                        <span>예상 산출 급여: <strong id="calculatedPayText" class="text-amber-700">0원</strong></span>
                     </div>
-                    <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                        <label class="text-xs text-gray-500 font-semibold">조회 월:</label>
-                        <input type="month" id="staffMonthPicker" onchange="renderStaffDashboard()" class="bg-gray-50 border border-gray-300 text-gray-800 text-xs rounded-lg p-1.5 focus:outline-none font-bold">
-                    </div>
-                </div>
 
-                <div>
-                    <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-1.5 sm:py-2 rounded-t-lg border border-gray-200">
-                        <span class="text-red-500">일</span>
-                        <span>월</span>
-                        <span>화</span>
-                        <span>수</span>
-                        <span>목</span>
-                        <span>금</span>
-                        <span class="text-blue-500">토</span>
-                    </div>
-                    <div id="staffCalendarGrid" class="grid grid-cols-7 gap-1 bg-gray-200 p-1 rounded-b-lg border border-t-0 border-gray-200 text-xs"></div>
-                </div>
-            </div>
-
-            <!-- Input Work Record (Staff) -->
-            <div id="inputFormCard" class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
-                <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center">
-                    <i class="fa-regular fa-clock text-amber-500 mr-2"></i>근무 시간 등록
-                </h3>
-                <p id="selectedDateNotice" class="text-[11px] sm:text-xs text-amber-600 font-semibold mb-3 sm:mb-4">날짜를 선택하거나 출퇴근 시각을 입력해 주세요.</p>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
-                        <input type="datetime-local" id="workStart" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
-                        <input type="datetime-local" id="workEnd" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="mt-3 sm:mt-4 p-3 bg-amber-50 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-amber-900 gap-1">
-                    <span>계산된 근무시간: <strong id="calculatedTimeText" class="text-amber-700">0시간 0분</strong></span>
-                    <span>예상 산출 급여: <strong id="calculatedPayText" class="text-amber-700">0원</strong></span>
-                </div>
-
-                <button onclick="saveAttendanceRecord()" class="w-full mt-3 sm:mt-4 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold py-3 sm:py-3.5 rounded-xl shadow transition text-sm">
-                    근태 기록 제출하기
-                </button>
-            </div>
-
-            <!-- History Table (Staff) -->
-            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
-                <h3 class="text-base font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
-                    <i class="fa-solid fa-list text-amber-500 mr-2"></i>선택 월 상세 근무 기록
-                </h3>
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left text-xs whitespace-nowrap min-w-[550px]">
-                        <thead class="bg-gray-50 text-gray-500 border-b">
-                            <tr>
-                                <th class="p-2.5">출근시간</th>
-                                <th class="p-2.5">퇴근시간</th>
-                                <th class="p-2.5">근무시간</th>
-                                <th class="p-2.5 text-right">급여</th>
-                                <th class="p-2.5 text-center">수정이력</th>
-                                <th class="p-2.5 text-center">수정/삭제</th>
-                            </tr>
-                        </thead>
-                        <tbody id="staffAttendanceTable" class="divide-y divide-gray-100"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- 3. ADMIN DASHBOARD                         -->
-        <!-- ========================================== -->
-        <div id="adminDashboard" class="hidden space-y-4 sm:space-y-6">
-            <!-- Header, Store Code & Month Filter -->
-            <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md space-y-3">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-3">
-                    <div>
-                        <h2 class="text-lg sm:text-xl font-bold">사장님 전용 통합 대시보드</h2>
-                        <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">독립 매장 전용 데이터 영역입니다.</p>
-                    </div>
-                    <div class="flex items-center space-x-2 self-end sm:self-auto">
-                        <label class="text-xs text-gray-300">조회 월:</label>
-                        <input type="month" id="adminMonthPicker" onchange="renderAdminDashboard()" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg p-1.5 focus:outline-none">
-                    </div>
-                </div>
-
-                <!-- STORE CODE BANNER -->
-                <div class="bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between flex-wrap gap-2 text-xs">
-                    <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-key text-amber-400 text-base"></i>
-                        <span>우리 매장 알바 전용 코드: <strong id="adminStoreCodeText" class="text-amber-300 font-extrabold select-all"></strong></span>
-                    </div>
-                    <button onclick="copyStoreCode()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-3 py-1 rounded-lg transition text-[11px]">
-                        <i class="fa-regular fa-copy mr-1"></i>코드 복사
-                    </button>
-                </div>
-            </div>
-
-            <!-- ADMIN MANUAL MANAGEMENT CARD -->
-            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200 space-y-4">
-                <div class="flex justify-between items-center border-b pb-3">
-                    <div>
-                        <h3 class="text-base font-bold text-gray-900 flex items-center">
-                            <i class="fa-solid fa-list-check text-amber-500 mr-2"></i>알바 업무 매뉴얼 추가 / 수정 / 순서 변경
-                        </h3>
-                        <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">알바생이 보게 될 업무 매뉴얼을 등록하고 순서를 조정할 수 있습니다.</p>
-                    </div>
-                </div>
-
-                <div class="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row gap-2">
-                    <select id="newManualCategory" class="bg-white border border-gray-300 rounded-lg p-2 text-xs font-bold text-gray-800">
-                        <option value="start">출근시</option>
-                        <option value="mid">근무중</option>
-                        <option value="end">퇴근 마감</option>
-                    </select>
-                    <input type="text" id="newManualText" placeholder="예: 테이블 상태 확인 및 청결 유지" class="flex-1 bg-white border border-gray-300 rounded-lg p-2 text-xs focus:outline-none">
-                    <button onclick="addNewManual()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition whitespace-nowrap">
-                        + 매뉴얼 추가
+                    <button onclick="saveAttendanceRecord()" class="w-full mt-3 sm:mt-4 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold py-3 sm:py-3.5 rounded-xl shadow transition text-sm">
+                        근태 기록 제출하기
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                    <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-200 space-y-2">
-                        <h4 class="font-bold text-amber-900 text-xs flex items-center"><i class="fa-solid fa-sun mr-1.5"></i>출근시 매뉴얼</h4>
-                        <div id="adminManualStartList" class="space-y-1.5"></div>
-                    </div>
-                    <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-200 space-y-2">
-                        <h4 class="font-bold text-blue-900 text-xs flex items-center"><i class="fa-solid fa-briefcase mr-1.5"></i>근무중 매뉴얼</h4>
-                        <div id="adminManualMidList" class="space-y-1.5"></div>
-                    </div>
-                    <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 space-y-2">
-                        <h4 class="font-bold text-slate-900 text-xs flex items-center"><i class="fa-solid fa-moon mr-1.5"></i>퇴근 마감 매뉴얼</h4>
-                        <div id="adminManualEndList" class="space-y-1.5"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Overall Summary Table -->
-            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
-                <div class="flex justify-between items-center mb-3 sm:mb-4">
-                    <h3 class="text-base font-bold text-gray-900 flex items-center">
-                        <i class="fa-solid fa-users text-amber-500 mr-2"></i>전체 알바생 월별 급여 & 근로계약서 현황
+                <!-- History Table (Staff) -->
+                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
+                    <h3 class="text-base font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
+                        <i class="fa-solid fa-list text-amber-500 mr-2"></i>선택 월 상세 근무 기록
                     </h3>
-                    <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
-                        + 신규 알바생
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left text-xs whitespace-nowrap min-w-[650px]">
-                        <thead class="bg-gray-50 text-gray-500 border-b">
-                            <tr>
-                                <th class="p-2.5">이름</th>
-                                <th class="p-2.5">설정 시급</th>
-                                <th class="p-2.5">이달 총 근무시간</th>
-                                <th class="p-2.5">이달 지급 예정 급여</th>
-                                <th class="p-2.5 text-center">표준 근로계약서</th>
-                                <th class="p-2.5 text-center">비번 초기화</th>
-                                <th class="p-2.5 text-center">삭제</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminStaffPayTable" class="divide-y divide-gray-100"></tbody>
-                    </table>
-                </div>
-
-                <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center text-xs sm:text-sm font-bold text-gray-900">
-                    <span>전체 알바생 지급 예정액 합계</span>
-                    <span id="adminTotalMonthPay" class="text-amber-600 text-base sm:text-lg">0원</span>
-                </div>
-            </div>
-
-            <!-- ADMIN DIRECT ATTENDANCE ENTRY CARD (사장님이 직접 알바 근무시간 대리 등록) -->
-            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200">
-                <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center">
-                    <i class="fa-solid fa-user-plus text-amber-500 mr-2"></i>알바생 근무시간 대리 입력 (사장님 전용)
-                </h3>
-                <p class="text-[11px] sm:text-xs text-gray-500 mb-3 sm:mb-4">알바생이 직접 등록하지 못한 근무 시간을 사장님이 대신 등록할 수 있습니다.</p>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">알바생 선택</label>
-                        <select id="adminInputStaffSelect" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm font-bold bg-amber-50/50">
-                            <option value="">알바생을 선택하세요</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
-                        <input type="datetime-local" id="adminWorkStart" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
-                        <input type="datetime-local" id="adminWorkEnd" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
-                    </div>
-                </div>
-
-                <button onclick="saveAdminDirectAttendance()" class="w-full mt-3.5 bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold py-3 rounded-xl shadow transition text-xs sm:text-sm">
-                    + 알바생 근무시간 대리 저장하기
-                </button>
-            </div>
-
-            <!-- Staff Detailed View with Calendar -->
-            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-4 sm:space-y-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 sm:pb-4">
-                    <div>
-                        <h3 class="text-base font-bold text-gray-900 flex items-center">
-                            <i class="fa-solid fa-calendar-check text-amber-500 mr-2"></i>알바생별 상세 근태 & 달력 조회
-                        </h3>
-                        <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">알바생을 선택해 달력을 확인하고, 근태 시각을 바로 수정할 수 있습니다.</p>
-                    </div>
-                    <div class="w-full sm:w-52">
-                        <select id="adminSelectedStaff" onchange="renderAdminStaffCalendar()" class="w-full bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-xs sm:text-sm font-bold text-amber-900 focus:outline-none">
-                            <option value="">알바생을 선택하세요</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="staffDetailCard" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
-                        <p class="text-[11px] text-gray-500 font-semibold">설정 시급</p>
-                        <p id="detailStaffWage" class="text-base sm:text-lg font-bold text-gray-800 mt-0.5">0원</p>
-                    </div>
-                    <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-100">
-                        <p class="text-[11px] text-amber-700 font-semibold">선택 월 총 근무시간</p>
-                        <p id="detailStaffHours" class="text-base sm:text-lg font-bold text-amber-900 mt-0.5">0시간 0분</p>
-                    </div>
-                    <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-100">
-                        <p class="text-[11px] text-emerald-700 font-semibold">선택 월 지급 예정 급여</p>
-                        <p id="detailStaffPay" class="text-lg sm:text-xl font-extrabold text-emerald-800 mt-0.5">0원</p>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 id="calendarTitle" class="text-xs sm:text-sm font-bold text-gray-800 mb-2.5">근무 달력</h4>
-                    <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-1.5 rounded-t-lg border border-gray-200">
-                        <span class="text-red-500">일</span>
-                        <span>월</span>
-                        <span>화</span>
-                        <span>수</span>
-                        <span>목</span>
-                        <span>금</span>
-                        <span class="text-blue-500">토</span>
-                    </div>
-                    <div id="adminCalendarGrid" class="grid grid-cols-7 gap-1 bg-gray-200 p-1 rounded-b-lg border border-t-0 border-gray-200 text-xs"></div>
-                </div>
-
-                <div>
-                    <h4 class="text-xs sm:text-sm font-bold text-gray-800 mb-2">선택 알바생 이달의 상세 근태 기록 및 변경 이력</h4>
                     <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full text-left text-xs whitespace-nowrap min-w-[600px]">
+                        <table class="w-full text-left text-xs whitespace-nowrap min-w-[550px]">
                             <thead class="bg-gray-50 text-gray-500 border-b">
                                 <tr>
-                                    <th class="p-2.5">출근시각</th>
-                                    <th class="p-2.5">퇴근시각</th>
+                                    <th class="p-2.5">출근시간</th>
+                                    <th class="p-2.5">퇴근시간</th>
                                     <th class="p-2.5">근무시간</th>
                                     <th class="p-2.5 text-right">급여</th>
                                     <th class="p-2.5 text-center">수정이력</th>
-                                    <th class="p-2.5 text-center">근태 수정</th>
-                                    <th class="p-2.5 text-center">삭제</th>
+                                    <th class="p-2.5 text-center">수정/삭제</th>
                                 </tr>
                             </thead>
-                            <tbody id="detailAttendanceTable" class="divide-y divide-gray-100"></tbody>
+                            <tbody id="staffAttendanceTable" class="divide-y divide-gray-100"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
-        </div>
 
+            <!-- ========================================== -->
+            <!-- 3. ADMIN DASHBOARD                         -->
+            <!-- ========================================== -->
+            <div id="adminDashboard" class="hidden space-y-4 sm:space-y-6">
+                <!-- Header, Store Code & Month Filter -->
+                <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md space-y-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-3">
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-bold">사장님 전용 통합 대시보드</h2>
+                            <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">독립 매장 전용 데이터 영역입니다.</p>
+                        </div>
+                        <div class="flex items-center space-x-2 self-end sm:self-auto">
+                            <label class="text-xs text-gray-300">조회 월:</label>
+                            <input type="month" id="adminMonthPicker" onchange="renderAdminDashboard()" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg p-1.5 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- STORE CODE BANNER -->
+                    <div class="bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between flex-wrap gap-2 text-xs">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-key text-amber-400 text-base"></i>
+                            <span>우리 매장 알바 전용 코드: <strong id="adminStoreCodeText" class="text-amber-300 font-extrabold select-all"></strong></span>
+                        </div>
+                        <button onclick="copyStoreCode()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-3 py-1 rounded-lg transition text-[11px]">
+                            <i class="fa-regular fa-copy mr-1"></i>코드 복사
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ADMIN MANUAL MANAGEMENT CARD -->
+                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200 space-y-4">
+                    <div class="flex justify-between items-center border-b pb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900 flex items-center">
+                                <i class="fa-solid fa-list-check text-amber-500 mr-2"></i>알바 업무 매뉴얼 추가 / 수정 / 순서 변경
+                            </h3>
+                            <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">알바생이 보게 될 업무 매뉴얼을 등록하고 순서를 조정할 수 있습니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row gap-2">
+                        <select id="newManualCategory" class="bg-white border border-gray-300 rounded-lg p-2 text-xs font-bold text-gray-800">
+                            <option value="start">출근시</option>
+                            <option value="mid">근무중</option>
+                            <option value="end">퇴근 마감</option>
+                        </select>
+                        <input type="text" id="newManualText" placeholder="예: 테이블 상태 확인 및 청결 유지" class="flex-1 bg-white border border-gray-300 rounded-lg p-2 text-xs focus:outline-none">
+                        <button onclick="addNewManual()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition whitespace-nowrap">
+                            + 매뉴얼 추가
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+                        <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-200 space-y-2">
+                            <h4 class="font-bold text-amber-900 text-xs flex items-center"><i class="fa-solid fa-sun mr-1.5"></i>출근시 매뉴얼</h4>
+                            <div id="adminManualStartList" class="space-y-1.5"></div>
+                        </div>
+                        <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-200 space-y-2">
+                            <h4 class="font-bold text-blue-900 text-xs flex items-center"><i class="fa-solid fa-briefcase mr-1.5"></i>근무중 매뉴얼</h4>
+                            <div id="adminManualMidList" class="space-y-1.5"></div>
+                        </div>
+                        <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 space-y-2">
+                            <h4 class="font-bold text-slate-900 text-xs flex items-center"><i class="fa-solid fa-moon mr-1.5"></i>퇴근 마감 매뉴얼</h4>
+                            <div id="adminManualEndList" class="space-y-1.5"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overall Summary Table -->
+                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
+                    <div class="flex justify-between items-center mb-3 sm:mb-4">
+                        <h3 class="text-base font-bold text-gray-900 flex items-center">
+                            <i class="fa-solid fa-users text-amber-500 mr-2"></i>전체 알바생 월별 급여 & 근로계약서 현황
+                        </h3>
+                        <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
+                            + 신규 알바생
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs whitespace-nowrap min-w-[650px]">
+                            <thead class="bg-gray-50 text-gray-500 border-b">
+                                <tr>
+                                    <th class="p-2.5">이름</th>
+                                    <th class="p-2.5">설정 시급</th>
+                                    <th class="p-2.5">이달 총 근무시간</th>
+                                    <th class="p-2.5">이달 지급 예정 급여</th>
+                                    <th class="p-2.5 text-center">표준 근로계약서</th>
+                                    <th class="p-2.5 text-center">비번 초기화</th>
+                                    <th class="p-2.5 text-center">삭제</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminStaffPayTable" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center text-xs sm:text-sm font-bold text-gray-900">
+                        <span>전체 알바생 지급 예정액 합계</span>
+                        <span id="adminTotalMonthPay" class="text-amber-600 text-base sm:text-lg">0원</span>
+                    </div>
+                </div>
+
+                <!-- ADMIN DIRECT ATTENDANCE ENTRY CARD -->
+                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200">
+                    <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center">
+                        <i class="fa-solid fa-user-plus text-amber-500 mr-2"></i>알바생 근무시간 대리 입력 (사장님 전용)
+                    </h3>
+                    <p class="text-[11px] sm:text-xs text-gray-500 mb-3 sm:mb-4">알바생이 직접 등록하지 못한 근무 시간을 사장님이 대신 등록할 수 있습니다.</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">알바생 선택</label>
+                            <select id="adminInputStaffSelect" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm font-bold bg-amber-50/50">
+                                <option value="">알바생을 선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
+                            <input type="datetime-local" id="adminWorkStart" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
+                            <input type="datetime-local" id="adminWorkEnd" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
+                        </div>
+                    </div>
+
+                    <button onclick="saveAdminDirectAttendance()" class="w-full mt-3.5 bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold py-3 rounded-xl shadow transition text-xs sm:text-sm">
+                        + 알바생 근무시간 대리 저장하기
+                    </button>
+                </div>
+
+                <!-- Staff Detailed View with Calendar -->
+                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-4 sm:space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 sm:pb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900 flex items-center">
+                                <i class="fa-solid fa-calendar-check text-amber-500 mr-2"></i>알바생별 상세 근태 & 달력 조회
+                            </h3>
+                            <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">알바생을 선택해 달력을 확인하고, 근태 시각을 바로 수정할 수 있습니다.</p>
+                        </div>
+                        <div class="w-full sm:w-52">
+                            <select id="adminSelectedStaff" onchange="renderAdminStaffCalendar()" class="w-full bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-xs sm:text-sm font-bold text-amber-900 focus:outline-none">
+                                <option value="">알바생을 선택하세요</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="staffDetailCard" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                            <p class="text-[11px] text-gray-500 font-semibold">설정 시급</p>
+                            <p id="detailStaffWage" class="text-base sm:text-lg font-bold text-gray-800 mt-0.5">0원</p>
+                        </div>
+                        <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-100">
+                            <p class="text-[11px] text-amber-700 font-semibold">선택 월 총 근무시간</p>
+                            <p id="detailStaffHours" class="text-base sm:text-lg font-bold text-amber-900 mt-0.5">0시간 0분</p>
+                        </div>
+                        <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-100">
+                            <p class="text-[11px] text-emerald-700 font-semibold">선택 월 지급 예정 급여</p>
+                            <p id="detailStaffPay" class="text-lg sm:text-xl font-extrabold text-emerald-800 mt-0.5">0원</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 id="calendarTitle" class="text-xs sm:text-sm font-bold text-gray-800 mb-2.5">근무 달력</h4>
+                        <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-1.5 rounded-t-lg border border-gray-200">
+                            <span class="text-red-500">일</span>
+                            <span>월</span>
+                            <span>화</span>
+                            <span>수</span>
+                            <span>목</span>
+                            <span>금</span>
+                            <span class="text-blue-500">토</span>
+                        </div>
+                        <div id="adminCalendarGrid" class="grid grid-cols-7 gap-1 bg-gray-200 p-1 rounded-b-lg border border-t-0 border-gray-200 text-xs"></div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs sm:text-sm font-bold text-gray-800 mb-2">선택 알바생 이달의 상세 근태 기록 및 변경 이력</h4>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left text-xs whitespace-nowrap min-w-[600px]">
+                                <thead class="bg-gray-50 text-gray-500 border-b">
+                                    <tr>
+                                        <th class="p-2.5">출근시각</th>
+                                        <th class="p-2.5">퇴근시각</th>
+                                        <th class="p-2.5">근무시간</th>
+                                        <th class="p-2.5 text-right">급여</th>
+                                        <th class="p-2.5 text-center">수정이력</th>
+                                        <th class="p-2.5 text-center">근태 수정</th>
+                                        <th class="p-2.5 text-center">삭제</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailAttendanceTable" class="divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
+
+    <!-- ========================================== -->
+    <!-- COUPANG DYNAMIC BANNER FOOTER              -->
+    <!-- ========================================== -->
+    <footer class="w-full mt-8 py-6 bg-slate-900 border-t border-slate-800 no-print">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col items-center justify-center">
+            <p class="text-[11px] text-gray-400 mb-2">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
+            <div class="overflow-hidden max-w-full flex justify-center items-center">
+                <script src="https://ads-partners.coupang.com/g.js"></script>
+                <script>
+                    new PartnersCoupang.G({"id":1046559,"template":"carousel","trackingCode":"AF4185384","width":"680","height":"140","tsource":""});
+                </script>
+            </div>
+        </div>
+    </footer>
 
     <!-- MODALS & CONTRACT FORMS -->
     <!-- 1. CREATE CONTRACT MODAL -->
@@ -729,7 +746,7 @@
         </div>
     </div>
 
-    <!-- Edit Attendance Modal for Both Admin and Staff -->
+    <!-- Edit Attendance Modal -->
     <div id="editAttendanceModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4">
             <h3 class="text-base sm:text-lg font-bold text-gray-900 flex items-center">
@@ -1035,7 +1052,6 @@
             }
         }
 
-        // SHOW HISTORY POPUP
         function showHistoryDetails(recordId) {
             const record = attendanceList.find(r => r.id === recordId);
             if (!record || !record.editHistory || record.editHistory.length === 0) return;
@@ -1051,7 +1067,6 @@
             alert(historyText);
         }
 
-        // SAVE DIRECT ATTENDANCE BY ADMIN
         function saveAdminDirectAttendance() {
             const staffId = document.getElementById('adminInputStaffSelect').value;
             const startVal = document.getElementById('adminWorkStart').value;
@@ -1092,7 +1107,6 @@
             });
         }
 
-        // ADMIN MANUAL MANAGEMENT FUNCTIONS
         function renderAdminManualEditor() {
             const startContainer = document.getElementById('adminManualStartList');
             const midContainer = document.getElementById('adminManualMidList');
@@ -1182,7 +1196,6 @@
             batch.commit();
         }
 
-        // STAFF DASHBOARD & CHECKLIST
         function checkStaffContractAlert() {
             if (!currentUser || currentUser.role !== 'staff') return;
             const myContract = contractList.find(c => c.staffId === currentUser.id);
@@ -1592,7 +1605,6 @@
             });
         }
 
-        // CANVAS DRAWING & CONTRACT HELPERS
         function setupCanvasDrawing(canvasId) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
