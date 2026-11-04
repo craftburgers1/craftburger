@@ -14,7 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     
-    <!-- html2pdf.js (스마트폰 PDF 다운로드 라이브러리) -->
+    <!-- html2pdf.js (PDF 다운로드 라이브러리) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
@@ -906,8 +906,8 @@
             </div>
 
             <!-- PDF 미리보기 및 캡처 스냅샷 영역 -->
-            <div class="overflow-y-auto custom-scrollbar flex-1 p-1">
-                <div id="payslipPrintArea" class="bg-white p-5 sm:p-8 rounded-xl border border-gray-300 text-xs text-gray-900 space-y-4 max-w-full">
+            <div class="overflow-y-auto custom-scrollbar flex-1 p-1" id="payslipModalScrollArea">
+                <div id="payslipPrintArea" class="bg-white p-6 rounded-xl border border-gray-300 text-xs text-gray-900 space-y-4 max-w-full">
                     <h2 id="psTitle" class="text-center font-extrabold text-lg sm:text-xl border-b-2 border-gray-900 pb-2">급 여 명 세 서</h2>
                     
                     <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 text-[11px]">
@@ -1063,7 +1063,7 @@
         let contractList = [];
         let currentActiveContract = null;
         let pendingUserObj = null;
-        let activePayslipData = null; // 미리보기 급여명세서 임시 데이터
+        let activePayslipData = null;
 
         const defaultManuals = [
             { category: 'start', text: '매장 환기 및 테이블 청결 상태 확인', order: 1 },
@@ -1309,7 +1309,6 @@
             if (currentUser.role === 'staff') {
                 document.getElementById('staffDashboard').classList.remove('hidden');
                 
-                // 알바생 자동 정산 기간 세팅 (이전 정산일의 다음 날부터 오늘까지)
                 const lastSettlementEnd = localStorage.getItem(`last_settlement_end_${currentUser.id}`);
                 const now = new Date();
                 const todayStr = now.toISOString().split('T')[0];
@@ -1350,6 +1349,16 @@
                 document.getElementById('adminDashboard').classList.add('hidden');
                 document.getElementById('staffPassword').value = '';
             }
+        }
+
+        // 특정 날짜가 지정된 시작일~종료일 범위에 속하는지 엄격히 확인하는 필터 함수
+        function isRecordInDateRange(recordStartTime, startDateStr, endDateStr) {
+            if (!recordStartTime) return false;
+            const recDateStr = recordStartTime.split('T')[0];
+            
+            if (startDateStr && recDateStr < startDateStr) return false;
+            if (endDateStr && recDateStr > endDateStr) return false;
+            return true;
         }
 
         function calculateWeeklyAllowance(records, wage) {
@@ -1569,10 +1578,7 @@
 
             const myRecords = attendanceList.filter(r => {
                 if (r.staffId !== currentUser.id) return false;
-                const recordDate = r.startTime.split('T')[0];
-                if (startDate && recordDate < startDate) return false;
-                if (endDate && recordDate > endDate) return false;
-                return true;
+                return isRecordInDateRange(r.startTime, startDate, endDate);
             });
 
             let totalMinutes = 0;
@@ -1900,10 +1906,7 @@
 
             const filteredRecords = attendanceList.filter(r => {
                 if (r.staffId !== selectedStaffId) return false;
-                const recordDate = r.startTime.split('T')[0];
-                if (startDate && recordDate < startDate) return false;
-                if (endDate && recordDate > endDate) return false;
-                return true;
+                return isRecordInDateRange(r.startTime, startDate, endDate);
             });
 
             let totalMinutes = 0;
@@ -2366,7 +2369,7 @@
         }
 
         // ==========================================
-        // 4. PAYSLIP MODAL & GENERATION LOGIC (미리보기 팝업 구현)
+        // 4. PAYSLIP MODAL & GENERATION LOGIC
         // ==========================================
         function formatDateKorean(dateStr) {
             if (!dateStr) return "00년 00월 00일";
@@ -2380,12 +2383,11 @@
             if (!staff) return null;
 
             const contract = contractList.find(c => c.staffId === staffId) || {};
+            
+            // 날짜 비교 로직 보완 (시작일~종료일 내 기록 바인딩)
             const records = attendanceList.filter(r => {
                 if (r.staffId !== staffId) return false;
-                const recordDate = r.startTime.split('T')[0];
-                if (startDate && recordDate < startDate) return false;
-                if (endDate && recordDate > endDate) return false;
-                return true;
+                return isRecordInDateRange(r.startTime, startDate, endDate);
             });
 
             let totalMinutes = 0;
@@ -2412,7 +2414,7 @@
                 basePay: totalBasePay,
                 allowancePay: weeklyAllowance,
                 totalPay: totalPay,
-                records: records.sort((a, b) => new Date(a.startTime) - new Date(a.startTime))
+                records: records.sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
             };
         }
 
@@ -2492,31 +2494,49 @@
             }
         }
 
+        // PDF 다운로드 시 백지 출력 오류 수정 로직
         function downloadPayslipPDFFromModal() {
             if (!activePayslipData) return;
 
-            const element = document.getElementById('payslipPrintArea');
+            const printElement = document.getElementById('payslipPrintArea');
+            const scrollArea = document.getElementById('payslipModalScrollArea');
             const staffName = activePayslipData.staffName;
             const startDate = activePayslipData.startDate;
             const endDate = activePayslipData.endDate;
+
+            // PDF 캡처 오차 방지를 위해 순간적으로 오프스크린 독립 영역으로 추출 렌더링
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px';
+            tempContainer.style.top = '0';
+            tempContainer.style.width = '750px';
+            tempContainer.style.backgroundColor = '#ffffff';
+            
+            const clone = printElement.cloneNode(true);
+            tempContainer.appendChild(clone);
+            document.body.appendChild(tempContainer);
 
             const opt = {
                 margin:       [10, 10, 10, 10],
                 filename:     `급여명세서_${staffName}_${startDate}~${endDate}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                html2canvas:  { scale: 2, useCORS: true, logging: false, windowWidth: 800 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).save().then(() => {
+            html2pdf().set(opt).from(clone).save().then(() => {
+                document.body.removeChild(tempContainer);
                 if (endDate && activePayslipData.staffId) {
                     localStorage.setItem(`last_settlement_end_${activePayslipData.staffId}`, endDate);
                 }
+            }).catch(err => {
+                console.error("PDF 생성 오류:", err);
+                if(tempContainer.parentNode) document.body.removeChild(tempContainer);
             });
         }
 
         // ==========================================
-        // 5. CSV BACKUP & GOOGLE SHEETS EXPORT (기간 기준)
+        // 5. CSV BACKUP & GOOGLE SHEETS EXPORT
         // ==========================================
         function exportAttendanceToCSV() {
             let recordsToExport = [];
@@ -2528,10 +2548,7 @@
                 
                 recordsToExport = attendanceList.filter(r => {
                     if (r.staffId !== currentUser.id) return false;
-                    const recordDate = r.startTime.split('T')[0];
-                    if (startDate && recordDate < startDate) return false;
-                    if (endDate && recordDate > endDate) return false;
-                    return true;
+                    return isRecordInDateRange(r.startTime, startDate, endDate);
                 });
                 fileName = `근무기록백업_${currentUser.name}_${startDate}~${endDate}.csv`;
             } else {
