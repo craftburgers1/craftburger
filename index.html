@@ -132,7 +132,7 @@
                 </div>
 
                 <!-- Header Summary Card -->
-                <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg">
+                <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg space-y-4">
                     <div class="flex justify-between items-start">
                         <div>
                             <p class="text-amber-100 text-[11px] sm:text-xs font-medium">반갑습니다!</p>
@@ -143,18 +143,32 @@
                             <p id="staffWageDisplay" class="text-lg sm:text-xl font-bold mt-0.5">0원</p>
                         </div>
                     </div>
-                    <div class="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-amber-400/40 flex justify-between items-end">
+
+                    <!-- 정산 기간 선택 필드 (알바생) -->
+                    <div class="bg-black/10 p-3 rounded-xl border border-white/20 text-xs space-y-2">
+                        <p class="font-bold text-amber-100 flex items-center"><i class="fa-solid fa-calculator mr-1.5"></i>맞춤 기간 급여 정산 설정</p>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <input type="date" id="staffSettlementStart" class="bg-white text-gray-900 p-1.5 rounded-lg border font-bold">
+                            <span>~</span>
+                            <input type="date" id="staffSettlementEnd" class="bg-white text-gray-900 p-1.5 rounded-lg border font-bold">
+                            <button onclick="calculateStaffSettlement()" class="bg-slate-900 hover:bg-slate-800 text-amber-300 font-bold px-3 py-1.5 rounded-lg shadow transition">
+                                정산 실행
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-amber-400/40 flex justify-between items-end flex-wrap gap-2">
                         <div>
-                            <p class="text-amber-100 text-[11px] sm:text-xs">선택 월 예상 총 급여 (기본급 + 주휴수당)</p>
+                            <p class="text-amber-100 text-[11px] sm:text-xs">지정 기간 총 예상 급여 (기본급 + 주휴수당)</p>
                             <p id="staffTotalPayDisplay" class="text-2xl sm:text-3xl font-extrabold mt-0.5">0원</p>
                             <button onclick="downloadStaffPayslipPDF()" class="mt-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition">
-                                <i class="fa-solid fa-file-invoice-dollar mr-1"></i>이달의 급여명세서 다운로드 (PDF)
+                                <i class="fa-solid fa-file-invoice-dollar mr-1"></i>급여명세서 PDF 다운로드
                             </button>
                         </div>
                         <div class="text-right">
-                            <p class="text-amber-100 text-[11px] sm:text-xs">선택 월 총 근무시간</p>
+                            <p class="text-amber-100 text-[11px] sm:text-xs">지정 기간 총 근무시간</p>
                             <p id="staffTotalHoursDisplay" class="text-xs sm:text-sm font-semibold mt-0.5">0시간 0분</p>
-                            <p id="staffWeeklyAllowanceDisplay" class="text-[10px] text-amber-100 font-medium mt-0.5">(주휴수당 포함분: 0원)</p>
+                            <p id="staffWeeklyAllowanceDisplay" class="text-[10px] text-amber-100 font-medium mt-0.5">(주휴수당: 0원)</p>
                         </div>
                     </div>
                 </div>
@@ -254,7 +268,7 @@
                 <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
                         <h3 class="text-base font-bold text-gray-900 flex items-center">
-                            <i class="fa-solid fa-list text-amber-500 mr-2"></i>선택 월 상세 근무 기록
+                            <i class="fa-solid fa-list text-amber-500 mr-2"></i>선택 기간 상세 근무 기록
                         </h3>
                         <button onclick="exportAttendanceToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition">
                             <i class="fa-solid fa-file-csv mr-1"></i>내 근무이력 백업 (구글시트/CSV 다운로드)
@@ -370,7 +384,7 @@
                                     <th class="p-2.5">이달 총 근무시간</th>
                                     <th class="p-2.5">이달 지급 예정 총 급여</th>
                                     <th class="p-2.5 text-center">표준 근로계약서</th>
-                                    <th class="p-2.5 text-center">급여명세서</th>
+                                    <th class="p-2.5 text-center">기간 정산 / 급여명세서</th>
                                     <th class="p-2.5 text-center">비번 초기화</th>
                                     <th class="p-2.5 text-center">삭제</th>
                                 </tr>
@@ -433,20 +447,35 @@
                         </div>
                     </div>
 
-                    <div id="staffDetailCard" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
-                            <p class="text-[11px] text-gray-500 font-semibold">설정 시급</p>
-                            <p id="detailStaffWage" class="text-base sm:text-lg font-bold text-gray-800 mt-0.5">0원</p>
+                    <div id="staffDetailCard" class="hidden space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                                <p class="text-[11px] text-gray-500 font-semibold">설정 시급</p>
+                                <p id="detailStaffWage" class="text-base sm:text-lg font-bold text-gray-800 mt-0.5">0원</p>
+                            </div>
+                            <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-100">
+                                <p class="text-[11px] text-amber-700 font-semibold">선택 기간 총 근무시간</p>
+                                <p id="detailStaffHours" class="text-base sm:text-lg font-bold text-amber-900 mt-0.5">0시간 0분</p>
+                            </div>
+                            <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-100">
+                                <p class="text-[11px] text-emerald-700 font-semibold">선택 기간 지급 예정 총 급여</p>
+                                <p id="detailStaffPay" class="text-lg sm:text-xl font-extrabold text-emerald-800 mt-0.5">0원</p>
+                                <p id="detailStaffAllowance" class="text-[10px] text-emerald-600 mt-0.5">(주휴수당: 0원)</p>
+                            </div>
                         </div>
-                        <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-100">
-                            <p class="text-[11px] text-amber-700 font-semibold">선택 월 총 근무시간</p>
-                            <p id="detailStaffHours" class="text-base sm:text-lg font-bold text-amber-900 mt-0.5">0시간 0분</p>
-                        </div>
-                        <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-100">
-                            <p class="text-[11px] text-emerald-700 font-semibold">선택 월 지급 예정 총 급여</p>
-                            <p id="detailStaffPay" class="text-lg sm:text-xl font-extrabold text-emerald-800 mt-0.5">0원</p>
-                            <p id="detailStaffAllowance" class="text-[10px] text-emerald-600 mt-0.5">(주휴수당: 0원)</p>
-                            <p class="text-[9px] text-gray-400 mt-0.5">* (정확한 주휴수당은 전문가를 통하여 산출을 권합니다)</p>
+
+                        <!-- 사장님 대시보드 맞춤 기간 정산 컨트롤 -->
+                        <div class="bg-slate-900 text-white p-3.5 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-calendar-week text-amber-400"></i>
+                                <span class="font-bold">정산 기간 선택:</span>
+                                <input type="date" id="adminSettlementStart" class="bg-slate-800 text-white border border-slate-700 p-1 rounded font-bold">
+                                <span>~</span>
+                                <input type="date" id="adminSettlementEnd" class="bg-slate-800 text-white border border-slate-700 p-1 rounded font-bold">
+                            </div>
+                            <button onclick="calculateAdminSettlement()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-3 py-1.5 rounded-lg transition">
+                                정산 실행 및 급여명세서 발행
+                            </button>
                         </div>
                     </div>
 
@@ -856,13 +885,13 @@
         </div>
     </div>
 
-    <!-- 3. PAYSLIP GENERATOR TEMPLATE (HIDDEN PRINT AREA) -->
-    <div id="payslipPrintArea" class="hidden bg-white p-6 rounded-xl border border-gray-200 text-xs text-gray-900 space-y-4 max-w-xl mx-auto">
+    <!-- 3. PAYSLIP GENERATOR TEMPLATE (PRINT CONTAINER) -->
+    <div id="payslipPrintArea" class="bg-white p-6 rounded-xl border border-gray-300 text-xs text-gray-900 space-y-4 max-w-2xl mx-auto" style="position: fixed; top: -9999px; left: -9999px; width: 700px;">
         <h2 id="psTitle" class="text-center font-extrabold text-xl border-b-2 border-gray-900 pb-2">급 여 명 세 서</h2>
         
         <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 text-[11px]">
-            <div><strong>귀속월:</strong> <span id="psMonth"></span></div>
-            <div><strong>지급일:</strong> <span id="psPayDate"></span></div>
+            <div><strong>정산 기간:</strong> <span id="psPeriod"></span></div>
+            <div><strong>지급 예정일:</strong> <span id="psPayDate"></span></div>
             <div><strong>사업장명:</strong> <span id="psShopName"></span></div>
             <div><strong>대표자:</strong> <span id="psOwnerName"></span></div>
             <div><strong>근로자명:</strong> <span id="psStaffName"></span></div>
@@ -872,7 +901,7 @@
         <table class="w-full border-collapse border border-gray-300 text-center text-xs">
             <thead>
                 <tr class="bg-gray-100 border-b border-gray-300 font-bold">
-                    <th class="border border-gray-300 p-2">항목</th>
+                    <th class="border border-gray-300 p-2">구분</th>
                     <th class="border border-gray-300 p-2">근무시간 / 산출 기준</th>
                     <th class="border border-gray-300 p-2">금액</th>
                 </tr>
@@ -885,19 +914,34 @@
                 </tr>
                 <tr>
                     <td class="border border-gray-300 p-2 font-semibold">주휴수당</td>
-                    <td id="psAllowanceNote" class="border border-gray-300 p-2">주 15시간 이상 근무 산출분</td>
+                    <td id="psAllowanceNote" class="border border-gray-300 p-2">주 15시간 이상 소정근로 산출분</td>
                     <td id="psAllowancePay" class="border border-gray-300 p-2 font-bold text-right pr-3">0원</td>
                 </tr>
                 <tr class="bg-amber-50 font-extrabold text-amber-900">
-                    <td class="border border-gray-300 p-2" colspan="2">실 지급 차인 지급액 (총계)</td>
+                    <td class="border border-gray-300 p-2" colspan="2">실 지급 차인 지급액 (합계)</td>
                     <td id="psTotalPay" class="border border-gray-300 p-2 text-right pr-3 text-sm">0원</td>
                 </tr>
             </tbody>
         </table>
 
+        <div>
+            <h4 class="font-bold text-xs mb-1.5 text-gray-800">■ 정산 기간 내 상세 근무 내역</h4>
+            <table class="w-full border-collapse border border-gray-300 text-center text-[10px]">
+                <thead>
+                    <tr class="bg-gray-100 font-bold">
+                        <th class="border border-gray-300 p-1">출근시각</th>
+                        <th class="border border-gray-300 p-1">퇴근시각</th>
+                        <th class="border border-gray-300 p-1">근무시간</th>
+                        <th class="border border-gray-300 p-1">일 기본급</th>
+                    </tr>
+                </thead>
+                <tbody id="psDetailTableBody"></tbody>
+            </table>
+        </div>
+
         <div class="text-[10px] text-gray-500 leading-relaxed space-y-0.5 border-t pt-2">
             <p>* 본 급여명세서는 관련 법령에 명시된 주요 내역을 반영하여 전자 방식으로 발급되었습니다.</p>
-            <p>* 정확한 세금 공제(4대보험/3.3%) 및 수당 산출은 매장의 정밀 노무/세무 기준을 확인하세요.</p>
+            <p>* 다음 정산 시에는 본 정산 종료일 다음 날부터 자동으로 정산 시작일이 설정됩니다.</p>
         </div>
     </div>
 
@@ -1231,6 +1275,23 @@
 
             if (currentUser.role === 'staff') {
                 document.getElementById('staffDashboard').classList.remove('hidden');
+                
+                // 알바생 자동 정산 기간 세팅 (이전 정산일의 다음 날부터 오늘까지)
+                const lastSettlementEnd = localStorage.getItem(`last_settlement_end_${currentUser.id}`);
+                const now = new Date();
+                const todayStr = now.toISOString().split('T')[0];
+
+                if (lastSettlementEnd) {
+                    const nextDay = new Date(lastSettlementEnd);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    document.getElementById('staffSettlementStart').value = nextDay.toISOString().split('T')[0];
+                } else {
+                    // 최초 정산 시 당월 1일로 설정
+                    const firstDayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+                    document.getElementById('staffSettlementStart').value = firstDayStr;
+                }
+                document.getElementById('staffSettlementEnd').value = todayStr;
+
                 renderStaffDashboard();
                 checkStaffContractAlert();
             } else {
@@ -1462,27 +1523,33 @@
             openViewContractModal(myContract.id, !myContract.isStaffSigned);
         }
 
+        function calculateStaffSettlement() {
+            renderStaffDashboard();
+            alert('설정한 기간으로 급여 정산이 완료되었습니다.');
+        }
+
         function renderStaffDashboard() {
             document.getElementById('staffNameDisplay').textContent = `${currentUser.name} 님`;
             document.getElementById('staffWageDisplay').textContent = `${currentUser.wage.toLocaleString()}원`;
 
-            const selectedMonth = document.getElementById('staffMonthPicker').value;
-            const myRecords = attendanceList.filter(r => r.staffId === currentUser.id && r.startTime.startsWith(selectedMonth));
+            const startDate = document.getElementById('staffSettlementStart').value;
+            const endDate = document.getElementById('staffSettlementEnd').value;
+
+            // 기간 필터링
+            const myRecords = attendanceList.filter(r => {
+                if (r.staffId !== currentUser.id) return false;
+                const recordDate = r.startTime.split('T')[0];
+                if (startDate && recordDate < startDate) return false;
+                if (endDate && recordDate > endDate) return false;
+                return true;
+            });
 
             let totalMinutes = 0;
             let totalBasePay = 0;
-            const workDatesMap = {};
 
             myRecords.forEach(r => {
                 totalMinutes += r.minutes;
                 totalBasePay += r.pay;
-
-                const dateStr = r.startTime.split('T')[0];
-                if (!workDatesMap[dateStr]) {
-                    workDatesMap[dateStr] = { minutes: 0, pay: 0 };
-                }
-                workDatesMap[dateStr].minutes += r.minutes;
-                workDatesMap[dateStr].pay += r.pay;
             });
 
             const weeklyAllowance = calculateWeeklyAllowance(myRecords, currentUser.wage);
@@ -1490,9 +1557,18 @@
 
             document.getElementById('staffTotalHoursDisplay').textContent = `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`;
             document.getElementById('staffTotalPayDisplay').textContent = `${grandTotalPay.toLocaleString()}원`;
-            document.getElementById('staffWeeklyAllowanceDisplay').textContent = `(주휴수당 포함분: ${weeklyAllowance.toLocaleString()}원)`;
+            document.getElementById('staffWeeklyAllowanceDisplay').textContent = `(주휴수당: ${weeklyAllowance.toLocaleString()}원)`;
 
-            renderStaffCalendar(selectedMonth, workDatesMap);
+            const selectedMonth = document.getElementById('staffMonthPicker').value;
+            const monthRecordsMap = {};
+            attendanceList.filter(r => r.staffId === currentUser.id && r.startTime.startsWith(selectedMonth)).forEach(r => {
+                const dateStr = r.startTime.split('T')[0];
+                if (!monthRecordsMap[dateStr]) monthRecordsMap[dateStr] = { minutes: 0, pay: 0 };
+                monthRecordsMap[dateStr].minutes += r.minutes;
+                monthRecordsMap[dateStr].pay += r.pay;
+            });
+
+            renderStaffCalendar(selectedMonth, monthRecordsMap);
             renderManualLists();
 
             const tableBody = document.getElementById('staffAttendanceTable');
@@ -1725,7 +1801,7 @@
                     </td>
                     <td class="p-2.5 text-center">${contractBtnHtml}</td>
                     <td class="p-2.5 text-center">
-                        <button onclick="downloadAdminStaffPayslipPDF('${staff.id}')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] px-2 py-1 rounded font-bold">급여명세서</button>
+                        <button onclick="selectAdminStaffForSettlement('${staff.id}')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] px-2 py-1 rounded font-bold">기간 정산 / 급여명세서</button>
                     </td>
                     <td class="p-2.5 text-center">
                         <button onclick="resetStaffPassword('${staff.id}')" class="text-[11px] bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded text-gray-600">초기화</button>
@@ -1742,6 +1818,18 @@
             renderAdminManualEditor();
         }
 
+        function selectAdminStaffForSettlement(staffId) {
+            document.getElementById('adminSelectedStaff').value = staffId;
+            renderAdminStaffCalendar();
+            document.getElementById('staffDetailCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function calculateAdminSettlement() {
+            renderAdminStaffCalendar();
+            const staffId = document.getElementById('adminSelectedStaff').value;
+            if (staffId) downloadAdminStaffPayslipPDF(staffId);
+        }
+
         function renderAdminStaffCalendar() {
             const selectedStaffId = document.getElementById('adminSelectedStaff').value;
             const selectedMonth = document.getElementById('adminMonthPicker').value;
@@ -1750,7 +1838,7 @@
             const calendarGrid = document.getElementById('adminCalendarGrid');
             const detailTable = document.getElementById('detailAttendanceTable');
 
-            if (!selectedStaffId || !selectedMonth) {
+            if (!selectedStaffId) {
                 detailCard.classList.add('hidden');
                 calendarGrid.innerHTML = '<div class="col-span-7 p-6 text-center text-xs text-gray-400 bg-white">상단 드롭다운에서 알바생을 선택하면 근무 달력이 표시됩니다.</div>';
                 detailTable.innerHTML = '';
@@ -1760,28 +1848,49 @@
             const staff = staffList.find(s => s.id === selectedStaffId);
             if (!staff) return;
 
+            // 정산 기간 기본 날짜 세팅 (이전 정산일의 다음 날 ~ 오늘)
+            const startInput = document.getElementById('adminSettlementStart');
+            const endInput = document.getElementById('adminSettlementEnd');
+            
+            if (!startInput.value) {
+                const lastSettlementEnd = localStorage.getItem(`last_settlement_end_${selectedStaffId}`);
+                const now = new Date();
+                const todayStr = now.toISOString().split('T')[0];
+
+                if (lastSettlementEnd) {
+                    const nextDay = new Date(lastSettlementEnd);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    startInput.value = nextDay.toISOString().split('T')[0];
+                } else {
+                    const firstDayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+                    startInput.value = firstDayStr;
+                }
+                endInput.value = todayStr;
+            }
+
+            const startDate = startInput.value;
+            const endDate = endInput.value;
+
             detailCard.classList.remove('hidden');
             document.getElementById('detailStaffWage').textContent = `${staff.wage.toLocaleString()}원`;
 
-            const monthRecords = attendanceList.filter(r => r.staffId === selectedStaffId && r.startTime.startsWith(selectedMonth));
+            const filteredRecords = attendanceList.filter(r => {
+                if (r.staffId !== selectedStaffId) return false;
+                const recordDate = r.startTime.split('T')[0];
+                if (startDate && recordDate < startDate) return false;
+                if (endDate && recordDate > endDate) return false;
+                return true;
+            });
 
             let totalMinutes = 0;
             let totalBasePay = 0;
-            const workDatesMap = {};
 
-            monthRecords.forEach(r => {
+            filteredRecords.forEach(r => {
                 totalMinutes += r.minutes;
                 totalBasePay += r.pay;
-
-                const dateStr = r.startTime.split('T')[0];
-                if (!workDatesMap[dateStr]) {
-                    workDatesMap[dateStr] = { minutes: 0, pay: 0 };
-                }
-                workDatesMap[dateStr].minutes += r.minutes;
-                workDatesMap[dateStr].pay += r.pay;
             });
 
-            const weeklyAllowance = calculateWeeklyAllowance(monthRecords, staff.wage);
+            const weeklyAllowance = calculateWeeklyAllowance(filteredRecords, staff.wage);
             const totalPay = totalBasePay + weeklyAllowance;
 
             document.getElementById('detailStaffHours').textContent = `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`;
@@ -1795,6 +1904,14 @@
             const firstDayIndex = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+            const monthRecordsMap = {};
+            attendanceList.filter(r => r.staffId === selectedStaffId && r.startTime.startsWith(selectedMonth)).forEach(r => {
+                const dateStr = r.startTime.split('T')[0];
+                if (!monthRecordsMap[dateStr]) monthRecordsMap[dateStr] = { minutes: 0, pay: 0 };
+                monthRecordsMap[dateStr].minutes += r.minutes;
+                monthRecordsMap[dateStr].pay += r.pay;
+            });
+
             document.getElementById('calendarTitle').textContent = `${year}년 ${month + 1}월 근무 달력 (${staff.name})`;
             calendarGrid.innerHTML = '';
 
@@ -1807,7 +1924,7 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayStr = String(day).padStart(2, '0');
                 const fullDateStr = `${selectedMonth}-${dayStr}`;
-                const workInfo = workDatesMap[fullDateStr];
+                const workInfo = monthRecordsMap[fullDateStr];
 
                 const dayCell = document.createElement('div');
                 dayCell.className = "bg-white min-h-[55px] sm:min-h-[70px] p-1 flex flex-col justify-between text-left border border-gray-100 rounded";
@@ -1830,7 +1947,7 @@
             }
 
             detailTable.innerHTML = '';
-            monthRecords.sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).forEach(r => {
+            filteredRecords.sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).forEach(r => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50";
 
@@ -2228,14 +2345,20 @@
         }
 
         // ==========================================
-        // 4. PAYSLIP GENERATION LOGIC (신규 급여명세서)
+        // 4. PAYSLIP GENERATION LOGIC (기간 선택 기반)
         // ==========================================
-        function generatePayslipData(staffId, selectedMonth) {
+        function generatePayslipDataByPeriod(staffId, startDate, endDate) {
             const staff = staffList.find(s => s.id === staffId);
             if (!staff) return null;
 
             const contract = contractList.find(c => c.staffId === staffId) || {};
-            const records = attendanceList.filter(r => r.staffId === staffId && r.startTime.startsWith(selectedMonth));
+            const records = attendanceList.filter(r => {
+                if (r.staffId !== staffId) return false;
+                const recordDate = r.startTime.split('T')[0];
+                if (startDate && recordDate < startDate) return false;
+                if (endDate && recordDate > endDate) return false;
+                return true;
+            });
 
             let totalMinutes = 0;
             let totalBasePay = 0;
@@ -2248,8 +2371,11 @@
             const totalPay = totalBasePay + weeklyAllowance;
 
             return {
-                month: selectedMonth,
-                payDate: contract.payDay || '매월 지정일',
+                staffId: staff.id,
+                periodText: `${startDate || '시작일'} ~ ${endDate || '종료일'}`,
+                startDate: startDate,
+                endDate: endDate,
+                payDate: contract.payDay || '정산 지정일',
                 shopName: contract.shopName || localStorage.getItem('default_shop_name') || '매장',
                 ownerName: contract.ownerName || localStorage.getItem('default_owner_name') || '대표자',
                 staffName: staff.name,
@@ -2257,30 +2383,35 @@
                 baseHoursText: `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`,
                 basePay: totalBasePay,
                 allowancePay: weeklyAllowance,
-                totalPay: totalPay
+                totalPay: totalPay,
+                records: records.sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
             };
         }
 
         function downloadStaffPayslipPDF() {
-            const selectedMonth = document.getElementById('staffMonthPicker').value;
-            const data = generatePayslipData(currentUser.id, selectedMonth);
+            const startDate = document.getElementById('staffSettlementStart').value;
+            const endDate = document.getElementById('staffSettlementEnd').value;
+            const data = generatePayslipDataByPeriod(currentUser.id, startDate, endDate);
+            
             if (!data) return alert('급여 데이터를 불러올 수 없습니다.');
-
+            
             renderPayslipDOM(data);
-            triggerPayslipPDF(data.staffName, data.month);
+            triggerPayslipPDF(data.staffName, data.startDate, data.endDate);
         }
 
         function downloadAdminStaffPayslipPDF(staffId) {
-            const selectedMonth = document.getElementById('adminMonthPicker').value;
-            const data = generatePayslipData(staffId, selectedMonth);
+            const startDate = document.getElementById('adminSettlementStart').value;
+            const endDate = document.getElementById('adminSettlementEnd').value;
+            const data = generatePayslipDataByPeriod(staffId, startDate, endDate);
+            
             if (!data) return alert('급여 데이터를 불러올 수 없습니다.');
 
             renderPayslipDOM(data);
-            triggerPayslipPDF(data.staffName, data.month);
+            triggerPayslipPDF(data.staffName, data.startDate, data.endDate);
         }
 
         function renderPayslipDOM(data) {
-            document.getElementById('psMonth').textContent = data.month;
+            document.getElementById('psPeriod').textContent = data.periodText;
             document.getElementById('psPayDate').textContent = data.payDate;
             document.getElementById('psShopName').textContent = data.shopName;
             document.getElementById('psOwnerName').textContent = data.ownerName;
@@ -2290,36 +2421,65 @@
             document.getElementById('psBasePay').textContent = `${data.basePay.toLocaleString()}원`;
             document.getElementById('psAllowancePay').textContent = `${data.allowancePay.toLocaleString()}원`;
             document.getElementById('psTotalPay').textContent = `${data.totalPay.toLocaleString()}원`;
+
+            const detailBody = document.getElementById('psDetailTableBody');
+            detailBody.innerHTML = '';
+
+            if (data.records.length === 0) {
+                detailBody.innerHTML = '<tr><td colspan="4" class="border border-gray-300 p-2 text-gray-400">선택한 정산 기간 내 근무 기록이 없습니다.</td></tr>';
+            } else {
+                data.records.forEach(r => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="border border-gray-300 p-1">${formatDateTime(r.startTime)}</td>
+                        <td class="border border-gray-300 p-1">${formatDateTime(r.endTime)}</td>
+                        <td class="border border-gray-300 p-1">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
+                        <td class="border border-gray-300 p-1 text-right pr-2">${r.pay.toLocaleString()}원</td>
+                    `;
+                    detailBody.appendChild(tr);
+                });
+            }
         }
 
-        function triggerPayslipPDF(staffName, month) {
+        function triggerPayslipPDF(staffName, startDate, endDate) {
             const element = document.getElementById('payslipPrintArea');
-            element.classList.remove('hidden');
 
             const opt = {
-                margin:       [15, 15, 15, 15],
-                filename:     `급여명세서_${staffName}_${month}.pdf`,
+                margin:       [10, 10, 10, 10],
+                filename:     `급여명세서_${staffName}_${startDate}~${endDate}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true, logging: false },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(element).save().then(() => {
-                element.classList.add('hidden');
+                // 마지막 정산 종료일 저장 (다음 정산 시 다음 날부터 자동 셋업)
+                if (endDate) {
+                    const staffId = currentUser.role === 'staff' ? currentUser.id : document.getElementById('adminSelectedStaff').value;
+                    if (staffId) localStorage.setItem(`last_settlement_end_${staffId}`, endDate);
+                }
             });
         }
 
         // ==========================================
-        // 5. CSV BACKUP & GOOGLE SHEETS EXPORT (신규 백업 기능)
+        // 5. CSV BACKUP & GOOGLE SHEETS EXPORT (기간 기준)
         // ==========================================
         function exportAttendanceToCSV() {
             let recordsToExport = [];
             let fileName = '';
 
             if (currentUser.role === 'staff') {
-                const selectedMonth = document.getElementById('staffMonthPicker').value;
-                recordsToExport = attendanceList.filter(r => r.staffId === currentUser.id && r.startTime.startsWith(selectedMonth));
-                fileName = `근무기록백업_${currentUser.name}_${selectedMonth}.csv`;
+                const startDate = document.getElementById('staffSettlementStart').value;
+                const endDate = document.getElementById('staffSettlementEnd').value;
+                
+                recordsToExport = attendanceList.filter(r => {
+                    if (r.staffId !== currentUser.id) return false;
+                    const recordDate = r.startTime.split('T')[0];
+                    if (startDate && recordDate < startDate) return false;
+                    if (endDate && recordDate > endDate) return false;
+                    return true;
+                });
+                fileName = `근무기록백업_${currentUser.name}_${startDate}~${endDate}.csv`;
             } else {
                 const selectedMonth = document.getElementById('adminMonthPicker').value;
                 recordsToExport = attendanceList.filter(r => r.startTime.startsWith(selectedMonth));
