@@ -11,6 +11,7 @@
     
     <!-- Firebase SDK (v9 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     
     <style>
@@ -35,7 +36,10 @@
         <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-users-gear text-amber-500 text-2xl"></i>
-                <h1 class="text-lg sm:text-xl font-bold tracking-tight">매장 관리 <span class="text-xs text-amber-400 font-normal ml-1">통합 시스템</span></h1>
+                <h1 class="text-lg sm:text-xl font-bold tracking-tight flex items-center gap-2">
+                    매장 관리 <span class="text-xs text-amber-400 font-normal hidden sm:inline">통합 시스템</span>
+                    <span class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full border border-amber-500/30">Built by 더크래프트</span>
+                </h1>
             </div>
             <div id="userInfoHeader" class="hidden flex items-center space-x-2 sm:space-x-3">
                 <span id="loggedInBadge" class="bg-amber-500 text-slate-900 text-[11px] sm:text-xs font-bold px-2 py-1 sm:px-2.5 sm:py-1 rounded-full"></span>
@@ -57,7 +61,7 @@
                     <i class="fa-solid fa-user-lock text-xl sm:text-2xl"></i>
                 </div>
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-900">시스템 로그인</h2>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1">알바생 및 관리자 전용 공간입니다.</p>
+                <p class="text-xs sm:text-sm text-gray-500 mt-1">자영업 사장님 및 알바생 전용 관리 플랫폼</p>
             </div>
 
             <div class="flex border-b border-gray-200 mb-5">
@@ -65,14 +69,14 @@
                     알바생 접속
                 </button>
                 <button id="tabAdminBtn" onclick="switchLoginTab('admin')" class="flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600">
-                    관리자 접속
+                    관리자(사장님) 접속
                 </button>
             </div>
 
             <!-- Staff Login Form -->
             <div id="staffLoginForm" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">이름 선택 (개인정보 보호)</label>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">매장 선택 / 연결 코드가 자동 적용됩니다.</label>
                     <select id="staffSelect" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                         <option value="">알바생을 선택하세요</option>
                     </select>
@@ -87,14 +91,12 @@
                 </button>
             </div>
 
-            <!-- Admin Login Form -->
-            <div id="adminLoginForm" class="space-y-4 hidden">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">관리자 비밀번호</label>
-                    <input type="password" id="adminPassword" placeholder="비밀번호를 입력하세요" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                </div>
-                <button onclick="loginAdmin()" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold py-3.5 rounded-xl shadow-md transition">
-                    관리자 로그인
+            <!-- Admin Google Auth Login Form -->
+            <div id="adminLoginForm" class="space-y-4 hidden text-center">
+                <p class="text-xs text-gray-600 mb-2">사장님 구글 계정으로 로그인하면 독자적인 매장 데이터가 안전하게 생성·관리됩니다.</p>
+                <button onclick="loginAdminGoogle()" class="w-full bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-3 transition">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                    <span>Google 계정으로 사장님 로그인</span>
                 </button>
             </div>
         </div>
@@ -275,8 +277,8 @@
             <!-- Header & Month Filter -->
             <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h2 class="text-lg sm:text-xl font-bold">관리자 전용 대시보드</h2>
-                    <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">알바생별 근태, 표준 근로계약서, 매뉴얼 및 급여 통합 관리</p>
+                    <h2 class="text-lg sm:text-xl font-bold">사장님 전용 통합 대시보드</h2>
+                    <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">독립 매장 전용 데이터 영역입니다.</p>
                 </div>
                 <div class="flex items-center space-x-2 self-end sm:self-auto">
                     <label class="text-xs text-gray-300">조회 월:</label>
@@ -428,11 +430,8 @@
 
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODALS & CONTRACT FORMS                    -->
-    <!-- ========================================== -->
-
-    <!-- 1. CREATE CONTRACT MODAL (ADMIN) -->
+    <!-- MODALS & CONTRACT FORMS (Omitted details unchanged for full compatibility) -->
+    <!-- 1. CREATE CONTRACT MODAL -->
     <div id="createContractModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-2xl max-w-5xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] flex flex-col">
             <div class="flex justify-between items-center border-b pb-3 flex-shrink-0">
@@ -445,8 +444,6 @@
             <input type="hidden" id="contractStaffId">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-y-auto custom-scrollbar pr-1 flex-1">
-                
-                <!-- Left Form Inputs -->
                 <div class="lg:col-span-5 space-y-3 bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 text-xs">
                     <div class="bg-amber-100/70 p-2.5 rounded-lg border border-amber-200">
                         <label class="block font-bold text-amber-900 mb-1.5">1. 사업장 규모 구분</label>
@@ -486,7 +483,7 @@
                         <div>
                             <label class="block font-semibold text-gray-700 mb-0.5">사업장명 & 주소</label>
                             <input type="text" id="contractShopName" placeholder="예: 철수네 김밥집" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2 mb-1">
-                            <input type="text" id="contractShopAddress" placeholder="예: 세종00로 00-00 00프라자 0층 00호" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                            <input type="text" id="contractShopAddress" placeholder="예: 세종00로 00-00 0층 00호" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
                         </div>
                         <div>
                             <label class="block font-semibold text-gray-700 mb-0.5">담당 업무 내용</label>
@@ -556,7 +553,6 @@
                     </div>
                 </div>
 
-                <!-- Right Realtime Preview Area -->
                 <div class="lg:col-span-7 bg-white p-4 sm:p-5 rounded-xl border-2 border-slate-800 text-xs leading-relaxed space-y-3 flex flex-col justify-between">
                     <div>
                         <h2 id="prevHeaderTitle" class="text-center font-extrabold text-base sm:text-lg pb-2 border-b-2 border-slate-900 mb-3 text-slate-900">표 준 근 로 계 약 서</h2>
@@ -592,7 +588,6 @@
                         </p>
                     </div>
 
-                    <!-- Owner Sign Canvas Pad -->
                     <div class="border-t-2 border-dashed border-gray-300 pt-3 mt-3">
                         <label class="block text-xs font-bold text-slate-900 mb-1">✍️ 사용자(사장님) 전자 서명</label>
                         <div class="border-2 border-amber-400 rounded-lg bg-amber-50/30 relative">
@@ -612,7 +607,7 @@
         </div>
     </div>
 
-    <!-- 2. VIEW & DOWNLOAD CONTRACT MODAL (STAFF / ADMIN VIEW) -->
+    <!-- 2. VIEW CONTRACT MODAL -->
     <div id="viewContractModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3 no-print">
@@ -622,7 +617,6 @@
                 <button onclick="closeViewContractModal()" class="text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <!-- Printable Legal Contract Document Paper Area -->
             <div id="contractPrintArea" class="bg-white p-5 sm:p-8 rounded-xl border border-gray-200 text-xs leading-relaxed space-y-3.5 text-gray-900">
                 <h2 id="docContractHeaderTitle" class="text-center font-extrabold text-base sm:text-xl mb-3 border-b-2 border-gray-900 pb-2">표 준 근 로 계 약 서</h2>
                 
@@ -657,7 +651,6 @@
                     <p class="text-center text-[10px]">본 계약서를 2부 작성하여 사용자와 근로자가 각각 1부씩 보관한다.</p>
                 </div>
 
-                <!-- Signatures -->
                 <div class="grid grid-cols-2 gap-4 border-t border-gray-300 pt-4 mt-4">
                     <div class="text-center space-y-1">
                         <p class="font-bold text-gray-800">사용자 (사업주)</p>
@@ -677,7 +670,6 @@
                 </div>
             </div>
 
-            <!-- Staff Signature Pad Section -->
             <div id="staffSignSection" class="hidden border-t pt-3 space-y-2 no-print">
                 <label class="block text-xs font-bold text-red-600">✍️ 알바생 스마트폰 터치 서명</label>
                 <div class="border-2 border-red-300 rounded-lg bg-gray-50 relative">
@@ -752,7 +744,7 @@
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
+    <!-- JavaScript Logic with Multi-Tenant Google Authentication -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCD4M452qAiF7JnG7Z9wcI_qjxNB6cwkbI",
@@ -766,8 +758,10 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
         let currentUser = null;
+        let ownerUid = null; // Current Owner Account UID
         let staffList = [];
         let attendanceList = [];
         let manualList = [];
@@ -788,13 +782,34 @@
             const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             document.getElementById('adminMonthPicker').value = currentMonthStr;
             document.getElementById('staffMonthPicker').value = currentMonthStr;
-            initRealtimeListeners();
             setupCanvasDrawing('ownerCanvas');
             setupCanvasDrawing('staffCanvas');
+
+            // Listen for Auth changes
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    ownerUid = user.uid;
+                    currentUser = { role: 'admin', name: user.displayName || '사장님', uid: user.uid };
+                    showDashboard();
+                    initRealtimeListeners();
+                }
+            });
         });
 
+        function getDBRef(collectionName) {
+            if (!ownerUid) return null;
+            return db.collection("users").doc(ownerUid).collection(collectionName);
+        }
+
         function initRealtimeListeners() {
-            db.collection("staffs").onSnapshot(snapshot => {
+            const staffsRef = getDBRef("staffs");
+            const attendanceRef = getDBRef("attendance");
+            const manualsRef = getDBRef("manuals");
+            const contractsRef = getDBRef("contracts");
+
+            if (!staffsRef) return;
+
+            staffsRef.onSnapshot(snapshot => {
                 staffList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderStaffDropdown();
                 renderAdminStaffSelectOptions();
@@ -808,25 +823,24 @@
                 }
             });
 
-            db.collection("attendance").onSnapshot(snapshot => {
+            attendanceRef.onSnapshot(snapshot => {
                 attendanceList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 if (currentUser && currentUser.role === 'staff') renderStaffDashboard();
                 if (currentUser && currentUser.role === 'admin') renderAdminDashboard();
             });
 
-            db.collection("manuals").onSnapshot(snapshot => {
-                if (snapshot.empty) {
-                    defaultManuals.forEach(item => db.collection("manuals").add({ ...item, completedBy: [] }));
+            manualsRef.onSnapshot(snapshot => {
+                if (snapshot.empty && currentUser && currentUser.role === 'admin') {
+                    defaultManuals.forEach(item => manualsRef.add({ ...item, completedBy: [] }));
                 } else {
                     manualList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Sort manuals by order
                     manualList.sort((a, b) => (a.order || 0) - (b.order || 0));
                     if (currentUser && currentUser.role === 'staff') renderManualLists();
                     if (currentUser && currentUser.role === 'admin') renderAdminManualEditor();
                 }
             });
 
-            db.collection("contracts").onSnapshot(snapshot => {
+            contractsRef.onSnapshot(snapshot => {
                 contractList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 if (currentUser && currentUser.role === 'staff') checkStaffContractAlert();
                 if (currentUser && currentUser.role === 'admin') renderAdminDashboard();
@@ -889,8 +903,10 @@
             const staff = staffList.find(s => s.id === staffId);
             if (!staff) return alert('알바생 정보가 올바르지 않습니다.');
 
+            const staffsRef = getDBRef("staffs");
+
             if (!staff.password) {
-                db.collection('staffs').doc(staffId).update({ password: inputPw });
+                staffsRef.doc(staffId).update({ password: inputPw });
                 alert('비밀번호가 새로 설정되었습니다.');
             } else if (staff.password !== inputPw) {
                 return alert('비밀번호가 일치하지 않습니다.');
@@ -900,20 +916,17 @@
             showDashboard();
         }
 
-        function loginAdmin() {
-            const pw = document.getElementById('adminPassword').value.trim();
-            if (pw === "2039") {
-                currentUser = { role: 'admin', name: '관리자' };
-                showDashboard();
-            } else {
-                alert('비밀번호가 틀렸습니다.');
-            }
+        function loginAdminGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => {
+                alert('로그인 처리 중 오류가 발생했습니다: ' + error.message);
+            });
         }
 
         function showDashboard() {
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('userInfoHeader').classList.remove('hidden');
-            document.getElementById('loggedInBadge').textContent = `${currentUser.name} (${currentUser.role === 'admin' ? '관리자' : '알바'})`;
+            document.getElementById('loggedInBadge').textContent = `${currentUser.name} (${currentUser.role === 'admin' ? '사장님' : '알바'})`;
 
             if (currentUser.role === 'staff') {
                 document.getElementById('staffDashboard').classList.remove('hidden');
@@ -926,18 +939,18 @@
         }
 
         function logout() {
-            currentUser = null;
-            document.getElementById('loginSection').classList.remove('hidden');
-            document.getElementById('userInfoHeader').classList.add('hidden');
-            document.getElementById('staffDashboard').classList.add('hidden');
-            document.getElementById('adminDashboard').classList.add('hidden');
-            document.getElementById('staffPassword').value = '';
-            document.getElementById('adminPassword').value = '';
+            auth.signOut().then(() => {
+                currentUser = null;
+                ownerUid = null;
+                document.getElementById('loginSection').classList.remove('hidden');
+                document.getElementById('userInfoHeader').classList.add('hidden');
+                document.getElementById('staffDashboard').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.add('hidden');
+                document.getElementById('staffPassword').value = '';
+            });
         }
 
-        // ==========================================
         // ADMIN MANUAL MANAGEMENT FUNCTIONS
-        // ==========================================
         function renderAdminManualEditor() {
             const startContainer = document.getElementById('adminManualStartList');
             const midContainer = document.getElementById('adminManualMidList');
@@ -990,7 +1003,7 @@
             const categoryItems = manualList.filter(m => m.category === category);
             const nextOrder = categoryItems.length + 1;
 
-            db.collection('manuals').add({
+            getDBRef('manuals').add({
                 category: category,
                 text: text,
                 order: nextOrder,
@@ -1002,12 +1015,12 @@
 
         function updateManualText(manualId, newText) {
             if (!newText.trim()) return;
-            db.collection('manuals').doc(manualId).update({ text: newText.trim() });
+            getDBRef('manuals').doc(manualId).update({ text: newText.trim() });
         }
 
         function deleteManual(manualId) {
             if (confirm('해당 매뉴얼 항목을 삭제하시겠습니까?')) {
-                db.collection('manuals').doc(manualId).delete();
+                getDBRef('manuals').doc(manualId).delete();
             }
         }
 
@@ -1021,14 +1034,13 @@
             const targetItem = catItems[targetIndex];
 
             const batch = db.batch();
-            batch.update(db.collection('manuals').doc(currentItem.id), { order: targetIndex + 1 });
-            batch.update(db.collection('manuals').doc(targetItem.id), { order: currentIndex + 1 });
+            const manualsRef = getDBRef('manuals');
+            batch.update(manualsRef.doc(currentItem.id), { order: targetIndex + 1 });
+            batch.update(manualsRef.doc(targetItem.id), { order: currentIndex + 1 });
             batch.commit();
         }
 
-        // ==========================================
         // STAFF DASHBOARD & CHECKLIST
-        // ==========================================
         function checkStaffContractAlert() {
             if (!currentUser || currentUser.role !== 'staff') return;
             const myContract = contractList.find(c => c.staffId === currentUser.id);
@@ -1225,7 +1237,7 @@
                 createdAt: new Date().toISOString()
             };
 
-            db.collection('attendance').add(record).then(() => {
+            getDBRef('attendance').add(record).then(() => {
                 alert('근태 기록이 저장되었습니다.');
                 document.getElementById('workStart').value = '';
                 document.getElementById('workEnd').value = '';
@@ -1274,7 +1286,7 @@
                 completedBy = completedBy.filter(id => id !== currentUser.id);
             }
 
-            db.collection('manuals').doc(manualId).update({ completedBy });
+            getDBRef('manuals').doc(manualId).update({ completedBy });
         }
 
         function renderAdminDashboard() {
@@ -1442,9 +1454,7 @@
             });
         }
 
-        // ==========================================
-        // CANVAS SIGNATURE LOGIC
-        // ==========================================
+        // CANVAS DRAWING & CONTRACT HELPERS
         function setupCanvasDrawing(canvasId) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
@@ -1511,7 +1521,6 @@
             }
         }
 
-        // REALTIME PREVIEW UPDATE WITH LEGAL MANDATED CLAUSES ONLY
         function updateContractPreview() {
             const companyTypeEl = document.querySelector('input[name="companyType"]:checked');
             const companyType = companyTypeEl ? companyTypeEl.value : 'under5';
@@ -1570,7 +1579,6 @@
             }
         }
 
-        // CONTRACT FUNCTIONS WITH LOCALSTORAGE DEFAULT RESTORE
         function openCreateContractModal(staffId) {
             const staff = staffList.find(s => s.id === staffId);
             if (!staff) return;
@@ -1579,7 +1587,6 @@
             document.getElementById('contractStaffName').value = staff.name;
             document.getElementById('contractWage').value = staff.wage;
 
-            // Load saved default shop info if checked previously
             const savedShopName = localStorage.getItem('default_shop_name') || '';
             const savedShopAddr = localStorage.getItem('default_shop_address') || '';
             const savedTask = localStorage.getItem('default_shop_task') || '';
@@ -1618,7 +1625,6 @@
             const shopAddress = document.getElementById('contractShopAddress').value.trim();
             const task = document.getElementById('contractTask').value.trim();
 
-            // Save default info to LocalStorage if checkbox is on
             if (document.getElementById('saveShopDefaultCheck').checked) {
                 localStorage.setItem('default_shop_name', shopName);
                 localStorage.setItem('default_shop_address', shopAddress);
@@ -1668,7 +1674,7 @@
                 createdAt: new Date().toISOString()
             };
 
-            db.collection('contracts').doc(staffId).set(contractData).then(() => {
+            getDBRef('contracts').doc(staffId).set(contractData).then(() => {
                 alert('표준 근로계약서 작성이 완료되었습니다!\n알바생이 접속하여 확인 및 터치 서명 후 인쇄/다운로드할 수 있습니다.');
                 closeCreateContractModal();
             });
@@ -1759,7 +1765,7 @@
             const staffCanvas = document.getElementById('staffCanvas');
             const staffSignImgData = staffCanvas.toDataURL();
 
-            db.collection('contracts').doc(currentActiveContract.id).update({
+            getDBRef('contracts').doc(currentActiveContract.id).update({
                 staffSignImgData: staffSignImgData,
                 isStaffSigned: true,
                 signedAt: new Date().toISOString()
@@ -1769,7 +1775,6 @@
             });
         }
 
-        // ATTENDANCE EDIT & BASIC MODALS
         function openEditAttendanceModal(recordId) {
             const record = attendanceList.find(r => r.id === recordId);
             if (!record) return;
@@ -1848,7 +1853,7 @@
 
             const updatedHistory = originalRecord.editHistory ? [...originalRecord.editHistory, newHistoryItem] : [newHistoryItem];
 
-            db.collection('attendance').doc(recordId).update({
+            getDBRef('attendance').doc(recordId).update({
                 startTime: startVal,
                 endTime: endVal,
                 minutes: diffMinutes,
@@ -1862,19 +1867,19 @@
         }
 
         function updateStaffWage(staffId, newWage) {
-            db.collection('staffs').doc(staffId).update({ wage: Number(newWage) });
+            getDBRef('staffs').doc(staffId).update({ wage: Number(newWage) });
         }
 
         function resetStaffPassword(staffId) {
             if (confirm('비밀번호를 초기화하시겠습니까? 다음 로그인 시 새로 등록할 수 있습니다.')) {
-                db.collection('staffs').doc(staffId).update({ password: "" });
+                getDBRef('staffs').doc(staffId).update({ password: "" });
             }
         }
 
         function deleteStaff(staffId) {
             if (confirm('알바생 정보를 삭제하시겠습니까?')) {
-                db.collection('staffs').doc(staffId).delete();
-                db.collection('contracts').doc(staffId).delete();
+                getDBRef('staffs').doc(staffId).delete();
+                getDBRef('contracts').doc(staffId).delete();
             }
         }
 
@@ -1894,7 +1899,7 @@
 
             if (!name) return alert('이름을 입력해주세요.');
 
-            db.collection('staffs').add({
+            getDBRef('staffs').add({
                 name: name,
                 wage: wage,
                 password: ""
@@ -1906,7 +1911,7 @@
 
         function deleteAttendance(id) {
             if (confirm('해당 근태 기록을 삭제하시겠습니까?')) {
-                db.collection('attendance').doc(id).delete();
+                getDBRef('attendance').doc(id).delete();
             }
         }
 
