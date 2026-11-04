@@ -1811,7 +1811,6 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // 캔버스가 비어있는지 확인하는 핵심 유효성 함수
         function isCanvasEmpty(canvasId) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return true;
@@ -1941,7 +1940,6 @@
             if (!startDate) return alert('근무 시작일을 입력해주세요.');
             if (!shopName) return alert('사업장명을 입력해주세요.');
 
-            // 사장님 서명 입력 유효성 검사
             if (isCanvasEmpty('ownerCanvas')) {
                 return alert('사장님 서명을 해주세요.');
             }
@@ -1998,7 +1996,7 @@
             });
         }
 
-        // 사장님 / 알바생 공용 계약서 조회 모달 (백지 문제 완전 수정)
+        // 사장님 / 알바생 공용 계약서 조회 모달 (백지 현상 완전 방지)
         function openViewContractModal(contractId, isStaffSigningMode = false) {
             const contract = contractList.find(c => c.id === contractId);
             if (!contract) return;
@@ -2019,7 +2017,7 @@
             document.getElementById('docBreakTime').textContent = contract.breakTime;
             document.getElementById('docDailyHours').textContent = contract.dailyHours;
             document.getElementById('docRestDay').textContent = contract.restDay;
-            document.getElementById('docWage').textContent = contract.wage.toLocaleString();
+            document.getElementById('docWage').textContent = Number(contract.wage).toLocaleString();
             document.getElementById('docMonthlyBase').textContent = contract.monthlyBase || '해당없음';
             document.getElementById('docPayDay').textContent = contract.payDay;
             document.getElementById('docPayMethod').textContent = contract.payMethod;
@@ -2046,12 +2044,15 @@
                 `;
             }
 
-            document.getElementById('docOwnerSignImg').src = contract.ownerSignImgData;
+            const ownerSignImg = document.getElementById('docOwnerSignImg');
+            if (contract.ownerSignImgData) {
+                ownerSignImg.src = contract.ownerSignImgData;
+            }
 
             const staffSignImg = document.getElementById('docStaffSignImg');
             const pendingNotice = document.getElementById('docPendingSignNotice');
 
-            if (contract.isStaffSigned) {
+            if (contract.isStaffSigned && contract.staffSignImgData) {
                 staffSignImg.src = contract.staffSignImgData;
                 staffSignImg.classList.remove('hidden');
                 pendingNotice.classList.add('hidden');
@@ -2078,27 +2079,36 @@
             document.getElementById('viewContractModal').classList.remove('flex');
         }
 
-        // PDF 바로 다운로드 (모바일/PC 지원 및 백지화 방지 적용)
+        // PDF 바로 다운로드 (모바일/PC 지원 및 백지화 방지 옵션 완비)
         function downloadContractPDF() {
             const element = document.getElementById('contractPrintArea');
             if (!element) return;
 
             const staffName = currentActiveContract ? currentActiveContract.staffName : '알바생';
+
             const opt = {
                 margin:       [10, 10, 10, 10],
                 filename:     `표준근로계약서_${staffName}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    logging: false,
+                    scrollY: 0,
+                    scrollX: 0,
+                    windowWidth: element.scrollWidth
+                },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).save();
+            setTimeout(() => {
+                html2pdf().set(opt).from(element).save();
+            }, 100);
         }
 
         function saveStaffSignature() {
             if (!currentActiveContract) return;
 
-            // 알바생 서명 입력 유효성 검사
             if (isCanvasEmpty('staffCanvas')) {
                 return alert('서명을 해주세요.');
             }
