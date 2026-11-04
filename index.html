@@ -2418,11 +2418,14 @@
 
             const staffName = currentActiveContract ? currentActiveContract.staffName : '알바생';
             const host = document.createElement('div');
-            host.style.cssText = 'position:fixed;left:0;top:0;width:794px;background:#fff;z-index:2147483000;pointer-events:none;';
+            host.style.cssText = 'position:fixed;left:0;top:0;width:718px;min-width:718px;max-width:718px;background:#fff;z-index:2147483000;pointer-events:none;overflow:visible;';
             const clone = element.cloneNode(true);
-            clone.style.width = '100%';
-            clone.style.maxWidth = 'none';
+            clone.style.width = '718px';
+            clone.style.minWidth = '718px';
+            clone.style.maxWidth = '718px';
             clone.style.boxSizing = 'border-box';
+            clone.style.margin = '0';
+            clone.style.overflow = 'visible';
             host.appendChild(clone);
             document.body.appendChild(host);
 
@@ -2433,7 +2436,7 @@
                     margin: [10, 10, 10, 10],
                     filename: `표준근로계약서_${staffName}.pdf`,
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, windowWidth: 900 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, windowWidth: 718 },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 await html2pdf().set(opt).from(clone).save();
@@ -2583,11 +2586,14 @@
             const startDate = activePayslipData.startDate || '';
             const endDate = activePayslipData.endDate || '';
             const host = document.createElement('div');
-            host.style.cssText = 'position:fixed;left:0;top:0;width:794px;background:#fff;z-index:2147483000;pointer-events:none;';
+            host.style.cssText = 'position:fixed;left:0;top:0;width:718px;min-width:718px;max-width:718px;background:#fff;z-index:2147483000;pointer-events:none;overflow:visible;';
             const clone = printElement.cloneNode(true);
-            clone.style.width = '100%';
-            clone.style.maxWidth = 'none';
+            clone.style.width = '718px';
+            clone.style.minWidth = '718px';
+            clone.style.maxWidth = '718px';
             clone.style.boxSizing = 'border-box';
+            clone.style.margin = '0';
+            clone.style.overflow = 'visible';
             clone.style.backgroundColor = '#ffffff';
             host.appendChild(clone);
             document.body.appendChild(host);
@@ -2602,7 +2608,7 @@
                     margin: [10, 10, 10, 10],
                     filename: `급여명세서_${staffName}_${startDate}~${endDate}.pdf`,
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, windowWidth: 900 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, windowWidth: 718 },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 await html2pdf().set(opt).from(clone).save();
