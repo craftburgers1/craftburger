@@ -578,10 +578,43 @@
                     </div>
 
                     <div class="space-y-2">
-                        <div>
-                            <label class="block font-semibold text-gray-700 mb-0.5">근로자(알바생) 성명</label>
-                            <input type="text" id="contractStaffName" readonly class="w-full bg-gray-200 border border-gray-300 rounded p-2 font-bold">
+                        <!-- 고용주(사장님) 인적사항 -->
+                        <div class="bg-slate-100 p-2.5 rounded-lg border border-slate-200 space-y-1.5">
+                            <p class="font-bold text-slate-800 text-[11px]"><i class="fa-solid fa-store mr-1 text-slate-600"></i>고용주(사업주) 정보</p>
+                            <div>
+                                <label class="block font-semibold text-gray-700 text-[10px]">사업장명 & 주소</label>
+                                <input type="text" id="contractShopName" placeholder="예: 철수네 김밥집" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 mb-1 bg-white">
+                                <input type="text" id="contractShopAddress" placeholder="예: 세종00로 00-00 0층 00호" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 bg-white">
+                            </div>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                <div>
+                                    <label class="block font-semibold text-gray-700 text-[10px]">대표자 이름 <span class="text-red-500">*</span></label>
+                                    <input type="text" id="contractOwnerName" placeholder="예: 홍길동" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 bg-white">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-gray-700 text-[10px]">사업장/대표 연락처 <span class="text-red-500">*</span></label>
+                                    <input type="text" id="contractOwnerPhone" placeholder="예: 010-1234-5678" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 bg-white">
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- 근로자(알바생) 인적사항 -->
+                        <div class="bg-amber-50/50 p-2.5 rounded-lg border border-amber-200 space-y-1.5">
+                            <p class="font-bold text-amber-900 text-[11px]"><i class="fa-solid fa-user mr-1 text-amber-600"></i>근로자(알바생) 정보</p>
+                            <div>
+                                <label class="block font-semibold text-gray-700 text-[10px]">근로자 성명</label>
+                                <input type="text" id="contractStaffName" readonly class="w-full bg-gray-200 border border-gray-300 rounded p-1.5 font-bold">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-gray-700 text-[10px]">근로자 주소</label>
+                                <input type="text" id="contractStaffAddress" placeholder="예: 세종특별자치시 00로 123" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 bg-white">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-gray-700 text-[10px]">근로자 연락처</label>
+                                <input type="text" id="contractStaffPhone" placeholder="예: 010-9876-5432" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 bg-white">
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="block font-semibold text-gray-700 mb-0.5">근무 시작일</label>
@@ -599,11 +632,6 @@
                             </label>
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-700 mb-0.5">사업장명 & 주소</label>
-                            <input type="text" id="contractShopName" placeholder="예: 철수네 김밥집" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2 mb-1">
-                            <input type="text" id="contractShopAddress" placeholder="예: 세종00로 00-00 0층 00호" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
-                        </div>
-                        <div>
                             <label class="block font-semibold text-gray-700 mb-0.5">담당 업무 내용</label>
                             <input type="text" id="contractTask" placeholder="예: 서빙 및 주방보조" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
                         </div>
@@ -611,7 +639,7 @@
                         <div class="bg-blue-50 p-2 rounded border border-blue-200 mt-2">
                             <label class="flex items-center space-x-2 cursor-pointer">
                                 <input type="checkbox" id="saveShopDefaultCheck" checked class="w-4 h-4 text-blue-600 rounded">
-                                <span class="font-bold text-blue-900 text-[11px]">☑️ 다음에도 이 정보(사업장명, 주소, 업무) 기본값으로 저장</span>
+                                <span class="font-bold text-blue-900 text-[11px]">☑️ 다음에도 사업주 정보(대표자, 연락처, 사업장명, 주소, 업무) 기본값으로 저장</span>
                             </label>
                         </div>
 
@@ -770,18 +798,22 @@
                     <p class="text-center text-[10px]">본 계약서를 2부 작성하여 사용자와 근로자가 각각 1부씩 보관한다.</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 border-t border-gray-300 pt-4 mt-4">
-                    <div class="text-center space-y-1">
-                        <p class="font-bold text-gray-800">사용자 (사업주)</p>
-                        <p id="docOwnerSubText" class="text-[10px] text-gray-500">사업장명: </p>
-                        <div class="h-20 border border-gray-200 bg-gray-50 rounded flex items-center justify-center p-1">
+                <div class="grid grid-cols-2 gap-4 border-t border-gray-300 pt-4 mt-4 text-[11px]">
+                    <div class="space-y-1">
+                        <p class="font-bold text-gray-800 text-center">사용자 (사업주)</p>
+                        <p id="docOwnerSubText" class="text-gray-700">사업장명: </p>
+                        <p id="docOwnerNameText" class="text-gray-700">대표자명: </p>
+                        <p id="docOwnerPhoneText" class="text-gray-700">연락처: </p>
+                        <div class="h-20 border border-gray-200 bg-gray-50 rounded flex items-center justify-center p-1 mt-1">
                             <img id="docOwnerSignImg" class="max-h-full max-w-full object-contain">
                         </div>
                     </div>
-                    <div class="text-center space-y-1">
-                        <p class="font-bold text-gray-800">근로자 (알바생)</p>
-                        <p id="docStaffSubText" class="text-[10px] text-gray-500">성명: </p>
-                        <div class="h-20 border border-gray-200 bg-gray-50 rounded flex items-center justify-center p-1 relative">
+                    <div class="space-y-1">
+                        <p class="font-bold text-gray-800 text-center">근로자 (알바생)</p>
+                        <p id="docStaffSubText" class="text-gray-700">성명: </p>
+                        <p id="docStaffAddressText" class="text-gray-700">주소: </p>
+                        <p id="docStaffPhoneText" class="text-gray-700">연락처: </p>
+                        <div class="h-20 border border-gray-200 bg-gray-50 rounded flex items-center justify-center p-1 relative mt-1">
                             <img id="docStaffSignImg" class="max-h-full max-w-full object-contain hidden">
                             <span id="docPendingSignNotice" class="text-red-500 font-bold text-xs">서명 대기 중</span>
                         </div>
@@ -852,6 +884,14 @@
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">알바생 이름</label>
                 <input type="text" id="newStaffName" placeholder="예: 김철수" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">주소</label>
+                <input type="text" id="newStaffAddress" placeholder="예: 세종특별자치시 00로 123" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">연락처</label>
+                <input type="text" id="newStaffPhone" placeholder="예: 010-9876-5432" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">기본 시급 (원)</label>
@@ -1899,13 +1939,22 @@
             document.getElementById('contractStaffName').value = staff.name;
             document.getElementById('contractWage').value = staff.wage;
 
+            // 알바생 기존 입력 주소 및 연락처 불러오기
+            document.getElementById('contractStaffAddress').value = staff.address || '';
+            document.getElementById('contractStaffPhone').value = staff.phone || '';
+
+            // 고용주 기본 저장값 불러오기
             const savedShopName = localStorage.getItem('default_shop_name') || '';
             const savedShopAddr = localStorage.getItem('default_shop_address') || '';
             const savedTask = localStorage.getItem('default_shop_task') || '';
+            const savedOwnerName = localStorage.getItem('default_owner_name') || '';
+            const savedOwnerPhone = localStorage.getItem('default_owner_phone') || '';
 
             document.getElementById('contractShopName').value = savedShopName;
             document.getElementById('contractShopAddress').value = savedShopAddr;
             document.getElementById('contractTask').value = savedTask;
+            document.getElementById('contractOwnerName').value = savedOwnerName;
+            document.getElementById('contractOwnerPhone').value = savedOwnerPhone;
             
             const now = new Date();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -1935,10 +1984,17 @@
 
             const shopName = document.getElementById('contractShopName').value.trim();
             const shopAddress = document.getElementById('contractShopAddress').value.trim();
+            const ownerName = document.getElementById('contractOwnerName').value.trim();
+            const ownerPhone = document.getElementById('contractOwnerPhone').value.trim();
+
+            const staffAddress = document.getElementById('contractStaffAddress').value.trim();
+            const staffPhone = document.getElementById('contractStaffPhone').value.trim();
             const task = document.getElementById('contractTask').value.trim();
 
             if (!startDate) return alert('근무 시작일을 입력해주세요.');
             if (!shopName) return alert('사업장명을 입력해주세요.');
+            if (!ownerName) return alert('대표자 이름을 입력해주세요.');
+            if (!ownerPhone) return alert('사업장/대표 연락처를 입력해주세요.');
 
             if (isCanvasEmpty('ownerCanvas')) {
                 return alert('사장님 서명을 해주세요.');
@@ -1948,6 +2004,8 @@
                 localStorage.setItem('default_shop_name', shopName);
                 localStorage.setItem('default_shop_address', shopAddress);
                 localStorage.setItem('default_shop_task', task);
+                localStorage.setItem('default_owner_name', ownerName);
+                localStorage.setItem('default_owner_phone', ownerPhone);
             }
 
             const workDays = document.getElementById('contractWorkDays').value;
@@ -1967,11 +2025,15 @@
             const contractData = {
                 staffId,
                 staffName,
+                staffAddress,
+                staffPhone,
                 companyType,
                 startDate,
                 endDate,
                 shopName,
                 shopAddress,
+                ownerName,
+                ownerPhone,
                 task,
                 workDays,
                 restDay,
@@ -1996,7 +2058,7 @@
             });
         }
 
-        // 사장님 / 알바생 공용 계약서 조회 모달 (백지 현상 완전 방지)
+        // 사장님 / 알바생 공용 계약서 조회 모달 (대표자 및 알바 인적사항 포함)
         function openViewContractModal(contractId, isStaffSigningMode = false) {
             const contract = contractList.find(c => c.id === contractId);
             if (!contract) return;
@@ -2022,8 +2084,15 @@
             document.getElementById('docPayDay').textContent = contract.payDay;
             document.getElementById('docPayMethod').textContent = contract.payMethod;
             document.getElementById('docContractDate').textContent = contract.contractDate || contract.startDate;
-            document.getElementById('docStaffSubText').textContent = `성명: ${contract.staffName}`;
-            document.getElementById('docOwnerSubText').textContent = `사업장명: ${contract.shopName}`;
+
+            // 하단 인적사항 세팅
+            document.getElementById('docOwnerSubText').textContent = `사업장명: ${contract.shopName || '-'}`;
+            document.getElementById('docOwnerNameText').textContent = `대표자명: ${contract.ownerName || '-'}`;
+            document.getElementById('docOwnerPhoneText').textContent = `연락처: ${contract.ownerPhone || '-'}`;
+
+            document.getElementById('docStaffSubText').textContent = `성명: ${contract.staffName || '-'}`;
+            document.getElementById('docStaffAddressText').textContent = `주소: ${contract.staffAddress || '-'}`;
+            document.getElementById('docStaffPhoneText').textContent = `연락처: ${contract.staffPhone || '-'}`;
 
             const holidayClause = document.getElementById('docHolidaysClause');
             const extraClause = document.getElementById('docExtraClauseSection');
@@ -2079,7 +2148,7 @@
             document.getElementById('viewContractModal').classList.remove('flex');
         }
 
-        // PDF 바로 다운로드 (모바일/PC 지원 및 백지화 방지 옵션 완비)
+        // PDF 바로 다운로드
         function downloadContractPDF() {
             const element = document.getElementById('contractPrintArea');
             if (!element) return;
@@ -2249,17 +2318,23 @@
 
         function saveNewStaff() {
             const name = document.getElementById('newStaffName').value.trim();
+            const address = document.getElementById('newStaffAddress').value.trim();
+            const phone = document.getElementById('newStaffPhone').value.trim();
             const wage = Number(document.getElementById('newStaffWage').value);
 
             if (!name) return alert('이름을 입력해주세요.');
 
             getDBRef('staffs').add({
                 name: name,
+                address: address,
+                phone: phone,
                 wage: wage,
                 password: ""
             }).then(() => {
                 closeAddStaffModal();
                 document.getElementById('newStaffName').value = '';
+                document.getElementById('newStaffAddress').value = '';
+                document.getElementById('newStaffPhone').value = '';
             });
         }
 
