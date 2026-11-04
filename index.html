@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>매장 관리 및 근태/급여/계약서/매뉴얼 통합 시스템</title>
+    <title>매장 관리 및 근태/급여/계약서/급여명세서 통합 시스템</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -26,8 +26,8 @@
         
         @media print {
             body * { visibility: hidden; }
-            #contractPrintArea, #contractPrintArea * { visibility: visible; }
-            #contractPrintArea { position: absolute; left: 0; top: 0; width: 100%; font-size: 11pt; border: none !important; }
+            #contractPrintArea, #contractPrintArea *, #payslipPrintArea, #payslipPrintArea * { visibility: visible; }
+            #contractPrintArea, #payslipPrintArea { position: absolute; left: 0; top: 0; width: 100%; font-size: 11pt; border: none !important; }
             .no-print { display: none !important; }
         }
     </style>
@@ -147,7 +147,9 @@
                         <div>
                             <p class="text-amber-100 text-[11px] sm:text-xs">선택 월 예상 총 급여 (기본급 + 주휴수당)</p>
                             <p id="staffTotalPayDisplay" class="text-2xl sm:text-3xl font-extrabold mt-0.5">0원</p>
-                            <p class="text-[10px] text-amber-200 mt-1">* (정확한 주휴수당은 전문가를 통하여 산출을 권합니다)</p>
+                            <button onclick="downloadStaffPayslipPDF()" class="mt-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition">
+                                <i class="fa-solid fa-file-invoice-dollar mr-1"></i>이달의 급여명세서 다운로드 (PDF)
+                            </button>
                         </div>
                         <div class="text-right">
                             <p class="text-amber-100 text-[11px] sm:text-xs">선택 월 총 근무시간</p>
@@ -249,10 +251,16 @@
                 </div>
 
                 <!-- History Table (Staff) -->
-                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
-                    <h3 class="text-base font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
-                        <i class="fa-solid fa-list text-amber-500 mr-2"></i>선택 월 상세 근무 기록
-                    </h3>
+                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
+                        <h3 class="text-base font-bold text-gray-900 flex items-center">
+                            <i class="fa-solid fa-list text-amber-500 mr-2"></i>선택 월 상세 근무 기록
+                        </h3>
+                        <button onclick="exportAttendanceToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition">
+                            <i class="fa-solid fa-file-csv mr-1"></i>내 근무이력 백업 (구글시트/CSV 다운로드)
+                        </button>
+                    </div>
+
                     <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full text-left text-xs whitespace-nowrap min-w-[550px]">
                             <thead class="bg-gray-50 text-gray-500 border-b">
@@ -343,9 +351,14 @@
                         <h3 class="text-base font-bold text-gray-900 flex items-center">
                             <i class="fa-solid fa-users text-amber-500 mr-2"></i>전체 알바생 월별 급여 & 근로계약서 현황
                         </h3>
-                        <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
-                            + 신규 알바생
-                        </button>
+                        <div class="space-x-2">
+                            <button onclick="exportAttendanceToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
+                                <i class="fa-solid fa-file-csv mr-1"></i>전체 근무기록 백업 (CSV)
+                            </button>
+                            <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
+                                + 신규 알바생
+                            </button>
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto custom-scrollbar">
@@ -357,6 +370,7 @@
                                     <th class="p-2.5">이달 총 근무시간</th>
                                     <th class="p-2.5">이달 지급 예정 총 급여</th>
                                     <th class="p-2.5 text-center">표준 근로계약서</th>
+                                    <th class="p-2.5 text-center">급여명세서</th>
                                     <th class="p-2.5 text-center">비번 초기화</th>
                                     <th class="p-2.5 text-center">삭제</th>
                                 </tr>
@@ -839,6 +853,51 @@
                 </button>
                 <button onclick="closeViewContractModal()" class="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-xl">닫기</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 3. PAYSLIP GENERATOR TEMPLATE (HIDDEN PRINT AREA) -->
+    <div id="payslipPrintArea" class="hidden bg-white p-6 rounded-xl border border-gray-200 text-xs text-gray-900 space-y-4 max-w-xl mx-auto">
+        <h2 id="psTitle" class="text-center font-extrabold text-xl border-b-2 border-gray-900 pb-2">급 여 명 세 서</h2>
+        
+        <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 text-[11px]">
+            <div><strong>귀속월:</strong> <span id="psMonth"></span></div>
+            <div><strong>지급일:</strong> <span id="psPayDate"></span></div>
+            <div><strong>사업장명:</strong> <span id="psShopName"></span></div>
+            <div><strong>대표자:</strong> <span id="psOwnerName"></span></div>
+            <div><strong>근로자명:</strong> <span id="psStaffName"></span></div>
+            <div><strong>적용시급:</strong> <span id="psWage"></span>원</div>
+        </div>
+
+        <table class="w-full border-collapse border border-gray-300 text-center text-xs">
+            <thead>
+                <tr class="bg-gray-100 border-b border-gray-300 font-bold">
+                    <th class="border border-gray-300 p-2">항목</th>
+                    <th class="border border-gray-300 p-2">근무시간 / 산출 기준</th>
+                    <th class="border border-gray-300 p-2">금액</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="border border-gray-300 p-2 font-semibold">기본급</td>
+                    <td id="psBaseHours" class="border border-gray-300 p-2">0시간 0분</td>
+                    <td id="psBasePay" class="border border-gray-300 p-2 font-bold text-right pr-3">0원</td>
+                </tr>
+                <tr>
+                    <td class="border border-gray-300 p-2 font-semibold">주휴수당</td>
+                    <td id="psAllowanceNote" class="border border-gray-300 p-2">주 15시간 이상 근무 산출분</td>
+                    <td id="psAllowancePay" class="border border-gray-300 p-2 font-bold text-right pr-3">0원</td>
+                </tr>
+                <tr class="bg-amber-50 font-extrabold text-amber-900">
+                    <td class="border border-gray-300 p-2" colspan="2">실 지급 차인 지급액 (총계)</td>
+                    <td id="psTotalPay" class="border border-gray-300 p-2 text-right pr-3 text-sm">0원</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="text-[10px] text-gray-500 leading-relaxed space-y-0.5 border-t pt-2">
+            <p>* 본 급여명세서는 관련 법령에 명시된 주요 내역을 반영하여 전자 방식으로 발급되었습니다.</p>
+            <p>* 정확한 세금 공제(4대보험/3.3%) 및 수당 산출은 매장의 정밀 노무/세무 기준을 확인하세요.</p>
         </div>
     </div>
 
@@ -1666,6 +1725,9 @@
                     </td>
                     <td class="p-2.5 text-center">${contractBtnHtml}</td>
                     <td class="p-2.5 text-center">
+                        <button onclick="downloadAdminStaffPayslipPDF('${staff.id}')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] px-2 py-1 rounded font-bold">급여명세서</button>
+                    </td>
+                    <td class="p-2.5 text-center">
                         <button onclick="resetStaffPassword('${staff.id}')" class="text-[11px] bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded text-gray-600">초기화</button>
                     </td>
                     <td class="p-2.5 text-center">
@@ -1795,7 +1857,7 @@
         }
 
         // ==========================================
-        // CANVAS SETUP & EMPTY SIGNATURE VALIDATION
+        // CANVAS SETUP & SIGNATURE
         // ==========================================
         function setupCanvasDrawing(canvasId) {
             const canvas = document.getElementById(canvasId);
@@ -1939,11 +2001,11 @@
             document.getElementById('contractStaffName').value = staff.name;
             document.getElementById('contractWage').value = staff.wage;
 
-            // 알바생 기존 입력 주소 및 연락처 불러오기
+            // 알바생 주소/연락처
             document.getElementById('contractStaffAddress').value = staff.address || '';
             document.getElementById('contractStaffPhone').value = staff.phone || '';
 
-            // 고용주 기본 저장값 불러오기
+            // 사장님 정보 불러오기
             const savedShopName = localStorage.getItem('default_shop_name') || '';
             const savedShopAddr = localStorage.getItem('default_shop_address') || '';
             const savedTask = localStorage.getItem('default_shop_task') || '';
@@ -2058,7 +2120,6 @@
             });
         }
 
-        // 사장님 / 알바생 공용 계약서 조회 모달 (대표자 및 알바 인적사항 포함)
         function openViewContractModal(contractId, isStaffSigningMode = false) {
             const contract = contractList.find(c => c.id === contractId);
             if (!contract) return;
@@ -2148,7 +2209,7 @@
             document.getElementById('viewContractModal').classList.remove('flex');
         }
 
-        // PDF 바로 다운로드
+        // PDF 다운로드 (계약서)
         function downloadContractPDF() {
             const element = document.getElementById('contractPrintArea');
             if (!element) return;
@@ -2159,20 +2220,140 @@
                 margin:       [10, 10, 10, 10],
                 filename:     `표준근로계약서_${staffName}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true, 
-                    logging: false,
-                    scrollY: 0,
-                    scrollX: 0,
-                    windowWidth: element.scrollWidth
-                },
+                html2canvas:  { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0, windowWidth: element.scrollWidth },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            setTimeout(() => {
-                html2pdf().set(opt).from(element).save();
-            }, 100);
+            setTimeout(() => { html2pdf().set(opt).from(element).save(); }, 100);
+        }
+
+        // ==========================================
+        // 4. PAYSLIP GENERATION LOGIC (신규 급여명세서)
+        // ==========================================
+        function generatePayslipData(staffId, selectedMonth) {
+            const staff = staffList.find(s => s.id === staffId);
+            if (!staff) return null;
+
+            const contract = contractList.find(c => c.staffId === staffId) || {};
+            const records = attendanceList.filter(r => r.staffId === staffId && r.startTime.startsWith(selectedMonth));
+
+            let totalMinutes = 0;
+            let totalBasePay = 0;
+            records.forEach(r => {
+                totalMinutes += r.minutes;
+                totalBasePay += r.pay;
+            });
+
+            const weeklyAllowance = calculateWeeklyAllowance(records, staff.wage);
+            const totalPay = totalBasePay + weeklyAllowance;
+
+            return {
+                month: selectedMonth,
+                payDate: contract.payDay || '매월 지정일',
+                shopName: contract.shopName || localStorage.getItem('default_shop_name') || '매장',
+                ownerName: contract.ownerName || localStorage.getItem('default_owner_name') || '대표자',
+                staffName: staff.name,
+                wage: staff.wage,
+                baseHoursText: `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`,
+                basePay: totalBasePay,
+                allowancePay: weeklyAllowance,
+                totalPay: totalPay
+            };
+        }
+
+        function downloadStaffPayslipPDF() {
+            const selectedMonth = document.getElementById('staffMonthPicker').value;
+            const data = generatePayslipData(currentUser.id, selectedMonth);
+            if (!data) return alert('급여 데이터를 불러올 수 없습니다.');
+
+            renderPayslipDOM(data);
+            triggerPayslipPDF(data.staffName, data.month);
+        }
+
+        function downloadAdminStaffPayslipPDF(staffId) {
+            const selectedMonth = document.getElementById('adminMonthPicker').value;
+            const data = generatePayslipData(staffId, selectedMonth);
+            if (!data) return alert('급여 데이터를 불러올 수 없습니다.');
+
+            renderPayslipDOM(data);
+            triggerPayslipPDF(data.staffName, data.month);
+        }
+
+        function renderPayslipDOM(data) {
+            document.getElementById('psMonth').textContent = data.month;
+            document.getElementById('psPayDate').textContent = data.payDate;
+            document.getElementById('psShopName').textContent = data.shopName;
+            document.getElementById('psOwnerName').textContent = data.ownerName;
+            document.getElementById('psStaffName').textContent = data.staffName;
+            document.getElementById('psWage').textContent = data.wage.toLocaleString();
+            document.getElementById('psBaseHours').textContent = data.baseHoursText;
+            document.getElementById('psBasePay').textContent = `${data.basePay.toLocaleString()}원`;
+            document.getElementById('psAllowancePay').textContent = `${data.allowancePay.toLocaleString()}원`;
+            document.getElementById('psTotalPay').textContent = `${data.totalPay.toLocaleString()}원`;
+        }
+
+        function triggerPayslipPDF(staffName, month) {
+            const element = document.getElementById('payslipPrintArea');
+            element.classList.remove('hidden');
+
+            const opt = {
+                margin:       [15, 15, 15, 15],
+                filename:     `급여명세서_${staffName}_${month}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.classList.add('hidden');
+            });
+        }
+
+        // ==========================================
+        // 5. CSV BACKUP & GOOGLE SHEETS EXPORT (신규 백업 기능)
+        // ==========================================
+        function exportAttendanceToCSV() {
+            let recordsToExport = [];
+            let fileName = '';
+
+            if (currentUser.role === 'staff') {
+                const selectedMonth = document.getElementById('staffMonthPicker').value;
+                recordsToExport = attendanceList.filter(r => r.staffId === currentUser.id && r.startTime.startsWith(selectedMonth));
+                fileName = `근무기록백업_${currentUser.name}_${selectedMonth}.csv`;
+            } else {
+                const selectedMonth = document.getElementById('adminMonthPicker').value;
+                recordsToExport = attendanceList.filter(r => r.startTime.startsWith(selectedMonth));
+                fileName = `전체근무기록백업_${selectedMonth}.csv`;
+            }
+
+            if (recordsToExport.length === 0) {
+                return alert('백업할 근무 기록이 없습니다.');
+            }
+
+            let csvContent = "\uFEFF"; // UTF-8 BOM (한글 엑셀 깨짐 방지)
+            csvContent += "알바생이름,출근시간,퇴근시간,근무시간(분),산출금액(원),수정여부,등록자\n";
+
+            recordsToExport.forEach(r => {
+                const row = [
+                    `"${r.staffName || ''}"`,
+                    `"${r.startTime || ''}"`,
+                    `"${r.endTime || ''}"`,
+                    r.minutes || 0,
+                    r.pay || 0,
+                    r.isEdited ? "수정됨" : "정상",
+                    `"${r.createdBy || ''}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function saveStaffSignature() {
