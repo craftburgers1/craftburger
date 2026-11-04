@@ -56,9 +56,7 @@
 
         <div class="max-w-6xl mx-auto px-3 py-4 sm:p-6 space-y-4 sm:space-y-6">
 
-            <!-- ========================================== -->
-            <!-- 1. LOGIN SECTION                           -->
-            <!-- ========================================== -->
+            <!-- 1. LOGIN SECTION -->
             <div id="loginSection" class="bg-white rounded-2xl shadow-xl p-5 sm:p-8 max-w-md mx-auto my-6 sm:my-12 border border-gray-100">
                 <div class="text-center mb-5 sm:mb-6">
                     <div class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-amber-100 text-amber-600 rounded-full mb-3">
@@ -115,9 +113,7 @@
                 </div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- 2. STAFF DASHBOARD                         -->
-            <!-- ========================================== -->
+            <!-- 2. STAFF DASHBOARD -->
             <div id="staffDashboard" class="hidden space-y-4 sm:space-y-6">
                 <!-- Contract Alert Banner -->
                 <div id="staffContractAlert" class="bg-amber-50 border-l-4 border-amber-500 p-3.5 sm:p-4 rounded-r-xl shadow-sm">
@@ -275,9 +271,7 @@
                 </div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- 3. ADMIN DASHBOARD                         -->
-            <!-- ========================================== -->
+            <!-- 3. ADMIN DASHBOARD -->
             <div id="adminDashboard" class="hidden space-y-4 sm:space-y-6">
                 <!-- Header, Store Code & Month Filter -->
                 <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md space-y-3">
@@ -481,9 +475,7 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- COUPANG DYNAMIC BANNER & DISCLAIMER FOOTER -->
-    <!-- ========================================== -->
+    <!-- FOOTER -->
     <footer class="w-full mt-8 py-6 bg-slate-900 border-t border-slate-800 text-gray-400 no-print">
         <div class="max-w-6xl mx-auto px-4 flex flex-col items-center justify-center space-y-4">
             
@@ -498,7 +490,7 @@
                 </div>
             </div>
 
-            <!-- BETA VERSION & LEGAL DISCLAIMER -->
+            <!-- DISCLAIMER -->
             <div class="max-w-3xl text-[10px] sm:text-[11px] leading-relaxed text-gray-400 border-t border-slate-800 pt-4 text-center sm:text-left">
                 <p class="font-bold text-amber-400 mb-1">⚠️ [베타버전 운영 및 법적 책임 한계 고지] (Beta Version Disclaimer)</p>
                 <ul class="list-disc list-inside space-y-0.5">
@@ -511,9 +503,7 @@
         </div>
     </footer>
 
-    <!-- MODALS & CONTRACT FORMS -->
-
-    <!-- TERMS OF SERVICE & PRIVACY POLICY MODAL FOR GOOGLE SIGN-IN -->
+    <!-- TERMS OF SERVICE MODAL -->
     <div id="termsModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
             <div class="border-b pb-3">
@@ -717,7 +707,7 @@
                     </div>
 
                     <div class="border-t-2 border-dashed border-gray-300 pt-3 mt-3">
-                        <label class="block text-xs font-bold text-slate-900 mb-1">✍️ 사용자(사장님) 전자 서명</label>
+                        <label class="block text-xs font-bold text-slate-900 mb-1">✍️ 사용자(사장님) 전자 서명 <span class="text-red-500">*필수</span></label>
                         <div class="border-2 border-amber-400 rounded-lg bg-amber-50/30 relative">
                             <canvas id="ownerCanvas" class="w-full h-24 cursor-crosshair rounded-lg"></canvas>
                             <button onclick="clearCanvas('ownerCanvas')" class="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[10px] px-2 py-1 rounded font-bold">지우기</button>
@@ -745,6 +735,7 @@
                 <button onclick="closeViewContractModal()" class="text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
+            <!-- PDF PRINT AREA -->
             <div id="contractPrintArea" class="bg-white p-5 sm:p-8 rounded-xl border border-gray-200 text-xs leading-relaxed space-y-3.5 text-gray-900">
                 <h2 id="docContractHeaderTitle" class="text-center font-extrabold text-base sm:text-xl mb-3 border-b-2 border-gray-900 pb-2">표 준 근 로 계 약 서</h2>
                 
@@ -798,8 +789,9 @@
                 </div>
             </div>
 
+            <!-- Staff Signature Area in Modal -->
             <div id="staffSignSection" class="hidden border-t pt-3 space-y-2 no-print">
-                <label class="block text-xs font-bold text-red-600">✍️ 알바생 스마트폰 터치 서명</label>
+                <label class="block text-xs font-bold text-red-600">✍️ 알바생 스마트폰 터치 서명 <span class="text-red-500">*필수</span></label>
                 <div class="border-2 border-red-300 rounded-lg bg-gray-50 relative">
                     <canvas id="staffCanvas" class="w-full h-32 cursor-crosshair rounded-lg"></canvas>
                     <button onclick="clearCanvas('staffCanvas')" class="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-[10px] px-2 py-1 rounded">지우기</button>
@@ -1168,15 +1160,11 @@
             }
         }
 
-        // ==========================================
-        // 주휴수당 자동 산출 함수
-        // ==========================================
         function calculateWeeklyAllowance(records, wage) {
             const weekMinutesMap = {};
 
             records.forEach(r => {
                 const d = new Date(r.startTime);
-                // 해당 날짜가 위치한 주의 월요일 날짜 구하기
                 const day = d.getDay();
                 const diffToMon = d.getDate() - day + (day === 0 ? -6 : 1);
                 const monDate = new Date(d.setDate(diffToMon));
@@ -1190,7 +1178,6 @@
             Object.values(weekMinutesMap).forEach(mins => {
                 const hours = mins / 60;
                 if (hours >= 15) {
-                    // 주 15시간 이상 근무 시 (최대 40시간 한도 기준 주휴수당 계산)
                     const cappedHours = Math.min(hours, 40);
                     const allowanceHours = (cappedHours / 40) * 8;
                     totalAllowance += Math.floor(allowanceHours * wage);
@@ -1399,7 +1386,6 @@
                 workDatesMap[dateStr].pay += r.pay;
             });
 
-            // 주휴수당 계산
             const weeklyAllowance = calculateWeeklyAllowance(myRecords, currentUser.wage);
             const grandTotalPay = totalBasePay + weeklyAllowance;
 
@@ -1768,6 +1754,9 @@
             });
         }
 
+        // ==========================================
+        // CANVAS SETUP & EMPTY SIGNATURE VALIDATION
+        // ==========================================
         function setupCanvasDrawing(canvasId) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
@@ -1820,6 +1809,17 @@
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 캔버스가 비어있는지 확인하는 핵심 유효성 함수
+        function isCanvasEmpty(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return true;
+            const ctx = canvas.getContext('2d');
+            const pixelBuffer = new Uint32Array(
+                ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+            );
+            return !pixelBuffer.some(color => color !== 0);
         }
 
         function toggleEndDateInput(isNoEndDate) {
@@ -1938,6 +1938,14 @@
             const shopAddress = document.getElementById('contractShopAddress').value.trim();
             const task = document.getElementById('contractTask').value.trim();
 
+            if (!startDate) return alert('근무 시작일을 입력해주세요.');
+            if (!shopName) return alert('사업장명을 입력해주세요.');
+
+            // 사장님 서명 입력 유효성 검사
+            if (isCanvasEmpty('ownerCanvas')) {
+                return alert('사장님 서명을 해주세요.');
+            }
+
             if (document.getElementById('saveShopDefaultCheck').checked) {
                 localStorage.setItem('default_shop_name', shopName);
                 localStorage.setItem('default_shop_address', shopAddress);
@@ -1957,9 +1965,6 @@
 
             const ownerCanvas = document.getElementById('ownerCanvas');
             const ownerSignImgData = ownerCanvas.toDataURL();
-
-            if (!startDate) return alert('근무 시작일을 입력해주세요.');
-            if (!shopName) return alert('사업장명을 입력해주세요.');
 
             const contractData = {
                 staffId,
@@ -1993,6 +1998,7 @@
             });
         }
 
+        // 사장님 / 알바생 공용 계약서 조회 모달 (백지 문제 완전 수정)
         function openViewContractModal(contractId, isStaffSigningMode = false) {
             const contract = contractList.find(c => c.id === contractId);
             if (!contract) return;
@@ -2072,9 +2078,7 @@
             document.getElementById('viewContractModal').classList.remove('flex');
         }
 
-        // ==========================================
-        // 모바일 및 PC 통합 PDF 바로 다운로드 함수
-        // ==========================================
+        // PDF 바로 다운로드 (모바일/PC 지원 및 백지화 방지 적용)
         function downloadContractPDF() {
             const element = document.getElementById('contractPrintArea');
             if (!element) return;
@@ -2093,6 +2097,11 @@
 
         function saveStaffSignature() {
             if (!currentActiveContract) return;
+
+            // 알바생 서명 입력 유효성 검사
+            if (isCanvasEmpty('staffCanvas')) {
+                return alert('서명을 해주세요.');
+            }
 
             const staffCanvas = document.getElementById('staffCanvas');
             const staffSignImgData = staffCanvas.toDataURL();
