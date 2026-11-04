@@ -241,7 +241,7 @@
                     <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center">
                         <i class="fa-regular fa-clock text-amber-500 mr-2"></i>근무 시간 등록
                     </h3>
-                    <p id="selectedDateNotice" class="text-[11px] sm:text-xs text-amber-600 font-semibold mb-3 sm:mb-4">날짜를 선택하거나 출퇴근 시각을 입력해 주세요.</p>
+                    <p id="selectedDateNotice" class="text-[11px] sm:text-xs text-amber-600 font-semibold mb-3 sm:mb-4">날짜를 선택하거나 출퇴근 시각을 입력해 주세요. 휴게시간은 근로계약서의 고정 설정을 자동 차감합니다.</p>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
@@ -1351,6 +1351,65 @@
             }
         }
 
+        // 계약서에 등록된 고정 휴게시간을 분 단위로 읽습니다.
+        // 예: "15:00 ~ 16:00 (1시간)", "1시간", "30분", "없음"
+        function getFixedBreakMinutes(staffId) {
+            const contract = contractList.find(c => c.staffId === staffId);
+            const raw = String(contract?.breakTime || '').trim();
+            if (!raw || /없음|무급휴게없음|0분|0시간/.test(raw)) return 0;
+
+            const range = raw.match(/(\d{1,2}):(\d{2})\s*(?:~|～|-|부터)\s*(\d{1,2}):(\d{2})/);
+            if (range) {
+                const start = Number(range[1]) * 60 + Number(range[2]);
+                const end = Number(range[3]) * 60 + Number(range[4]);
+                const duration = end >= start ? end - start : (24 * 60 - start + end);
+                if (duration > 0 && duration <= 240) return duration;
+            }
+
+            const hourMatch = raw.match(/(\d+(?:\.\d+)?)\s*시간/);
+            const minuteMatch = raw.match(/(\d+)\s*분/);
+            const minutes = Math.round((hourMatch ? Number(hourMatch[1]) * 60 : 0) + (minuteMatch ? Number(minuteMatch[1]) : 0));
+            return Number.isFinite(minutes) ? Math.max(0, Math.min(minutes, 240)) : 0;
+        }
+
+        // 새 기록은 breakMinutes를 우선 사용하고, 과거 기록은 계약서의 고정 휴게시간을 소급 계산합니다.
+        function getRecordMinutes(record) {
+            if (!record) return 0;
+            const stored = Number(record.minutes);
+            if (Number.isFinite(Number(record.breakMinutes))) {
+                return Math.max(0, Number.isFinite(stored) ? stored : 0);
+            }
+            const start = new Date(record.startTime);
+            const end = new Date(record.endTime);
+            const gross = Number.isFinite(start.getTime()) && Number.isFinite(end.getTime()) && end > start
+                ? Math.floor((end - start) / 60000)
+                : (Number.isFinite(stored) ? stored : 0);
+            const legacyBreak = getFixedBreakMinutes(record.staffId);
+            return Math.max(0, gross - legacyBreak);
+        }
+
+        function getRecordPay(record) {
+            if (!record) return 0;
+            const storedPay = Number(record.pay);
+            // 휴게시간 필드가 없는 과거 데이터는 새 순근무시간 기준으로 다시 산출합니다.
+            if (Number.isFinite(Number(record.breakMinutes))) {
+                return Number.isFinite(storedPay) ? storedPay : Math.floor(getRecordMinutes(record) * (Number(record.wageAtTime) || 0) / 60);
+            }
+            const staff = staffList.find(s => s.id === record.staffId);
+            const wage = Number(record.wageAtTime) || Number(staff?.wage) || 0;
+            return Math.floor(getRecordMinutes(record) * wage / 60);
+        }
+
+        function buildAttendanceValues(startVal, endVal, staffId, wage) {
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+            if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) return null;
+            const grossMinutes = Math.floor((end - start) / 60000);
+            const breakMinutes = Math.min(grossMinutes, getFixedBreakMinutes(staffId));
+            const minutes = Math.max(0, grossMinutes - breakMinutes);
+            return { grossMinutes, breakMinutes, minutes, pay: Math.floor(minutes * (Number(wage) || 0) / 60) };
+        }
+
         // 특정 날짜가 지정된 시작일~종료일 범위에 속하는지 엄격히 확인하는 필터 함수
         function isRecordInDateRange(recordStartTime, startDateStr, endDateStr) {
             if (!recordStartTime) return false;
@@ -1372,7 +1431,7 @@
                 const weekKey = `${monDate.getFullYear()}-${monDate.getMonth() + 1}-${monDate.getDate()}`;
 
                 if (!weekMinutesMap[weekKey]) weekMinutesMap[weekKey] = 0;
-                weekMinutesMap[weekKey] += r.minutes;
+                weekMinutesMap[weekKey] += getRecordMinutes(r);
             });
 
             let totalAllowance = 0;
@@ -1418,17 +1477,19 @@
             const end = new Date(endVal);
             if (end <= start) return alert('퇴근 시간을 확인해주세요.');
 
-            const diffMinutes = Math.floor((end - start) / (1000 * 60));
-            const pay = Math.floor(diffMinutes * (staff.wage / 60));
+            const work = buildAttendanceValues(startVal, endVal, staff.id, staff.wage);
+            if (!work) return alert('출퇴근 시간을 확인해주세요.');
 
             const record = {
                 staffId: staff.id,
                 staffName: staff.name,
                 startTime: startVal,
                 endTime: endVal,
-                minutes: diffMinutes,
+                grossMinutes: work.grossMinutes,
+                breakMinutes: work.breakMinutes,
+                minutes: work.minutes,
                 wageAtTime: staff.wage,
-                pay: pay,
+                pay: work.pay,
                 isEdited: false,
                 editHistory: [],
                 createdAt: new Date().toISOString(),
@@ -1585,8 +1646,8 @@
             let totalBasePay = 0;
 
             myRecords.forEach(r => {
-                totalMinutes += r.minutes;
-                totalBasePay += r.pay;
+                totalMinutes += getRecordMinutes(r);
+                totalBasePay += getRecordPay(r);
             });
 
             const weeklyAllowance = calculateWeeklyAllowance(myRecords, currentUser.wage);
@@ -1601,8 +1662,8 @@
             attendanceList.filter(r => r.staffId === currentUser.id && r.startTime.startsWith(selectedMonth)).forEach(r => {
                 const dateStr = r.startTime.split('T')[0];
                 if (!monthRecordsMap[dateStr]) monthRecordsMap[dateStr] = { minutes: 0, pay: 0 };
-                monthRecordsMap[dateStr].minutes += r.minutes;
-                monthRecordsMap[dateStr].pay += r.pay;
+                monthRecordsMap[dateStr].minutes += getRecordMinutes(r);
+                monthRecordsMap[dateStr].pay += getRecordPay(r);
             });
 
             renderStaffCalendar(selectedMonth, monthRecordsMap);
@@ -1623,8 +1684,8 @@
                 tr.innerHTML = `
                     <td class="p-2.5">${formatDateTime(r.startTime)}</td>
                     <td class="p-2.5">${formatDateTime(r.endTime)}</td>
-                    <td class="p-2.5 font-semibold">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
-                    <td class="p-2.5 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
+                    <td class="p-2.5 font-semibold">${Math.floor(getRecordMinutes(r)/60)}시간 ${getRecordMinutes(r)%60}분</td>
+                    <td class="p-2.5 text-right font-bold text-amber-600">${getRecordPay(r).toLocaleString()}원</td>
                     <td class="p-2.5 text-center">${historyTag}</td>
                     <td class="p-2.5 text-center space-x-1">
                         <button onclick="openEditAttendanceModal('${r.id}')" class="text-xs text-slate-700 hover:text-amber-600 font-bold mr-1">수정</button>
@@ -1702,14 +1763,12 @@
                 return;
             }
 
-            const diffMinutes = Math.floor((end - start) / (1000 * 60));
-            const hours = Math.floor(diffMinutes / 60);
-            const minutes = diffMinutes % 60;
-            const minuteWage = currentUser.wage / 60;
-            const totalPay = Math.floor(diffMinutes * minuteWage);
+            const work = buildAttendanceValues(startVal, endVal, currentUser.id, currentUser.wage);
+            const hours = Math.floor(work.minutes / 60);
+            const minutes = work.minutes % 60;
 
-            document.getElementById('calculatedTimeText').textContent = `${hours}시간 ${minutes}분`;
-            document.getElementById('calculatedPayText').textContent = `${totalPay.toLocaleString()}원`;
+            document.getElementById('calculatedTimeText').textContent = `${hours}시간 ${minutes}분 (휴게 ${work.breakMinutes}분 제외)`;
+            document.getElementById('calculatedPayText').textContent = `${work.pay.toLocaleString()}원`;
         }
 
         function saveAttendanceRecord() {
@@ -1721,18 +1780,19 @@
             const end = new Date(endVal);
             if (end <= start) return alert('퇴근 시간을 확인해 주세요.');
 
-            const diffMinutes = Math.floor((end - start) / (1000 * 60));
-            const minuteWage = currentUser.wage / 60;
-            const pay = Math.floor(diffMinutes * minuteWage);
+            const work = buildAttendanceValues(startVal, endVal, currentUser.id, currentUser.wage);
+            if (!work) return alert('출퇴근 시간을 확인해 주세요.');
 
             const record = {
                 staffId: currentUser.id,
                 staffName: currentUser.name,
                 startTime: startVal,
                 endTime: endVal,
-                minutes: diffMinutes,
+                grossMinutes: work.grossMinutes,
+                breakMinutes: work.breakMinutes,
+                minutes: work.minutes,
                 wageAtTime: currentUser.wage,
-                pay: pay,
+                pay: work.pay,
                 isEdited: false,
                 editHistory: [],
                 createdAt: new Date().toISOString(),
@@ -1805,8 +1865,8 @@
                 let staffBasePay = 0;
 
                 monthRecords.forEach(r => {
-                    staffMinutes += r.minutes;
-                    staffBasePay += r.pay;
+                    staffMinutes += getRecordMinutes(r);
+                    staffBasePay += getRecordPay(r);
                 });
 
                 const weeklyAllowance = calculateWeeklyAllowance(monthRecords, staff.wage);
@@ -1913,8 +1973,8 @@
             let totalBasePay = 0;
 
             filteredRecords.forEach(r => {
-                totalMinutes += r.minutes;
-                totalBasePay += r.pay;
+                totalMinutes += getRecordMinutes(r);
+                totalBasePay += getRecordPay(r);
             });
 
             const weeklyAllowance = calculateWeeklyAllowance(filteredRecords, staff.wage);
@@ -1935,8 +1995,8 @@
             attendanceList.filter(r => r.staffId === selectedStaffId && r.startTime.startsWith(selectedMonth)).forEach(r => {
                 const dateStr = r.startTime.split('T')[0];
                 if (!monthRecordsMap[dateStr]) monthRecordsMap[dateStr] = { minutes: 0, pay: 0 };
-                monthRecordsMap[dateStr].minutes += r.minutes;
-                monthRecordsMap[dateStr].pay += r.pay;
+                monthRecordsMap[dateStr].minutes += getRecordMinutes(r);
+                monthRecordsMap[dateStr].pay += getRecordPay(r);
             });
 
             document.getElementById('calendarTitle').textContent = `${year}년 ${month + 1}월 근무 달력 (${staff.name})`;
@@ -1986,8 +2046,8 @@
                 tr.innerHTML = `
                     <td class="p-2.5">${formatDateTime(r.startTime)}</td>
                     <td class="p-2.5">${formatDateTime(r.endTime)}</td>
-                    <td class="p-2.5 font-semibold">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
-                    <td class="p-2.5 text-right font-bold text-amber-600">${r.pay.toLocaleString()}원</td>
+                    <td class="p-2.5 font-semibold">${Math.floor(getRecordMinutes(r)/60)}시간 ${getRecordMinutes(r)%60}분</td>
+                    <td class="p-2.5 text-right font-bold text-amber-600">${getRecordPay(r).toLocaleString()}원</td>
                     <td class="p-2.5 text-center">${editTag}</td>
                     <td class="p-2.5 text-center">
                         <button onclick="openEditAttendanceModal('${r.id}')" class="bg-slate-800 text-white hover:bg-slate-700 px-2 py-0.5 rounded text-[11px] font-bold">수정</button>
@@ -2350,22 +2410,39 @@
             document.getElementById('viewContractModal').classList.remove('flex');
         }
 
-        // PDF 다운로드 (계약서)
-        function downloadContractPDF() {
+        // PDF 다운로드 (계약서): 화면 밖 요소를 캡처하지 않도록 화면 내 임시 복제본 사용
+        async function downloadContractPDF() {
             const element = document.getElementById('contractPrintArea');
-            if (!element) return;
+            if (!element) return alert('계약서 내용을 찾을 수 없습니다.');
+            if (typeof html2pdf !== 'function') return alert('PDF 라이브러리를 불러오지 못했습니다. 페이지를 새로고침해 주세요.');
 
             const staffName = currentActiveContract ? currentActiveContract.staffName : '알바생';
+            const host = document.createElement('div');
+            host.style.cssText = 'position:fixed;left:0;top:0;width:794px;background:#fff;z-index:2147483000;pointer-events:none;';
+            const clone = element.cloneNode(true);
+            clone.style.width = '100%';
+            clone.style.maxWidth = 'none';
+            clone.style.boxSizing = 'border-box';
+            host.appendChild(clone);
+            document.body.appendChild(host);
 
-            const opt = {
-                margin:       [10, 10, 10, 10],
-                filename:     `표준근로계약서_${staffName}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0, windowWidth: element.scrollWidth },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            setTimeout(() => { html2pdf().set(opt).from(element).save(); }, 100);
+            try {
+                if (document.fonts?.ready) await document.fonts.ready;
+                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                const opt = {
+                    margin: [10, 10, 10, 10],
+                    filename: `표준근로계약서_${staffName}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, windowWidth: 900 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                await html2pdf().set(opt).from(clone).save();
+            } catch (err) {
+                console.error('계약서 PDF 생성 오류:', err);
+                alert('PDF 생성에 실패했습니다. 브라우저를 새로고침한 뒤 다시 시도해 주세요.');
+            } finally {
+                host.remove();
+            }
         }
 
         // ==========================================
@@ -2388,13 +2465,13 @@
             const records = attendanceList.filter(r => {
                 if (r.staffId !== staffId) return false;
                 return isRecordInDateRange(r.startTime, startDate, endDate);
-            });
+            }).map(r => ({ ...r, minutes: getRecordMinutes(r), pay: getRecordPay(r) }));
 
             let totalMinutes = 0;
             let totalBasePay = 0;
             records.forEach(r => {
-                totalMinutes += r.minutes;
-                totalBasePay += r.pay;
+                totalMinutes += getRecordMinutes(r);
+                totalBasePay += getRecordPay(r);
             });
 
             const weeklyAllowance = calculateWeeklyAllowance(records, staff.wage);
@@ -2486,53 +2563,59 @@
                     tr.innerHTML = `
                         <td class="border border-gray-300 p-1">${formatDateTime(r.startTime)}</td>
                         <td class="border border-gray-300 p-1">${formatDateTime(r.endTime)}</td>
-                        <td class="border border-gray-300 p-1">${Math.floor(r.minutes/60)}시간 ${r.minutes%60}분</td>
-                        <td class="border border-gray-300 p-1 text-right pr-2">${r.pay.toLocaleString()}원</td>
+                        <td class="border border-gray-300 p-1">${Math.floor(getRecordMinutes(r)/60)}시간 ${getRecordMinutes(r)%60}분</td>
+                        <td class="border border-gray-300 p-1 text-right pr-2">${getRecordPay(r).toLocaleString()}원</td>
                     `;
                     detailBody.appendChild(tr);
                 });
             }
         }
 
-        // PDF 다운로드 시 백지 출력 오류 수정 로직
-        function downloadPayslipPDFFromModal() {
-            if (!activePayslipData) return;
+        // 급여명세서 PDF: 화면 밖 캡처로 인한 백지 문제 방지
+        async function downloadPayslipPDFFromModal() {
+            if (!activePayslipData) return alert('급여명세서 데이터가 없습니다.');
+            if (typeof html2pdf !== 'function') return alert('PDF 라이브러리를 불러오지 못했습니다. 페이지를 새로고침해 주세요.');
 
             const printElement = document.getElementById('payslipPrintArea');
-            const scrollArea = document.getElementById('payslipModalScrollArea');
-            const staffName = activePayslipData.staffName;
-            const startDate = activePayslipData.startDate;
-            const endDate = activePayslipData.endDate;
+            if (!printElement) return alert('급여명세서 영역을 찾을 수 없습니다.');
 
-            // PDF 캡처 오차 방지를 위해 순간적으로 오프스크린 독립 영역으로 추출 렌더링
-            const tempContainer = document.createElement('div');
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.left = '-9999px';
-            tempContainer.style.top = '0';
-            tempContainer.style.width = '750px';
-            tempContainer.style.backgroundColor = '#ffffff';
-            
+            const staffName = activePayslipData.staffName || '근로자';
+            const startDate = activePayslipData.startDate || '';
+            const endDate = activePayslipData.endDate || '';
+            const host = document.createElement('div');
+            host.style.cssText = 'position:fixed;left:0;top:0;width:794px;background:#fff;z-index:2147483000;pointer-events:none;';
             const clone = printElement.cloneNode(true);
-            tempContainer.appendChild(clone);
-            document.body.appendChild(tempContainer);
+            clone.style.width = '100%';
+            clone.style.maxWidth = 'none';
+            clone.style.boxSizing = 'border-box';
+            clone.style.backgroundColor = '#ffffff';
+            host.appendChild(clone);
+            document.body.appendChild(host);
 
-            const opt = {
-                margin:       [10, 10, 10, 10],
-                filename:     `급여명세서_${staffName}_${startDate}~${endDate}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false, windowWidth: 800 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
+            const button = document.querySelector('button[onclick="downloadPayslipPDFFromModal()"]');
+            if (button) { button.disabled = true; button.dataset.originalText = button.innerText; button.innerText = 'PDF 생성 중...'; }
 
-            html2pdf().set(opt).from(clone).save().then(() => {
-                document.body.removeChild(tempContainer);
+            try {
+                if (document.fonts?.ready) await document.fonts.ready;
+                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                const opt = {
+                    margin: [10, 10, 10, 10],
+                    filename: `급여명세서_${staffName}_${startDate}~${endDate}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, windowWidth: 900 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                await html2pdf().set(opt).from(clone).save();
                 if (endDate && activePayslipData.staffId) {
                     localStorage.setItem(`last_settlement_end_${activePayslipData.staffId}`, endDate);
                 }
-            }).catch(err => {
-                console.error("PDF 생성 오류:", err);
-                if(tempContainer.parentNode) document.body.removeChild(tempContainer);
-            });
+            } catch (err) {
+                console.error('급여명세서 PDF 생성 오류:', err);
+                alert('PDF 생성에 실패했습니다. 브라우저를 새로고침한 뒤 다시 시도해 주세요.');
+            } finally {
+                host.remove();
+                if (button) { button.disabled = false; button.innerText = button.dataset.originalText || '급여명세서 PDF 저장하기'; }
+            }
         }
 
         // ==========================================
@@ -2569,8 +2652,8 @@
                     `"${r.staffName || ''}"`,
                     `"${r.startTime || ''}"`,
                     `"${r.endTime || ''}"`,
-                    r.minutes || 0,
-                    r.pay || 0,
+                    getRecordMinutes(r),
+                    getRecordPay(r),
                     r.isEdited ? "수정됨" : "정상",
                     `"${r.createdBy || ''}"`
                 ];
@@ -2643,13 +2726,14 @@
                 return;
             }
 
-            const diffMinutes = Math.floor((end - start) / (1000 * 60));
-            const hours = Math.floor(diffMinutes / 60);
-            const minutes = diffMinutes % 60;
-            const pay = Math.floor(diffMinutes * (wage / 60));
+            const originalRecord = attendanceList.find(r => r.id === document.getElementById('editRecordId').value);
+            const staffId = originalRecord?.staffId || currentUser?.id;
+            const work = buildAttendanceValues(startVal, endVal, staffId, wage);
+            const hours = Math.floor(work.minutes / 60);
+            const minutes = work.minutes % 60;
 
-            document.getElementById('editCalcTime').textContent = `${hours}시간 ${minutes}분`;
-            document.getElementById('editCalcPay').textContent = `${pay.toLocaleString()}원`;
+            document.getElementById('editCalcTime').textContent = `${hours}시간 ${minutes}분 (휴게 ${work.breakMinutes}분 제외)`;
+            document.getElementById('editCalcPay').textContent = `${work.pay.toLocaleString()}원`;
         }
 
         function saveAttendanceEdit() {
@@ -2669,8 +2753,8 @@
             const originalRecord = attendanceList.find(r => r.id === recordId);
             if (!originalRecord) return;
 
-            const diffMinutes = Math.floor((end - start) / (1000 * 60));
-            const pay = Math.floor(diffMinutes * (wage / 60));
+            const work = buildAttendanceValues(startVal, endVal, originalRecord.staffId, wage);
+            if (!work) return alert('출퇴근 시간을 확인해주세요.');
 
             const editorName = currentUser.role === 'admin' ? `사장님 (${currentUser.name})` : `알바생 (${currentUser.name})`;
 
@@ -2679,8 +2763,8 @@
                 editedAt: new Date().toISOString(),
                 prevStart: originalRecord.startTime,
                 prevEnd: originalRecord.endTime,
-                prevMinutes: originalRecord.minutes,
-                prevPay: originalRecord.pay,
+                prevMinutes: getRecordMinutes(originalRecord),
+                prevPay: getRecordPay(originalRecord),
                 newStart: startVal,
                 newEnd: endVal,
                 reason: reason
@@ -2691,8 +2775,11 @@
             getDBRef('attendance').doc(recordId).update({
                 startTime: startVal,
                 endTime: endVal,
-                minutes: diffMinutes,
-                pay: pay,
+                grossMinutes: work.grossMinutes,
+                breakMinutes: work.breakMinutes,
+                minutes: work.minutes,
+                wageAtTime: wage,
+                pay: work.pay,
                 isEdited: true,
                 editHistory: updatedHistory
             }).then(() => {
