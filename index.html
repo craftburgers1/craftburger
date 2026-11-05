@@ -34,7 +34,7 @@
         /* 쿠팡 파트너스 배너 PC & 모바일 반응형 커스텀 스타일 */
         .coupang-banner-container {
             width: 100%;
-            max-width: 1200px; /* PC 화면에서도 넓게 확장되도록 최대 너비 증대 */
+            max-width: 1200px;
             margin: 0 auto;
             display: flex;
             justify-content: center;
@@ -335,199 +335,215 @@
                     </div>
                 </div>
 
-                <!-- ADMIN MANUAL MANAGEMENT CARD -->
-                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200 space-y-4">
-                    <div class="flex justify-between items-center border-b pb-3">
-                        <div>
-                            <h3 class="text-base font-bold text-gray-900 flex items-center">
-                                <i class="fa-solid fa-list-check text-amber-500 mr-2"></i>알바 업무 매뉴얼 추가 / 수정 / 순서 변경
-                            </h3>
-                            <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">알바생이 보게 될 업무 매뉴얼을 등록하고 순서를 조정할 수 있습니다.</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row gap-2">
-                        <select id="newManualCategory" class="bg-white border border-gray-300 rounded-lg p-2 text-xs font-bold text-gray-800">
-                            <option value="start">출근시</option>
-                            <option value="mid">근무중</option>
-                            <option value="end">퇴근 마감</option>
-                        </select>
-                        <input type="text" id="newManualText" placeholder="예: 테이블 상태 확인 및 청결 유지" class="flex-1 bg-white border border-gray-300 rounded-lg p-2 text-xs focus:outline-none">
-                        <button onclick="addNewManual()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition whitespace-nowrap">
-                            + 매뉴얼 추가
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                        <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-200 space-y-2">
-                            <h4 class="font-bold text-amber-900 text-xs flex items-center"><i class="fa-solid fa-sun mr-1.5"></i>출근시 매뉴얼</h4>
-                            <div id="adminManualStartList" class="space-y-1.5"></div>
-                        </div>
-                        <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-200 space-y-2">
-                            <h4 class="font-bold text-blue-900 text-xs flex items-center"><i class="fa-solid fa-briefcase mr-1.5"></i>근무중 매뉴얼</h4>
-                            <div id="adminManualMidList" class="space-y-1.5"></div>
-                        </div>
-                        <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 space-y-2">
-                            <h4 class="font-bold text-slate-900 text-xs flex items-center"><i class="fa-solid fa-moon mr-1.5"></i>퇴근 마감 매뉴얼</h4>
-                            <div id="adminManualEndList" class="space-y-1.5"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Overall Summary Table -->
-                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
-                    <div class="flex justify-between items-center mb-3 sm:mb-4">
-                        <h3 class="text-base font-bold text-gray-900 flex items-center">
-                            <i class="fa-solid fa-users text-amber-500 mr-2"></i>전체 알바생 월별 급여 & 근로계약서 현황
-                        </h3>
-                        <div class="space-x-2">
-                            <button onclick="exportAttendanceToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
-                                <i class="fa-solid fa-file-csv mr-1"></i>전체 근무기록 백업 (CSV)
-                            </button>
-                            <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
-                                + 신규 알바생
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full text-left text-xs whitespace-nowrap min-w-[650px]">
-                            <thead class="bg-gray-50 text-gray-500 border-b">
-                                <tr>
-                                    <th class="p-2.5">이름</th>
-                                    <th class="p-2.5">설정 시급</th>
-                                    <th class="p-2.5">이달 총 근무시간</th>
-                                    <th class="p-2.5">이달 지급 예정 총 급여</th>
-                                    <th class="p-2.5 text-center">표준 근로계약서</th>
-                                    <th class="p-2.5 text-center">기간 정산 / 급여명세서</th>
-                                    <th class="p-2.5 text-center">비번 초기화</th>
-                                    <th class="p-2.5 text-center">삭제</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminStaffPayTable" class="divide-y divide-gray-100"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-3 pt-3 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs sm:text-sm font-bold text-gray-900 gap-1">
-                        <div>
-                            <span>전체 알바생 지급 예정액 합계 (주휴수당 포함)</span>
-                            <p class="text-[10px] text-gray-400 font-normal">* (정확한 주휴수당은 전문가를 통하여 산출을 권합니다)</p>
-                        </div>
-                        <span id="adminTotalMonthPay" class="text-amber-600 text-base sm:text-lg">0원</span>
-                    </div>
-                </div>
-
-                <!-- ADMIN DIRECT ATTENDANCE ENTRY CARD -->
-                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200">
-                    <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center">
-                        <i class="fa-solid fa-user-plus text-amber-500 mr-2"></i>알바생 근무시간 대리 입력 (사장님 전용)
-                    </h3>
-                    <p class="text-[11px] sm:text-xs text-gray-500 mb-3 sm:mb-4">알바생이 직접 등록하지 못한 근무 시간을 사장님이 대신 등록할 수 있습니다.</p>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">알바생 선택</label>
-                            <select id="adminInputStaffSelect" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm font-bold bg-amber-50/50">
-                                <option value="">알바생을 선택하세요</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
-                            <input type="datetime-local" id="adminWorkStart" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
-                            <input type="datetime-local" id="adminWorkEnd" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
-                        </div>
-                    </div>
-
-                    <button onclick="saveAdminDirectAttendance()" class="w-full mt-3.5 bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold py-3 rounded-xl shadow transition text-xs sm:text-sm">
-                        + 알바생 근무시간 대리 저장하기
+                <!-- ADMIN SUB-TAB NAVIGATION -->
+                <div class="flex border-b-2 border-gray-200 bg-white rounded-xl p-1 shadow-sm">
+                    <button id="adminTabStatusBtn" onclick="switchAdminTab('status')" class="flex-1 py-3 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-xs sm:text-sm flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-users text-base"></i>알바 현황 및 급여 관리
+                    </button>
+                    <button id="adminTabManualBtn" onclick="switchAdminTab('manual')" class="flex-1 py-3 text-center font-semibold text-gray-500 border-b-2 border-transparent text-xs sm:text-sm flex items-center justify-center gap-2 hover:text-gray-800 transition">
+                        <i class="fa-solid fa-list-check text-base"></i>알바 업무 매뉴얼 관리
                     </button>
                 </div>
 
-                <!-- Staff Detailed View with Calendar -->
-                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-4 sm:space-y-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 sm:pb-4">
-                        <div>
+                <!-- TAB 1: ALBA STATUS & PAYROLL -->
+                <div id="adminStatusTabContent" class="space-y-4 sm:space-y-6">
+                    <!-- Overall Summary Table -->
+                    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100">
+                        <div class="flex justify-between items-center mb-3 sm:mb-4">
                             <h3 class="text-base font-bold text-gray-900 flex items-center">
-                                <i class="fa-solid fa-calendar-check text-amber-500 mr-2"></i>알바생별 상세 근태 & 달력 조회
+                                <i class="fa-solid fa-users text-amber-500 mr-2"></i>전체 알바생 월별 급여 & 근로계약서 현황
                             </h3>
-                            <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">알바생을 선택해 달력을 확인하고, 근태 시각을 바로 수정할 수 있습니다.</p>
-                        </div>
-                        <div class="w-full sm:w-52">
-                            <select id="adminSelectedStaff" onchange="renderAdminStaffCalendar()" class="w-full bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-xs sm:text-sm font-bold text-amber-900 focus:outline-none">
-                                <option value="">알바생을 선택하세요</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div id="staffDetailCard" class="hidden space-y-3">
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
-                                <p class="text-[11px] text-gray-500 font-semibold">설정 시급</p>
-                                <p id="detailStaffWage" class="text-base sm:text-lg font-bold text-gray-800 mt-0.5">0원</p>
-                            </div>
-                            <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-100">
-                                <p class="text-[11px] text-amber-700 font-semibold">선택 기간 총 근무시간</p>
-                                <p id="detailStaffHours" class="text-base sm:text-lg font-bold text-amber-900 mt-0.5">0시간 0분</p>
-                            </div>
-                            <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-100">
-                                <p class="text-[11px] text-emerald-700 font-semibold">선택 기간 지급 예정 총 급여</p>
-                                <p id="detailStaffPay" class="text-lg sm:text-xl font-extrabold text-emerald-800 mt-0.5">0원</p>
-                                <p id="detailStaffAllowance" class="text-[10px] text-emerald-600 mt-0.5">(주휴수당: 0원)</p>
+                            <div class="space-x-2">
+                                <button onclick="exportAttendanceToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
+                                    <i class="fa-solid fa-file-csv mr-1"></i>전체 근무기록 백업 (CSV)
+                                </button>
+                                <button onclick="openAddStaffModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
+                                    + 신규 알바생
+                                </button>
                             </div>
                         </div>
 
-                        <!-- 사장님 대시보드 맞춤 기간 정산 컨트롤 -->
-                        <div class="bg-slate-900 text-white p-3.5 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
-                            <div class="flex items-center space-x-2">
-                                <i class="fa-solid fa-calendar-week text-amber-400"></i>
-                                <span class="font-bold">정산 기간 선택:</span>
-                                <input type="date" id="adminSettlementStart" class="bg-slate-800 text-white border border-slate-700 p-1 rounded font-bold">
-                                <span>~</span>
-                                <input type="date" id="adminSettlementEnd" class="bg-slate-800 text-white border border-slate-700 p-1 rounded font-bold">
-                            </div>
-                            <button onclick="openAdminPayslipModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
-                                <i class="fa-solid fa-eye"></i>정산 / 급여명세서 미리보기
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 id="calendarTitle" class="text-xs sm:text-sm font-bold text-gray-800 mb-2.5">근무 달력</h4>
-                        <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-1.5 rounded-t-lg border border-gray-200">
-                            <span class="text-red-500">일</span>
-                            <span>월</span>
-                            <span>화</span>
-                            <span>수</span>
-                            <span>목</span>
-                            <span>금</span>
-                            <span class="text-blue-500">토</span>
-                        </div>
-                        <div id="adminCalendarGrid" class="grid grid-cols-7 gap-1 bg-gray-200 p-1 rounded-b-lg border border-t-0 border-gray-200 text-xs"></div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-xs sm:text-sm font-bold text-gray-800 mb-2">선택 알바생 이달의 상세 근태 기록 및 변경 이력</h4>
                         <div class="overflow-x-auto custom-scrollbar">
-                            <table class="w-full text-left text-xs whitespace-nowrap min-w-[600px]">
+                            <table class="w-full text-left text-xs whitespace-nowrap min-w-[650px]">
                                 <thead class="bg-gray-50 text-gray-500 border-b">
                                     <tr>
-                                        <th class="p-2.5">출근시각</th>
-                                        <th class="p-2.5">퇴근시각</th>
-                                        <th class="p-2.5">근무시간</th>
-                                        <th class="p-2.5 text-right">급여</th>
-                                        <th class="p-2.5 text-center">수정이력</th>
-                                        <th class="p-2.5 text-center">근태 수정</th>
+                                        <th class="p-2.5">이름</th>
+                                        <th class="p-2.5">설정 시급</th>
+                                        <th class="p-2.5">이달 총 근무시간</th>
+                                        <th class="p-2.5">이달 지급 예정 총 급여</th>
+                                        <th class="p-2.5 text-center">표준 근로계약서</th>
+                                        <th class="p-2.5 text-center">기간 정산 / 급여명세서</th>
+                                        <th class="p-2.5 text-center">비번 초기화</th>
                                         <th class="p-2.5 text-center">삭제</th>
                                     </tr>
                                 </thead>
-                                <tbody id="detailAttendanceTable" class="divide-y divide-gray-100"></tbody>
+                                <tbody id="adminStaffPayTable" class="divide-y divide-gray-100"></tbody>
                             </table>
+                        </div>
+
+                        <div class="mt-3 pt-3 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs sm:text-sm font-bold text-gray-900 gap-1">
+                            <div>
+                                <span>전체 알바생 지급 예정액 합계 (주휴수당 포함)</span>
+                                <p class="text-[10px] text-gray-400 font-normal">* (정확한 주휴수당은 전문가를 통하여 산출을 권합니다)</p>
+                            </div>
+                            <span id="adminTotalMonthPay" class="text-amber-600 text-base sm:text-lg">0원</span>
+                        </div>
+                    </div>
+
+                    <!-- ADMIN DIRECT ATTENDANCE ENTRY CARD -->
+                    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200">
+                        <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center">
+                            <i class="fa-solid fa-user-plus text-amber-500 mr-2"></i>알바생 근무시간 대리 입력 (사장님 전용)
+                        </h3>
+                        <p class="text-[11px] sm:text-xs text-gray-500 mb-3 sm:mb-4">알바생이 직접 등록하지 못한 근무 시간을 사장님이 대신 등록할 수 있습니다.</p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">알바생 선택</label>
+                                <select id="adminInputStaffSelect" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm font-bold bg-amber-50/50">
+                                    <option value="">알바생을 선택하세요</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">출근 일시</label>
+                                <input type="datetime-local" id="adminWorkStart" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">퇴근 일시</label>
+                                <input type="datetime-local" id="adminWorkEnd" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
+                            </div>
+                        </div>
+
+                        <button onclick="saveAdminDirectAttendance()" class="w-full mt-3.5 bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold py-3 rounded-xl shadow transition text-xs sm:text-sm">
+                            + 알바생 근무시간 대리 저장하기
+                        </button>
+                    </div>
+
+                    <!-- Staff Detailed View with Calendar -->
+                    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-4 sm:space-y-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 sm:pb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-gray-900 flex items-center">
+                                    <i class="fa-solid fa-calendar-check text-amber-500 mr-2"></i>알바생별 상세 근태 & 달력 조회
+                                </h3>
+                                <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">알바생을 선택해 달력을 확인하고, 근태 시각을 바로 수정할 수 있습니다.</p>
+                            </div>
+                            <div class="w-full sm:w-52">
+                                <select id="adminSelectedStaff" onchange="renderAdminStaffCalendar()" class="w-full bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-xs sm:text-sm font-bold text-amber-900 focus:outline-none">
+                                    <option value="">알바생을 선택하세요</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="staffDetailCard" class="hidden space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                                    <p class="text-[11px] text-gray-500 font-semibold">설정 시급</p>
+                                    <p id="detailStaffWage" class="text-base sm:text-lg font-bold text-gray-800 mt-0.5">0원</p>
+                                </div>
+                                <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-100">
+                                    <p class="text-[11px] text-amber-700 font-semibold">선택 기간 총 근무시간</p>
+                                    <p id="detailStaffHours" class="text-base sm:text-lg font-bold text-amber-900 mt-0.5">0시간 0분</p>
+                                </div>
+                                <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-100">
+                                    <p class="text-[11px] text-emerald-700 font-semibold">선택 기간 지급 예정 총 급여</p>
+                                    <p id="detailStaffPay" class="text-lg sm:text-xl font-extrabold text-emerald-800 mt-0.5">0원</p>
+                                    <p id="detailStaffAllowance" class="text-[10px] text-emerald-600 mt-0.5">(주휴수당: 0원)</p>
+                                </div>
+                            </div>
+
+                            <!-- 사장님 대시보드 맞춤 기간 정산 컨트롤 -->
+                            <div class="bg-slate-900 text-white p-3.5 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fa-solid fa-calendar-week text-amber-400"></i>
+                                    <span class="font-bold">정산 기간 선택:</span>
+                                    <input type="date" id="adminSettlementStart" class="bg-slate-800 text-white border border-slate-700 p-1 rounded font-bold">
+                                    <span>~</span>
+                                    <input type="date" id="adminSettlementEnd" class="bg-slate-800 text-white border border-slate-700 p-1 rounded font-bold">
+                                </div>
+                                <button onclick="openAdminPayslipModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-eye"></i>정산 / 급여명세서 미리보기
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 id="calendarTitle" class="text-xs sm:text-sm font-bold text-gray-800 mb-2.5">근무 달력</h4>
+                            <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs bg-gray-100 py-1.5 rounded-t-lg border border-gray-200">
+                                <span class="text-red-500">일</span>
+                                <span>월</span>
+                                <span>화</span>
+                                <span>수</span>
+                                <span>목</span>
+                                <span>금</span>
+                                <span class="text-blue-500">토</span>
+                            </div>
+                            <div id="adminCalendarGrid" class="grid grid-cols-7 gap-1 bg-gray-200 p-1 rounded-b-lg border border-t-0 border-gray-200 text-xs"></div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs sm:text-sm font-bold text-gray-800 mb-2">선택 알바생 이달의 상세 근태 기록 및 변경 이력</h4>
+                            <div class="overflow-x-auto custom-scrollbar">
+                                <table class="w-full text-left text-xs whitespace-nowrap min-w-[600px]">
+                                    <thead class="bg-gray-50 text-gray-500 border-b">
+                                        <tr>
+                                            <th class="p-2.5">출근시각</th>
+                                            <th class="p-2.5">퇴근시각</th>
+                                            <th class="p-2.5">근무시간</th>
+                                            <th class="p-2.5 text-right">급여</th>
+                                            <th class="p-2.5 text-center">수정이력</th>
+                                            <th class="p-2.5 text-center">근태 수정</th>
+                                            <th class="p-2.5 text-center">삭제</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="detailAttendanceTable" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- TAB 2: MANUAL MANAGEMENT -->
+                <div id="adminManualTabContent" class="hidden space-y-4 sm:space-y-6">
+                    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-amber-200 space-y-4">
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <div>
+                                <h3 class="text-base font-bold text-gray-900 flex items-center">
+                                    <i class="fa-solid fa-list-check text-amber-500 mr-2"></i>알바 업무 매뉴얼 추가 / 수정 / 순서 변경
+                                </h3>
+                                <p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">알바생이 보게 될 업무 매뉴얼을 등록하고 순서를 조정할 수 있습니다.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row gap-2">
+                            <select id="newManualCategory" class="bg-white border border-gray-300 rounded-lg p-2 text-xs font-bold text-gray-800">
+                                <option value="start">출근시</option>
+                                <option value="mid">근무중</option>
+                                <option value="end">퇴근 마감</option>
+                            </select>
+                            <input type="text" id="newManualText" placeholder="예: 테이블 상태 확인 및 청결 유지" class="flex-1 bg-white border border-gray-300 rounded-lg p-2 text-xs focus:outline-none">
+                            <button onclick="addNewManual()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition whitespace-nowrap">
+                                + 매뉴얼 추가
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+                            <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-200 space-y-2">
+                                <h4 class="font-bold text-amber-900 text-xs flex items-center"><i class="fa-solid fa-sun mr-1.5"></i>출근시 매뉴얼</h4>
+                                <div id="adminManualStartList" class="space-y-1.5"></div>
+                            </div>
+                            <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-200 space-y-2">
+                                <h4 class="font-bold text-blue-900 text-xs flex items-center"><i class="fa-solid fa-briefcase mr-1.5"></i>근무중 매뉴얼</h4>
+                                <div id="adminManualMidList" class="space-y-1.5"></div>
+                            </div>
+                            <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 space-y-2">
+                                <h4 class="font-bold text-slate-900 text-xs flex items-center"><i class="fa-solid fa-moon mr-1.5"></i>퇴근 마감 매뉴얼</h4>
+                                <div id="adminManualEndList" class="space-y-1.5"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
         </div>
@@ -537,7 +553,7 @@
     <footer class="w-full mt-8 py-6 bg-slate-900 border-t border-slate-800 text-gray-400 no-print">
         <div class="max-w-6xl mx-auto px-4 flex flex-col items-center justify-center space-y-4">
             
-            <!-- COUPANG BANNER (PC/모바일 광폭 플렉시블 적용 영역) -->
+            <!-- COUPANG BANNER -->
             <div class="text-center w-full px-2">
                 <p class="text-[11px] mb-2">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
                 <div class="coupang-banner-container">
@@ -910,7 +926,7 @@
                 <button onclick="closePayslipModal()" class="text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <!-- 안내 알림 박스 (지정 문구) -->
+            <!-- 안내 알림 박스 -->
             <div class="bg-amber-50 border-l-4 border-amber-500 p-3 sm:p-4 rounded-r-xl no-print flex-shrink-0">
                 <div class="flex items-start space-x-2">
                     <i class="fa-solid fa-circle-info text-amber-600 text-base mt-0.5"></i>
@@ -920,7 +936,7 @@
                 </div>
             </div>
 
-            <!-- PDF 미리보기 및 캡처 스냅샷 영역 -->
+            <!-- PDF 미리보기 영역 -->
             <div class="overflow-y-auto custom-scrollbar flex-1 p-1" id="payslipModalScrollArea">
                 <div id="payslipPrintArea" class="bg-white p-6 rounded-xl border border-gray-300 text-xs text-gray-900 space-y-4 max-w-full">
                     <h2 id="psTitle" class="text-center font-extrabold text-lg sm:text-xl border-b-2 border-gray-900 pb-2">급 여 명 세 서</h2>
@@ -982,7 +998,6 @@
                 </div>
             </div>
 
-            <!-- 하단 팝업 버튼 -->
             <div class="flex justify-between items-center pt-3 border-t no-print flex-shrink-0">
                 <button onclick="closePayslipModal()" class="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-xl">닫기</button>
                 <button onclick="downloadPayslipPDFFromModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-1.5">
@@ -1335,6 +1350,21 @@
                 : "flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600";
         }
 
+        /* 사장님 서브 탭 전환 함수 */
+        function switchAdminTab(tab) {
+            const isStatusTab = tab === 'status';
+            document.getElementById('adminStatusTabContent').classList.toggle('hidden', !isStatusTab);
+            document.getElementById('adminManualTabContent').classList.toggle('hidden', isStatusTab);
+
+            document.getElementById('adminTabStatusBtn').className = isStatusTab
+                ? "flex-1 py-3 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-xs sm:text-sm flex items-center justify-center gap-2 transition"
+                : "flex-1 py-3 text-center font-semibold text-gray-500 border-b-2 border-transparent text-xs sm:text-sm flex items-center justify-center gap-2 hover:text-gray-800 transition";
+
+            document.getElementById('adminTabManualBtn').className = !isStatusTab
+                ? "flex-1 py-3 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-xs sm:text-sm flex items-center justify-center gap-2 transition"
+                : "flex-1 py-3 text-center font-semibold text-gray-500 border-b-2 border-transparent text-xs sm:text-sm flex items-center justify-center gap-2 hover:text-gray-800 transition";
+        }
+
         function staffAuthEmail(storeUid, loginCode, version) {
             const safeStore = String(storeUid).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
             const safeCode = String(loginCode).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
@@ -1389,6 +1419,7 @@
                 checkStaffContractAlert();
             } else {
                 document.getElementById('adminDashboard').classList.remove('hidden');
+                switchAdminTab('status'); // 진입 시 알바 현황 탭 기본 활성화
                 renderAdminDashboard();
             }
         }
@@ -1554,6 +1585,8 @@
             const startContainer = document.getElementById('adminManualStartList');
             const midContainer = document.getElementById('adminManualMidList');
             const endContainer = document.getElementById('adminManualEndList');
+
+            if (!startContainer || !midContainer || !endContainer) return;
 
             startContainer.innerHTML = '';
             midContainer.innerHTML = '';
@@ -1861,6 +1894,8 @@
             const midContainer = document.getElementById('manualMidList');
             const endContainer = document.getElementById('manualEndList');
 
+            if(!startContainer || !midContainer || !endContainer) return;
+
             startContainer.innerHTML = '';
             midContainer.innerHTML = '';
             endContainer.innerHTML = '';
@@ -1907,6 +1942,7 @@
         function renderAdminDashboard() {
             const selectedMonth = document.getElementById('adminMonthPicker').value;
             const staffTable = document.getElementById('adminStaffPayTable');
+            if(!staffTable) return;
             staffTable.innerHTML = '';
 
             let overallPaySum = 0;
