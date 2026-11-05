@@ -30,6 +30,21 @@
             #contractPrintArea, #payslipPrintArea { position: absolute; left: 0; top: 0; width: 100%; font-size: 11pt; border: none !important; }
             .no-print { display: none !important; }
         }
+
+        /* 쿠팡 파트너스 배너 반응형 스타일 적용 */
+        .coupang-banner-container {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .coupang-banner-container iframe,
+        .coupang-banner-container div {
+            max-width: 100% !important;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800 antialiased selection:bg-amber-500 selection:text-white flex flex-col justify-between">
@@ -520,13 +535,13 @@
     <footer class="w-full mt-8 py-6 bg-slate-900 border-t border-slate-800 text-gray-400 no-print">
         <div class="max-w-6xl mx-auto px-4 flex flex-col items-center justify-center space-y-4">
             
-            <!-- COUPANG BANNER -->
-            <div class="text-center">
+            <!-- COUPANG BANNER (반응형 수정 영역) -->
+            <div class="text-center w-full max-w-full px-2">
                 <p class="text-[11px] mb-2">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
-                <div class="overflow-hidden max-w-full flex justify-center items-center">
+                <div class="coupang-banner-container">
                     <script src="https://ads-partners.coupang.com/g.js"></script>
                     <script>
-                        new PartnersCoupang.G({"id":1046559,"template":"carousel","trackingCode":"AF4185384","width":"680","height":"140","tsource":""});
+                        new PartnersCoupang.G({"id":1046559,"template":"carousel","trackingCode":"AF4185384","width":"100%","height":"140","tsource":""});
                     </script>
                 </div>
             </div>
@@ -1056,7 +1071,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
-        // 직원 계정 생성·초기화는 보조 Auth 인스턴스로 처리하여 사장님 로그인을 유지합니다.
         const staffProvisioningApp = firebase.initializeApp(firebaseConfig, 'staffProvisioning');
         const staffProvisioningAuth = staffProvisioningApp.auth();
         let realtimeUnsubscribers = [];
@@ -1094,7 +1108,6 @@
                 ownerUid = savedStoreCode;
             }
 
-            // 로그인 전에는 Firestore 리스너를 절대 시작하지 않습니다.
             auth.onAuthStateChanged(async user => {
                 stopRealtimeListeners();
                 currentUser = null;
@@ -1117,7 +1130,6 @@
                         return;
                     }
 
-                    // 직원은 사전에 저장한 매장 코드 + 본인 Auth UID로만 매핑합니다.
                     if (!ownerUid) ownerUid = localStorage.getItem('connected_store_code');
                     if (!ownerUid) throw new Error('먼저 매장 연결 코드를 입력해 주세요.');
                     const snap = await db.collection('users').doc(ownerUid).collection('staffs')
@@ -1281,16 +1293,6 @@
             }
         }
 
-        function maskName(name) {
-            if (!name) return '';
-            if (name.length <= 2) return name[0] + '*';
-            return name[0] + '*'.repeat(name.length - 2) + name[name.length - 1];
-        }
-
-        function renderStaffDropdown() {
-            // 직원 명단은 로그인 전에 조회하거나 노출하지 않습니다.
-        }
-
         function renderAdminStaffSelectOptions() {
             const select1 = document.getElementById('adminSelectedStaff');
             const select2 = document.getElementById('adminInputStaffSelect');
@@ -1344,7 +1346,6 @@
             if (!/^\d{8}$/.test(loginCode)) return alert('직원 로그인 코드 8자리를 입력해 주세요.');
             if (!inputPw) return alert('비밀번호를 입력해 주세요.');
             try {
-                // 계정 이메일은 앱 내부 식별자이며 실제 이메일 주소가 아닙니다.
                 const email = staffAuthEmail(ownerUid, loginCode, 1);
                 await auth.signInWithEmailAndPassword(email, inputPw);
             } catch (error) {
@@ -1398,8 +1399,6 @@
             document.getElementById('staffPassword').value = '';
         }
 
-        // 계약서에 등록된 고정 휴게시간을 분 단위로 읽습니다.
-        // 예: "15:00 ~ 16:00 (1시간)", "1시간", "30분", "없음"
         function getFixedBreakMinutes(staffId) {
             const contract = contractList.find(c => c.staffId === staffId);
             const raw = String(contract?.breakTime || '').trim();
@@ -1419,7 +1418,6 @@
             return Number.isFinite(minutes) ? Math.max(0, Math.min(minutes, 240)) : 0;
         }
 
-        // 새 기록은 breakMinutes를 우선 사용하고, 과거 기록은 계약서의 고정 휴게시간을 소급 계산합니다.
         function getRecordMinutes(record) {
             if (!record) return 0;
             const stored = Number(record.minutes);
@@ -1438,7 +1436,6 @@
         function getRecordPay(record) {
             if (!record) return 0;
             const storedPay = Number(record.pay);
-            // 휴게시간 필드가 없는 과거 데이터는 새 순근무시간 기준으로 다시 산출합니다.
             if (Number.isFinite(Number(record.breakMinutes))) {
                 return Number.isFinite(storedPay) ? storedPay : Math.floor(getRecordMinutes(record) * (Number(record.wageAtTime) || 0) / 60);
             }
@@ -1457,7 +1454,6 @@
             return { grossMinutes, breakMinutes, minutes, pay: Math.floor(minutes * (Number(wage) || 0) / 60) };
         }
 
-        // 특정 날짜가 지정된 시작일~종료일 범위에 속하는지 엄격히 확인하는 필터 함수
         function isRecordInDateRange(recordStartTime, startDateStr, endDateStr) {
             if (!recordStartTime) return false;
             const recDateStr = recordStartTime.split('T')[0];
@@ -2120,9 +2116,6 @@
             });
         }
 
-        // ==========================================
-        // CANVAS SETUP & SIGNATURE
-        // ==========================================
         function setupCanvasDrawing(canvasId) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
@@ -2472,7 +2465,6 @@
             document.getElementById('viewContractModal').classList.remove('flex');
         }
 
-        // PDF 다운로드 (계약서): 화면 밖 요소를 캡처하지 않도록 화면 내 임시 복제본 사용
         async function downloadContractPDF() {
             const element = document.getElementById('contractPrintArea');
             if (!element) return alert('계약서 내용을 찾을 수 없습니다.');
@@ -2510,9 +2502,6 @@
             }
         }
 
-        // ==========================================
-        // 4. PAYSLIP MODAL & GENERATION LOGIC
-        // ==========================================
         function formatDateKorean(dateStr) {
             if (!dateStr) return "00년 00월 00일";
             const parts = dateStr.split('-');
@@ -2526,7 +2515,6 @@
 
             const contract = contractList.find(c => c.staffId === staffId) || {};
             
-            // 날짜 비교 로직 보완 (시작일~종료일 내 기록 바인딩)
             const records = attendanceList.filter(r => {
                 if (r.staffId !== staffId) return false;
                 return isRecordInDateRange(r.startTime, startDate, endDate);
@@ -2636,7 +2624,6 @@
             }
         }
 
-        // 급여명세서 PDF: 화면 밖 캡처로 인한 백지 문제 방지
         async function downloadPayslipPDFFromModal() {
             if (!activePayslipData) return alert('급여명세서 데이터가 없습니다.');
             if (typeof html2pdf !== 'function') return alert('PDF 라이브러리를 불러오지 못했습니다. 페이지를 새로고침해 주세요.');
@@ -2686,9 +2673,6 @@
             }
         }
 
-        // ==========================================
-        // 5. CSV BACKUP & GOOGLE SHEETS EXPORT
-        // ==========================================
         function exportAttendanceToCSV() {
             let recordsToExport = [];
             let fileName = '';
