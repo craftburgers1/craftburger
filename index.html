@@ -439,6 +439,12 @@
                     </div>
                 </div>
 
+                <!-- STAFFING SNAPSHOT -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><div class="flex items-center justify-between"><span class="text-xs text-gray-500 font-semibold">현재 계약 중인 직원</span><i class="fa-solid fa-file-signature text-blue-500"></i></div><div class="mt-2"><strong id="adminActiveContractCount" class="text-2xl font-extrabold text-gray-900">0명</strong></div><p class="text-[10px] text-gray-400 mt-1">서명 완료 및 계약기간 유효 기준</p></div>
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><div class="flex items-center justify-between"><span class="text-xs text-gray-500 font-semibold">오늘 근무 예정</span><i class="fa-solid fa-calendar-day text-emerald-500"></i></div><div class="mt-2"><strong id="adminTodayScheduledCount" class="text-2xl font-extrabold text-gray-900">0명</strong></div><p id="adminTodayWeekdayLabel" class="text-[10px] text-gray-400 mt-1">등록된 정기 근무요일 기준</p></div>
+                </div>
+
                 <!-- ADMIN SUB-TAB NAVIGATION -->
                 <div class="flex border-b-2 border-gray-200 bg-white rounded-xl p-1 shadow-sm">
                     <button id="adminTabStatusBtn" onclick="switchAdminTab('status')" class="flex-1 py-3 text-center font-bold text-amber-600 border-b-2 border-amber-500 text-xs sm:text-sm flex items-center justify-center gap-2 transition">
@@ -577,6 +583,11 @@
                                     <p id="detailStaffPay" class="text-lg sm:text-xl font-extrabold text-emerald-800 mt-0.5">0원</p>
                                     <p id="detailStaffAllowance" class="text-[10px] text-emerald-600 mt-0.5">(주휴수당: 0원 / 가산금: 0원)</p>
                                 </div>
+                            </div>
+
+                            <div class="rounded-xl border border-gray-200 bg-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div class="min-w-0"><p class="text-[11px] text-gray-500 font-semibold">현재 등록된 근무조건</p><p id="detailStaffSchedule" class="text-sm font-bold text-gray-800 mt-1">근무요일 미설정 · 근무시간 미설정</p></div>
+                                <button type="button" onclick="openEditStaffTermsModal()" class="shrink-0 bg-slate-900 hover:bg-slate-700 text-white text-xs font-bold px-3 py-2 rounded-lg"><i class="fa-solid fa-pen-to-square mr-1"></i>시급·근무조건 수정</button>
                             </div>
 
                             <!-- 사장님 대시보드 맞춤 기간 정산 컨트롤 -->
@@ -758,6 +769,7 @@
                 </h3>
                 <button onclick="closeCreateContractModal()" class="text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <p id="contractAmendmentNotice" class="hidden text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-lg p-2">근무조건 변경에 따른 새 계약서입니다. 기존 계약서는 보관되며 직원 서명 완료 후 변경 내용이 적용됩니다.</p>
 
             <input type="hidden" id="contractStaffId">
 
@@ -1197,7 +1209,7 @@
 
     <!-- Add Staff Modal -->
     <div id="addStaffModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 sm:p-6 shadow-2xl space-y-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 class="text-base sm:text-lg font-bold text-gray-900">신규 알바생 등록</h3>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">알바생 이름</label>
@@ -1215,6 +1227,23 @@
                 <label class="block text-xs font-semibold text-gray-600 mb-1">기본 시급 (원)</label>
                 <input type="number" id="newStaffWage" value="10030" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
             </div>
+            <div class="rounded-xl border border-gray-200 p-3 space-y-2">
+                <label class="block text-xs font-semibold text-gray-700">정기 근무 요일</label>
+                <div class="grid grid-cols-4 gap-2 text-xs" id="newStaffWorkDays">
+                    <label class="flex items-center gap-1"><input type="checkbox" value="월">월</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" value="화">화</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" value="수">수</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" value="목">목</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" value="금">금</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" value="토">토</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" value="일">일</label>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="block text-[11px] text-gray-500 mb-1">출근</label><input type="time" id="newStaffStartTime" value="10:00" class="w-full border rounded-lg p-2 text-xs"></div>
+                    <div><label class="block text-[11px] text-gray-500 mb-1">퇴근</label><input type="time" id="newStaffEndTime" value="18:00" class="w-full border rounded-lg p-2 text-xs"></div>
+                </div>
+                <p class="text-[10px] text-gray-400">근무요일과 시간은 직원 상세 화면에서 언제든 수정할 수 있습니다.</p>
+            </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">초기 비밀번호 (8자 이상)</label>
                 <input type="password" id="newStaffPassword" minlength="6" autocomplete="new-password" placeholder="직원에게 별도로 전달하세요" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
@@ -1223,6 +1252,23 @@
                 <button onclick="closeAddStaffModal()" class="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg">취소</button>
                 <button onclick="saveNewStaff()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg">등록</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Staff Terms Edit Modal -->
+    <div id="editStaffTermsModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-[60]">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div><h3 class="text-lg font-bold text-gray-900">직원 근무조건 수정</h3><p class="text-xs text-gray-500 mt-1">변경사항은 새 근로계약서로 작성되며, 사장님과 직원의 서명이 완료되어야 확정됩니다.</p></div>
+            <input type="hidden" id="editTermsStaffId">
+            <div><label class="block text-xs font-semibold text-gray-600 mb-1">시급 (원)</label><input type="number" id="editTermsWage" min="1" class="w-full border rounded-lg p-2.5 text-sm"></div>
+            <div class="rounded-xl border border-gray-200 p-3 space-y-2">
+                <label class="block text-xs font-semibold text-gray-700">근무 요일</label>
+                <div class="grid grid-cols-4 gap-2 text-xs" id="editTermsWorkDays">
+                    <label class="flex items-center gap-1"><input type="checkbox" value="월">월</label><label class="flex items-center gap-1"><input type="checkbox" value="화">화</label><label class="flex items-center gap-1"><input type="checkbox" value="수">수</label><label class="flex items-center gap-1"><input type="checkbox" value="목">목</label><label class="flex items-center gap-1"><input type="checkbox" value="금">금</label><label class="flex items-center gap-1"><input type="checkbox" value="토">토</label><label class="flex items-center gap-1"><input type="checkbox" value="일">일</label>
+                </div>
+                <div class="grid grid-cols-2 gap-2"><div><label class="block text-[11px] text-gray-500 mb-1">출근</label><input type="time" id="editTermsStartTime" class="w-full border rounded-lg p-2 text-sm"></div><div><label class="block text-[11px] text-gray-500 mb-1">퇴근</label><input type="time" id="editTermsEndTime" class="w-full border rounded-lg p-2 text-sm"></div></div>
+            </div>
+            <div class="flex justify-end gap-2"><button onclick="closeEditStaffTermsModal()" class="px-4 py-2 bg-gray-100 rounded-lg text-sm font-semibold">취소</button><button onclick="continueStaffTermsChange()" class="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-bold">변경 계약서 작성</button></div>
         </div>
     </div>
 
@@ -1251,6 +1297,7 @@
         let attendanceList = [];
         let manualList = [];
         let contractList = [];
+        let contractChangeContext = null;
         let currentActiveContract = null;
         let pendingUserObj = null;
         let activePayslipData = null;
@@ -1440,6 +1487,9 @@
                 }, handleFirestoreError));
                 realtimeUnsubscribers.push(contractsRef.where('staffId', '==', currentUser.id).onSnapshot(snapshot => {
                     contractList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const signedTerms = getLatestStaffContract(currentUser.id, true);
+                    if (signedTerms) currentUser.wage = Number(signedTerms.wage || currentUser.wage);
+                    renderStaffDashboard();
                     checkStaffContractAlert();
                 }, handleFirestoreError));
             }
@@ -1585,7 +1635,8 @@
 
                 const opt2 = document.createElement('option');
                 opt2.value = staff.id;
-                opt2.textContent = `${staff.name} (시급: ${staff.wage.toLocaleString()}원)`;
+                const terms = getStaffEffectiveTerms(staff);
+                opt2.textContent = `${staff.name} (시급: ${terms.wage.toLocaleString()}원)`;
                 select2.appendChild(opt2);
             });
 
@@ -1735,7 +1786,8 @@
             const staff = staffList.find(s => s.id === staffId);
             if (!staff) return;
 
-            const work = calculateDetailedWork(startVal, endVal, breakOption, isExtraPayChecked, staff.wage);
+            const effectiveWage = getStaffEffectiveTerms(staff).wage;
+            const work = calculateDetailedWork(startVal, endVal, breakOption, isExtraPayChecked, effectiveWage);
             if (!work) return alert('출퇴근 시간을 올바르게 입력해주세요.');
 
             const record = {
@@ -1746,7 +1798,7 @@
                 grossMinutes: work.grossMinutes,
                 breakMinutes: work.breakMinutes,
                 minutes: work.minutes,
-                wageAtTime: staff.wage,
+                wageAtTime: effectiveWage,
                 basePay: work.basePay,
                 extraPay: work.extraPay,
                 pay: work.totalPay,
@@ -1847,7 +1899,7 @@
 
         function checkStaffContractAlert() {
             if (!currentUser || currentUser.role !== 'staff') return;
-            const myContract = contractList.find(c => c.staffId === currentUser.id);
+            const myContract = getLatestStaffContract(currentUser.id, false);
             const titleEl = document.getElementById('staffContractTitle');
             const subEl = document.getElementById('staffContractSub');
             const btnEl = document.getElementById('staffContractBtn');
@@ -1872,7 +1924,7 @@
         }
 
         function openStaffContractModal() {
-            const myContract = contractList.find(c => c.staffId === currentUser.id);
+            const myContract = getLatestStaffContract(currentUser.id, false);
             if (!myContract) return;
             openViewContractModal(myContract.id, !myContract.isStaffSigned);
         }
@@ -2103,6 +2155,93 @@
             getDBRef('manuals').doc(manualId).update({ completedBy });
         }
 
+        const WEEKDAY_KO = ['일','월','화','수','목','금','토'];
+        function getLatestStaffContract(staffId, signedOnly = false) {
+            return contractList.filter(c => c.staffId === staffId && (!signedOnly || c.isStaffSigned === true))
+                .sort((a,b) => String(b.createdAt || b.contractDate || '').localeCompare(String(a.createdAt || a.contractDate || '')))[0] || null;
+        }
+        function contractIsActiveToday(contract, today = new Date()) {
+            if (!contract || contract.isStaffSigned !== true) return false;
+            const dateKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            const start = contract.startDate || contract.contractDate || '';
+            const end = contract.endDate || '';
+            return (!start || start <= dateKey) && (!end || end === '기간의 정함 없음' || end >= dateKey);
+        }
+        function getStaffEffectiveTerms(staff) {
+            const signed = getLatestStaffContract(staff.id, true);
+            return {
+                wage: Number(signed?.wage ?? staff.wage ?? 0),
+                scheduleDays: Array.isArray(signed?.scheduleDays) ? signed.scheduleDays : (Array.isArray(staff.scheduleDays) ? staff.scheduleDays : parseWorkDays(signed?.workDays || staff.workDays || '')),
+                startTime: signed?.startTime || staff.workStartTime || '',
+                endTime: signed?.endTime || staff.workEndTime || '',
+                contract: signed
+            };
+        }
+        function parseWorkDays(value) {
+            const text = String(value || '').replace(/\s/g, '');
+            const order = ['월','화','수','목','금','토','일'];
+            const range = text.match(/([월화수목금토일])(?:~|-|〜)([월화수목금토일])/);
+            if (range) { const a=order.indexOf(range[1]), b=order.indexOf(range[2]); if (a >= 0 && b >= 0) return a <= b ? order.slice(a,b+1) : [...order.slice(a), ...order.slice(0,b+1)]; }
+            return order.filter(day => text.includes(day));
+        }
+        function formatWorkDays(days) { return ['월','화','수','목','금','토','일'].filter(d => (days || []).includes(d)).join(', ') || '미설정'; }
+        function formatRestDays(days) { const off = ['월','화','수','목','금','토','일'].filter(d => !(days || []).includes(d)); return off.length ? `매주 ${off.join(', ')} 휴무` : '휴무일 별도 협의'; }
+        function calculateContractDailyHours(start, end, breakText = '') { const toMin = v => { const [h,m] = String(v || '0:0').split(':').map(Number); return h*60+(m||0); }; let mins = Math.max(0, toMin(end)-toMin(start)); const h = breakText.match(/(\d+)\s*시간/); const m = breakText.match(/(\d+)\s*분/); mins = Math.max(0, mins-(h?Number(h[1])*60:0)-(m?Number(m[1]):0)); const dh=Math.floor(mins/60), dm=mins%60; const weekly=mins*0; return `1일 ${dh}시간${dm ? ` ${dm}분` : ''}`; }
+        function renderStaffingSnapshot() {
+            const now = new Date();
+            const dateKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            const activeCount = staffList.filter(staff => contractIsActiveToday(getLatestStaffContract(staff.id, true), now)).length;
+            const todayDay = WEEKDAY_KO[now.getDay()];
+            const scheduledCount = staffList.filter(staff => {
+                const terms = getStaffEffectiveTerms(staff);
+                const c = terms.contract;
+                const active = !c || contractIsActiveToday(c, now);
+                return active && terms.scheduleDays.includes(todayDay);
+            }).length;
+            const activeEl = document.getElementById('adminActiveContractCount');
+            const scheduledEl = document.getElementById('adminTodayScheduledCount');
+            const dayEl = document.getElementById('adminTodayWeekdayLabel');
+            if (activeEl) activeEl.textContent = `${activeCount}명`;
+            if (scheduledEl) scheduledEl.textContent = `${scheduledCount}명`;
+            if (dayEl) dayEl.textContent = `오늘은 ${todayDay}요일 · 정기 근무요일 기준`;
+        }
+        function openEditStaffTermsModal() {
+            if (!currentUser || currentUser.role !== 'admin') return alert('관리자 권한이 필요합니다.');
+            const staffId = document.getElementById('adminSelectedStaff').value;
+            const staff = staffList.find(s => s.id === staffId);
+            if (!staff) return alert('먼저 직원을 선택해주세요.');
+            const terms = getStaffEffectiveTerms(staff);
+            document.getElementById('editTermsStaffId').value = staffId;
+            document.getElementById('editTermsWage').value = terms.wage || '';
+            document.getElementById('editTermsStartTime').value = terms.startTime || '10:00';
+            document.getElementById('editTermsEndTime').value = terms.endTime || '18:00';
+            document.querySelectorAll('#editTermsWorkDays input').forEach(el => { el.checked = terms.scheduleDays.includes(el.value); });
+            document.getElementById('editStaffTermsModal').classList.remove('hidden');
+            document.getElementById('editStaffTermsModal').classList.add('flex');
+        }
+        function closeEditStaffTermsModal() {
+            document.getElementById('editStaffTermsModal').classList.add('hidden');
+            document.getElementById('editStaffTermsModal').classList.remove('flex');
+        }
+        function continueStaffTermsChange() {
+            const staffId = document.getElementById('editTermsStaffId').value;
+            const staff = staffList.find(s => s.id === staffId);
+            const wage = Number(document.getElementById('editTermsWage').value);
+            const days = Array.from(document.querySelectorAll('#editTermsWorkDays input:checked')).map(el => el.value);
+            const start = document.getElementById('editTermsStartTime').value;
+            const end = document.getElementById('editTermsEndTime').value;
+            if (!staff) return alert('직원 정보를 찾을 수 없습니다.');
+            if (!Number.isFinite(wage) || wage <= 0) return alert('시급을 올바르게 입력해주세요.');
+            if (!days.length) return alert('근무 요일을 하나 이상 선택해주세요.');
+            if (!start || !end || end <= start) return alert('출퇴근 시간을 올바르게 입력해주세요.');
+            const current = getStaffEffectiveTerms(staff);
+            const changed = wage !== current.wage || start !== current.startTime || end !== current.endTime || formatWorkDays(days) !== formatWorkDays(current.scheduleDays);
+            if (!changed) return alert('변경된 내용이 없습니다.');
+            closeEditStaffTermsModal();
+            contractChangeContext = { staffId, wage, days, start, end, previousContractId: current.contract?.id || null };
+            openCreateContractModal(staffId, true);
+        }
+
         function renderAdminDashboard() {
             const selectedMonth = document.getElementById('adminMonthPicker').value;
             const staffTable = document.getElementById('adminStaffPayTable');
@@ -2112,6 +2251,7 @@
             let overallPaySum = 0;
 
             staffList.forEach(staff => {
+                const effectiveTerms = getStaffEffectiveTerms(staff);
                 const monthRecords = attendanceList.filter(r => r.staffId === staff.id && r.startTime.startsWith(selectedMonth));
                 
                 let staffMinutes = 0;
@@ -2124,12 +2264,12 @@
                     staffExtraPay += getRecordExtraPay(r);
                 });
 
-                const weeklyAllowance = calculateWeeklyAllowance(monthRecords, staff.wage);
+                const weeklyAllowance = calculateWeeklyAllowance(monthRecords, effectiveTerms.wage);
                 const staffTotalPay = staffBasePay + staffExtraPay + weeklyAllowance;
 
                 overallPaySum += staffTotalPay;
 
-                const contract = contractList.find(c => c.staffId === staff.id);
+                const contract = getLatestStaffContract(staff.id, false);
                 let contractBtnHtml = '';
                 if (!contract) {
                     contractBtnHtml = `<button onclick="openCreateContractModal('${staff.id}')" class="bg-amber-500 hover:bg-amber-600 text-white text-[11px] px-2.5 py-1 rounded font-bold">+ 계약서 작성</button>`;
@@ -2148,8 +2288,8 @@
                             ${staff.loginCode ? `<button type="button" onclick="copyStaffLoginCode('${staff.id}')" class="text-[10px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded px-2 py-0.5">코드 복사</button>` : ''}
                         </div>
                     </td>
-                    <td class="p-2.5">
-                        <input type="number" value="${staff.wage}" onchange="updateStaffWage('${staff.id}', this.value)" class="w-16 sm:w-20 border rounded px-1 py-0.5 text-xs"> 원
+                    <td class="p-2.5 font-semibold">
+                        ${effectiveTerms.wage.toLocaleString()}원
                     </td>
                     <td class="p-2.5">${Math.floor(staffMinutes/60)}시간 ${staffMinutes%60}분</td>
                     <td class="p-2.5 font-bold text-amber-600">
@@ -2171,6 +2311,7 @@
             });
 
             document.getElementById('adminTotalMonthPay').textContent = `${overallPaySum.toLocaleString()}원`;
+            renderStaffingSnapshot();
             renderAdminStaffCalendar();
             renderAdminManualEditor();
         }
@@ -2222,7 +2363,10 @@
             const endDate = endInput.value;
 
             detailCard.classList.remove('hidden');
-            document.getElementById('detailStaffWage').textContent = `${staff.wage.toLocaleString()}원`;
+            const effectiveTerms = getStaffEffectiveTerms(staff);
+            document.getElementById('detailStaffWage').textContent = `${effectiveTerms.wage.toLocaleString()}원`;
+            const scheduleText = `${formatWorkDays(effectiveTerms.scheduleDays)} · ${effectiveTerms.startTime || '--:--'} ~ ${effectiveTerms.endTime || '--:--'}`;
+            document.getElementById('detailStaffSchedule').textContent = scheduleText;
 
             const filteredRecords = attendanceList.filter(r => {
                 if (r.staffId !== selectedStaffId) return false;
@@ -2239,7 +2383,7 @@
                 totalExtraPay += getRecordExtraPay(r);
             });
 
-            const weeklyAllowance = calculateWeeklyAllowance(filteredRecords, staff.wage);
+            const weeklyAllowance = calculateWeeklyAllowance(filteredRecords, effectiveTerms.wage);
             const totalPay = totalBasePay + totalExtraPay + weeklyAllowance;
 
             document.getElementById('detailStaffHours').textContent = `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`;
@@ -2456,7 +2600,7 @@
             }
         }
 
-        function openCreateContractModal(staffId) {
+        function openCreateContractModal(staffId, isAmendment = false) {
             if (!currentUser || currentUser.role !== 'admin') return alert('관리자 권한이 필요합니다.');
             const staff = staffList.find(s => s.id === staffId);
             if (!staff) return;
@@ -2467,14 +2611,51 @@
             document.getElementById('contractStaffAddress').value = staff.address || '';
             document.getElementById('contractStaffPhone').value = staff.phone || '';
 
-            document.getElementById('contractShopName').value = localStorage.getItem('default_shop_name') || '';
-            document.getElementById('contractShopAddress').value = localStorage.getItem('default_shop_address') || '';
-            document.getElementById('contractTask').value = localStorage.getItem('default_shop_task') || '';
-            document.getElementById('contractOwnerName').value = localStorage.getItem('default_owner_name') || '';
-            document.getElementById('contractOwnerPhone').value = localStorage.getItem('default_owner_phone') || '';
+            const previous = isAmendment ? getLatestStaffContract(staffId, true) : null;
+            const terms = isAmendment && contractChangeContext ? contractChangeContext : null;
+            document.getElementById('contractShopName').value = previous?.shopName || localStorage.getItem('default_shop_name') || '';
+            document.getElementById('contractShopAddress').value = previous?.shopAddress || localStorage.getItem('default_shop_address') || '';
+            document.getElementById('contractTask').value = previous?.task || localStorage.getItem('default_shop_task') || '';
+            document.getElementById('contractOwnerName').value = previous?.ownerName || localStorage.getItem('default_owner_name') || '';
+            document.getElementById('contractOwnerPhone').value = previous?.ownerPhone || localStorage.getItem('default_owner_phone') || '';
+            if (previous) {
+                const amendmentDays = terms?.days || getStaffEffectiveTerms(staff).scheduleDays;
+                document.getElementById('contractWorkDays').value = formatWorkDays(amendmentDays);
+                document.getElementById('contractRestDay').value = formatRestDays(amendmentDays);
+                document.getElementById('contractStartTime').value = terms?.start || previous.startTime || '10:00';
+                document.getElementById('contractEndTime').value = terms?.end || previous.endTime || '18:00';
+                document.getElementById('contractBreakTime').value = previous.breakTime || '휴게시간 별도 협의';
+                document.getElementById('contractDailyHours').value = previous.dailyHours || '';
+                document.getElementById('contractTask').value = previous.task || document.getElementById('contractTask').value;
+                document.getElementById('contractMonthlyBase').value = previous.monthlyBase || '해당없음 (시급제)';
+                document.getElementById('contractPayDay').value = previous.payDay || '매월 말일 지급';
+                document.getElementById('contractPayMethod').value = previous.payMethod || '계좌이체';
+                document.getElementById('contractWage').value = terms?.wage || previous.wage || staff.wage;
+                document.getElementById('contractDailyHours').value = calculateContractDailyHours(document.getElementById('contractStartTime').value, document.getElementById('contractEndTime').value, document.getElementById('contractBreakTime').value);
+                document.querySelector(`input[name="companyType"][value="${previous.companyType || 'under5'}"]`).checked = true;
+            } else {
+                const termsNow = getStaffEffectiveTerms(staff);
+                document.getElementById('contractWorkDays').value = formatWorkDays(termsNow.scheduleDays);
+                document.getElementById('contractRestDay').value = formatRestDays(termsNow.scheduleDays);
+                document.getElementById('contractStartTime').value = termsNow.startTime || '10:00';
+                document.getElementById('contractEndTime').value = termsNow.endTime || '18:00';
+                document.getElementById('contractWage').value = termsNow.wage;
+            }
+            document.getElementById('contractAmendmentNotice')?.classList.toggle('hidden', !isAmendment);
             
             const now = new Date();
-            document.getElementById('contractStartDate').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const todayValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            document.getElementById('contractStartDate').value = todayValue;
+            if (isAmendment && previous) {
+                const noEnd = !previous.endDate || previous.endDate === '기간의 정함 없음';
+                document.getElementById('contractNoEndDate').checked = noEnd;
+                document.getElementById('contractEndDate').value = noEnd ? '' : previous.endDate;
+                toggleEndDateInput(noEnd);
+            } else {
+                document.getElementById('contractNoEndDate').checked = false;
+                document.getElementById('contractEndDate').value = '';
+                toggleEndDateInput(false);
+            }
 
             clearCanvas('ownerCanvas');
             document.getElementById('createContractModal').classList.remove('hidden');
@@ -2487,6 +2668,7 @@
         function closeCreateContractModal() {
             document.getElementById('createContractModal').classList.add('hidden');
             document.getElementById('createContractModal').classList.remove('flex');
+            contractChangeContext = null;
         }
 
         function saveContractByOwner() {
@@ -2508,6 +2690,8 @@
             if (!shopName) return alert('사업장명을 입력해주세요.');
             if (!ownerName) return alert('대표자 이름을 입력해주세요.');
             if (!ownerPhone) return alert('사업장/대표 연락처를 입력해주세요.');
+            const contractWageValue = Number(document.getElementById('contractWage').value);
+            if (!Number.isFinite(contractWageValue) || contractWageValue <= 0) return alert('계약 시급을 올바르게 입력해주세요.');
 
             if (isCanvasEmpty('ownerCanvas')) return alert('사장님 서명을 해주세요.');
 
@@ -2546,13 +2730,17 @@
                 ownerSignImgData: document.getElementById('ownerCanvas').toDataURL(),
                 staffSignImgData: '',
                 isStaffSigned: false,
+                isAmendment: !!contractChangeContext && contractChangeContext.staffId === staffId,
+                previousContractId: contractChangeContext?.staffId === staffId ? contractChangeContext.previousContractId : null,
+                scheduleDays: contractChangeContext?.staffId === staffId ? contractChangeContext.days : (staffList.find(s => s.id === staffId)?.scheduleDays || parseWorkDays(document.getElementById('contractWorkDays').value)),
                 createdAt: new Date().toISOString()
             };
 
-            getDBRef('contracts').doc(staffId).set(contractData).then(() => {
-                alert('표준 근로계약서 작성이 완료되었습니다!\n알바생이 접속하여 확인 및 터치 서명 후 인쇄/다운로드할 수 있습니다.');
+            getDBRef('contracts').add(contractData).then(() => {
+                alert(contractData.isAmendment ? '근무조건 변경 계약서가 생성되었습니다. 직원 서명이 완료되면 새 조건이 적용됩니다.' : '표준 근로계약서 작성이 완료되었습니다!\n알바생이 접속하여 확인 및 터치 서명 후 인쇄/다운로드할 수 있습니다.');
+                contractChangeContext = null;
                 closeCreateContractModal();
-            });
+            }).catch(error => { console.error(error); alert('계약서 저장에 실패했습니다: ' + (error.message || '오류')); });
         }
 
         function openViewContractModal(contractId, isStaffSigningMode = false) {
@@ -2682,7 +2870,8 @@
             const staff = staffList.find(s => s.id === staffId);
             if (!staff) return null;
 
-            const contract = contractList.find(c => c.staffId === staffId) || {};
+            const contract = getLatestStaffContract(staffId, true) || getLatestStaffContract(staffId, false) || {};
+            const effectiveTerms = getStaffEffectiveTerms(staff);
             
             const records = attendanceList.filter(r => {
                 if (r.staffId !== staffId) return false;
@@ -2699,7 +2888,7 @@
                 totalExtraPay += getRecordExtraPay(r);
             });
 
-            const weeklyAllowance = calculateWeeklyAllowance(records, staff.wage);
+            const weeklyAllowance = calculateWeeklyAllowance(records, effectiveTerms.wage);
             const totalPay = totalBasePay + totalExtraPay + weeklyAllowance;
 
             return {
@@ -2711,7 +2900,7 @@
                 shopName: contract.shopName || localStorage.getItem('default_shop_name') || '매장',
                 ownerName: contract.ownerName || localStorage.getItem('default_owner_name') || '대표자',
                 staffName: staff.name,
-                wage: staff.wage,
+                wage: effectiveTerms.wage,
                 baseHoursText: `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`,
                 basePay: totalBasePay,
                 extraPay: totalExtraPay,
@@ -2889,9 +3078,13 @@
                 isStaffSigned: true,
                 signedAt: new Date().toISOString()
             }).then(() => {
+                if (currentUser?.role === 'staff' && currentActiveContract.staffId === currentUser.id) {
+                    currentUser.wage = Number(currentActiveContract.wage || currentUser.wage);
+                    document.getElementById('staffWageDisplay').textContent = `${currentUser.wage.toLocaleString()}원`;
+                }
                 alert('표준 근로계약서 서명이 완성되었습니다!');
                 closeViewContractModal();
-            });
+            }).catch(error => { console.error(error); alert('서명 저장에 실패했습니다: ' + (error.message || '오류')); });
         }
 
         function openEditAttendanceModal(recordId) {
@@ -3039,7 +3232,7 @@
             const staff = staffList.find(s => s.id === staffId);
             const batch = db.batch();
             batch.delete(getDBRef('staffs').doc(staffId));
-            batch.delete(getDBRef('contracts').doc(staffId));
+            contractList.filter(c => c.staffId === staffId).forEach(c => batch.delete(getDBRef('contracts').doc(c.id)));
             if (staff?.authUid) batch.delete(getDBRef('staffAuth').doc(staff.authUid));
             await batch.commit();
         }
@@ -3061,10 +3254,15 @@
             const phone = document.getElementById('newStaffPhone').value.trim();
             const wage = Number(document.getElementById('newStaffWage').value);
             const password = document.getElementById('newStaffPassword').value;
+            const scheduleDays = Array.from(document.querySelectorAll('#newStaffWorkDays input:checked')).map(el => el.value);
+            const workStartTime = document.getElementById('newStaffStartTime').value;
+            const workEndTime = document.getElementById('newStaffEndTime').value;
 
             if (!name) return alert('이름을 입력해주세요.');
             if (password.length < 8) return alert('초기 비밀번호는 8자 이상이어야 합니다.');
             if (!Number.isFinite(wage) || wage <= 0) return alert('시급을 올바르게 입력해주세요.');
+            if (scheduleDays.length === 0) return alert('정기 근무 요일을 하나 이상 선택해주세요.');
+            if (!workStartTime || !workEndTime || workEndTime <= workStartTime) return alert('출퇴근 시간을 올바르게 입력해주세요.');
 
             const loginCode = String(crypto.getRandomValues(new Uint32Array(1))[0] % 90000000 + 10000000);
             const staffRef = getDBRef('staffs').doc();
@@ -3072,7 +3270,7 @@
             try {
                 const credential = await staffProvisioningAuth.createUserWithEmailAndPassword(email, password);
                 const batch = db.batch();
-                batch.set(staffRef, { name, address, phone, wage, loginCode, authVersion: 1, authUid: credential.user.uid, createdAt: new Date().toISOString() });
+                batch.set(staffRef, { name, address, phone, wage, scheduleDays, workStartTime, workEndTime, loginCode, authVersion: 1, authUid: credential.user.uid, createdAt: new Date().toISOString() });
                 batch.set(getDBRef('staffAuth').doc(credential.user.uid), { staffId: staffRef.id, active: true, createdAt: new Date().toISOString() });
                 await batch.commit();
                 await staffProvisioningAuth.signOut();
@@ -3081,6 +3279,9 @@
                 document.getElementById('newStaffAddress').value = '';
                 document.getElementById('newStaffPhone').value = '';
                 document.getElementById('newStaffPassword').value = '';
+                document.querySelectorAll('#newStaffWorkDays input').forEach(el => { el.checked = false; });
+                document.getElementById('newStaffStartTime').value = '10:00';
+                document.getElementById('newStaffEndTime').value = '18:00';
                 alert(`직원 등록 완료!\n직원 로그인 코드: ${loginCode}`);
             } catch (error) {
                 console.error(error);
