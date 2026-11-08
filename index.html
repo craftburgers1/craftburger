@@ -47,6 +47,88 @@
             max-width: 100% !important;
         }
     </style>
+<style>
+
+        /* ===== Modern UI refresh: visual layer only; application logic unchanged ===== */
+        :root {
+            --app-bg: #f4f6fa;
+            --app-ink: #172033;
+            --app-muted: #697586;
+            --app-line: #e7ebf2;
+            --app-accent: #e9a23b;
+            --app-accent-dark: #bd741b;
+            --app-navy: #17243a;
+            --app-shadow: 0 8px 28px rgba(24, 39, 75, .055);
+        }
+        html { scroll-behavior: smooth; }
+        body { background: var(--app-bg) !important; color: var(--app-ink) !important; letter-spacing: -.012em; }
+        body > div:first-child { min-height: 100vh; }
+        nav.sticky { background: linear-gradient(115deg, #17243a 0%, #243751 100%) !important; box-shadow: 0 5px 22px rgba(16, 29, 49, .16) !important; border-bottom: 1px solid rgba(255,255,255,.08); }
+        nav .max-w-6xl { min-height: 68px; }
+        nav h1 { letter-spacing: -.035em !important; }
+        nav h1 > span:last-child { border-radius: 999px !important; padding: 5px 10px !important; }
+        #userInfoHeader button { border: 1px solid rgba(255,255,255,.13); border-radius: 10px !important; }
+        #loginSection, #staffDashboard > div, #adminDashboard > div,
+        #staffDashboard section, #adminDashboard section {
+            box-shadow: var(--app-shadow);
+        }
+        #loginSection { border: 1px solid #e9edf4 !important; border-radius: 24px !important; box-shadow: 0 22px 60px rgba(24,39,75,.10) !important; }
+        #loginSection h2 { letter-spacing: -.04em; }
+        #staffDashboard, #adminDashboard { padding-bottom: 28px; }
+        #staffDashboard .bg-white, #adminDashboard .bg-white,
+        #loginSection .bg-white { border-color: var(--app-line) !important; }
+        #staffDashboard .rounded-2xl, #adminDashboard .rounded-2xl { border-radius: 18px !important; }
+        #staffDashboard .shadow-md, #adminDashboard .shadow-md,
+        #staffDashboard .shadow-sm, #adminDashboard .shadow-sm { box-shadow: var(--app-shadow) !important; }
+        #staffDashboard h2, #adminDashboard h2, #staffDashboard h3, #adminDashboard h3 { letter-spacing: -.035em; }
+        #staffDashboard h3, #adminDashboard h3 { line-height: 1.35; }
+        #adminDashboard > div:first-child { border-radius: 20px !important; overflow: hidden; }
+        #adminDashboard > div:first-child .bg-slate-900 { background: linear-gradient(120deg,#1b2b43,#304661) !important; }
+        button { transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease, border-color .16s ease !important; }
+        button:not(:disabled):active { transform: translateY(1px) scale(.985); }
+        button.rounded-xl, button.rounded-lg { border-radius: 11px !important; }
+        button.shadow, button.shadow-md, button.shadow-sm { box-shadow: 0 4px 10px rgba(22,34,54,.09) !important; }
+        input:not([type=checkbox]):not([type=radio]), select, textarea {
+            border: 1px solid #dfe5ee !important; border-radius: 11px !important;
+            background-color: #fff !important; color: #172033 !important;
+            min-height: 42px; box-shadow: 0 1px 2px rgba(20,32,52,.025) !important;
+            transition: border-color .15s ease, box-shadow .15s ease !important;
+        }
+        input:focus, select:focus, textarea:focus { outline: none !important; border-color: #e5a13c !important; box-shadow: 0 0 0 3px rgba(233,162,59,.16) !important; }
+        input::placeholder, textarea::placeholder { color: #9aa4b2 !important; }
+        label { color: #536174; font-weight: 600; }
+        table { border-collapse: separate !important; border-spacing: 0; }
+        table th { color: #667386 !important; font-size: 11px !important; letter-spacing: .025em; text-transform: none; }
+        table td, table th { border-color: #edf0f5 !important; }
+        .custom-scrollbar { scrollbar-color: #c5ceda transparent; scrollbar-width: thin; }
+        #staffCalendarGrid, #adminCalendarGrid { background: #edf1f6 !important; border-color: #e5eaf1 !important; border-radius: 0 0 14px 14px !important; }
+        #staffCalendarGrid > *, #adminCalendarGrid > * { border-radius: 8px; }
+        #staffContractAlert { border-radius: 13px !important; border-left-width: 4px !important; }
+        #inputFormCard { border-radius: 18px !important; }
+        #staffDashboard .bg-slate-900, #adminDashboard .bg-slate-900 { background-color: #1d2b42 !important; }
+        #staffDashboard .text-amber-300, #adminDashboard .text-amber-300 { color: #f6c66f !important; }
+        [id$="Modal"] { backdrop-filter: blur(5px); }
+        [id$="Modal"] > div { border: 1px solid rgba(230,235,243,.9) !important; border-radius: 20px !important; box-shadow: 0 24px 80px rgba(12,22,38,.24) !important; }
+        #contractPrintArea, #payslipPrintArea, #prevContractPrintArea { box-shadow: none !important; border-radius: 8px !important; }
+        @media (min-width: 768px) {
+            .max-w-6xl { max-width: 1180px !important; }
+            #staffDashboard, #adminDashboard { gap: 22px !important; }
+        }
+        @media (max-width: 640px) {
+            nav .max-w-6xl { min-height: 60px; }
+            nav h1 { font-size: 16px !important; }
+            #staffDashboard, #adminDashboard { gap: 14px !important; }
+            #loginSection { margin-top: 22px !important; padding: 22px !important; }
+            #staffDashboard .p-6, #adminDashboard .p-6 { padding: 16px !important; }
+            [id$="Modal"] { align-items: flex-end !important; padding: 8px !important; }
+            [id$="Modal"] > div { max-height: 94vh; overflow-y: auto; border-radius: 20px 20px 14px 14px !important; }
+        }
+        @media print {
+            body { background: #fff !important; }
+            [id$="Modal"] { backdrop-filter: none !important; }
+        }
+
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800 antialiased selection:bg-amber-500 selection:text-white flex flex-col justify-between">
 
