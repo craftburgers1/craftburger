@@ -31,7 +31,6 @@
             .no-print { display: none !important; }
         }
 
-        /* 쿠팡 파트너스 배너 PC & 모바일 반응형 커스텀 스타일 */
         .coupang-banner-container {
             width: 100%;
             max-width: 1200px;
@@ -1350,7 +1349,6 @@
                 : "flex-1 py-2.5 text-center font-semibold text-gray-400 border-b-2 border-transparent text-sm hover:text-gray-600";
         }
 
-        /* 사장님 서브 탭 전환 함수 */
         function switchAdminTab(tab) {
             const isStatusTab = tab === 'status';
             document.getElementById('adminStatusTabContent').classList.toggle('hidden', !isStatusTab);
@@ -1419,7 +1417,7 @@
                 checkStaffContractAlert();
             } else {
                 document.getElementById('adminDashboard').classList.remove('hidden');
-                switchAdminTab('status'); // 진입 시 알바 현황 탭 기본 활성화
+                switchAdminTab('status');
                 renderAdminDashboard();
             }
         }
@@ -2734,7 +2732,7 @@
                 return alert('백업할 근무 기록이 없습니다.');
             }
 
-            let csvContent = "\uFEFF"; // UTF-8 BOM
+            let csvContent = "\uFEFF";
             csvContent += "알바생이름,출근시간,퇴근시간,근무시간(분),산출금액(원),수정여부,등록자\n";
 
             recordsToExport.forEach(r => {
