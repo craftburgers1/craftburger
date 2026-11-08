@@ -442,7 +442,7 @@
                 <!-- STAFFING SNAPSHOT -->
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><div class="flex items-center justify-between"><span class="text-xs text-gray-500 font-semibold">현재 계약 중인 직원</span><i class="fa-solid fa-file-signature text-blue-500"></i></div><div class="mt-2"><strong id="adminActiveContractCount" class="text-2xl font-extrabold text-gray-900">0명</strong></div><p class="text-[10px] text-gray-400 mt-1">서명 완료 및 계약기간 유효 기준</p></div>
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><div class="flex items-center justify-between"><span class="text-xs text-gray-500 font-semibold">오늘 근무 예정</span><i class="fa-solid fa-calendar-day text-emerald-500"></i></div><div class="mt-2"><strong id="adminTodayScheduledCount" class="text-2xl font-extrabold text-gray-900">0명</strong></div><p id="adminTodayWeekdayLabel" class="text-[10px] text-gray-400 mt-1">등록된 정기 근무요일 기준</p></div>
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><div class="flex items-center justify-between"><span class="text-xs text-gray-500 font-semibold">오늘 근무 예정</span><i class="fa-solid fa-calendar-day text-emerald-500"></i></div><div class="mt-2"><strong id="adminTodayScheduledCount" class="text-2xl font-extrabold text-gray-900">0명</strong></div><p id="adminTodayScheduledNames" class="text-xs text-gray-600 font-semibold mt-1 leading-relaxed break-words">예정자 없음</p><p id="adminTodayWeekdayLabel" class="text-[10px] text-gray-400 mt-1">등록된 정기 근무요일 기준</p></div>
                 </div>
 
                 <!-- ADMIN SUB-TAB NAVIGATION -->
@@ -2192,17 +2192,20 @@
             const dateKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
             const activeCount = staffList.filter(staff => contractIsActiveToday(getLatestStaffContract(staff.id, true), now)).length;
             const todayDay = WEEKDAY_KO[now.getDay()];
-            const scheduledCount = staffList.filter(staff => {
+            const scheduledStaff = staffList.filter(staff => {
                 const terms = getStaffEffectiveTerms(staff);
                 const c = terms.contract;
                 const active = !c || contractIsActiveToday(c, now);
                 return active && terms.scheduleDays.includes(todayDay);
-            }).length;
+            });
+            const scheduledCount = scheduledStaff.length;
             const activeEl = document.getElementById('adminActiveContractCount');
             const scheduledEl = document.getElementById('adminTodayScheduledCount');
+            const namesEl = document.getElementById('adminTodayScheduledNames');
             const dayEl = document.getElementById('adminTodayWeekdayLabel');
             if (activeEl) activeEl.textContent = `${activeCount}명`;
             if (scheduledEl) scheduledEl.textContent = `${scheduledCount}명`;
+            if (namesEl) namesEl.textContent = scheduledCount ? scheduledStaff.map(staff => staff.name).filter(Boolean).join(' · ') : '예정자 없음';
             if (dayEl) dayEl.textContent = `오늘은 ${todayDay}요일 · 정기 근무요일 기준`;
         }
         function openEditStaffTermsModal() {
