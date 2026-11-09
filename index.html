@@ -129,6 +129,86 @@
         }
 
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style id="ledgerModuleStyles">
+
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body { 
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; 
+            background-color: #f1f5f9; 
+            color: #0f172a; 
+            margin: 0; 
+            padding-bottom: 90px; 
+        }
+        
+        .ios-card { 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(226, 232, 240, 0.8); 
+            border-radius: 20px; 
+            padding: 18px; 
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03); 
+        }
+
+        .ios-header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .tab-btn { 
+            padding: 8px 16px; 
+            border-radius: 12px; 
+            font-size: 13px; 
+            font-weight: 600; 
+            color: #64748b; 
+            background: #f8fafc; 
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            white-space: nowrap; 
+        }
+        .tab-btn.active { 
+            background-color: #2563eb; 
+            color: #ffffff; 
+            font-weight: 700; 
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .sub-tab-btn {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            background: #f1f5f9;
+            transition: all 0.15s ease;
+        }
+        .sub-tab-btn.active {
+            background-color: #0f172a;
+            color: #ffffff;
+        }
+
+        input, select, textarea { 
+            background-color: #f8fafc !important; 
+            color: #0f172a !important; 
+            border: 1px solid #cbd5e1 !important; 
+        }
+        input:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: #2563eb !important; 
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+    
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800 antialiased selection:bg-amber-500 selection:text-white flex flex-col justify-between">
 
@@ -143,6 +223,10 @@
                         <span class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full border border-amber-500/30">Built by 더크래프트</span>
                     </h1>
                 </div>
+                <div id="moduleSwitch" class="hidden items-center gap-1 mr-2">
+                    <button id="moduleEmployeeBtn" onclick="setAppModule('employee')" class="px-3 py-2 rounded-lg text-xs font-bold bg-amber-500 text-slate-900">직원관리</button>
+                    <button id="moduleLedgerBtn" onclick="setAppModule('ledger')" class="px-3 py-2 rounded-lg text-xs font-bold bg-slate-700 text-slate-200 hover:bg-slate-600">가게부</button>
+                </div>
                 <div id="userInfoHeader" class="hidden flex items-center space-x-2 sm:space-x-3">
                     <span id="loggedInBadge" class="bg-amber-500 text-slate-900 text-[11px] sm:text-xs font-bold px-2 py-1 sm:px-2.5 sm:py-1 rounded-full"></span>
                     <button onclick="logout()" class="text-[11px] sm:text-xs bg-slate-800 hover:bg-slate-700 text-gray-300 px-2.5 py-1.5 sm:px-3 rounded transition">
@@ -151,6 +235,7 @@
                 </div>
             </div>
         </nav>
+        <div id="employeeModuleRoot">
 
         <div class="max-w-6xl mx-auto px-3 py-4 sm:p-6 space-y-4 sm:space-y-6">
 
@@ -1305,6 +1390,43 @@
         const staffProvisioningAuth = staffProvisioningApp.auth();
         let realtimeUnsubscribers = [];
 
+        // 가게부 모듈 호환 계층: 직원관리 앱과 동일한 Firebase 프로젝트/로그인 세션 사용
+        function ledgerResolvePath(kind, database, segments) {
+            if (!database || !segments.length) throw new Error('가게부 데이터베이스 경로가 올바르지 않습니다.');
+            if (kind === 'doc' && segments.length % 2 !== 0) throw new Error('문서 경로가 올바르지 않습니다.');
+            if (kind === 'collection' && segments.length % 2 !== 1) throw new Error('컬렉션 경로가 올바르지 않습니다.');
+            let ref = database.collection(segments[0]);
+            for (let i = 1; i < segments.length; i += 2) {
+                ref = ref.doc(segments[i]);
+                if (i + 1 < segments.length) ref = ref.collection(segments[i + 1]);
+            }
+            return ref;
+        }
+        window.firebaseDb = db;
+        window.doc = (database, ...segments) => ledgerResolvePath('doc', database, segments);
+        window.collection = (database, ...segments) => ledgerResolvePath('collection', database, segments);
+        window.getDocs = ref => ref.get();
+        window.setDoc = (ref, data) => ref.set(data);
+        window.deleteDoc = ref => ref.delete();
+
+        function setAppModule(module) {
+            if (!currentUser || currentUser.role !== 'admin') return alert('가게부는 사장님 계정에서만 사용할 수 있습니다.');
+            const employeeRoot = document.getElementById('employeeModuleRoot');
+            const ledgerRoot = document.getElementById('ledgerModuleRoot');
+            const isLedger = module === 'ledger';
+            employeeRoot.classList.toggle('hidden', isLedger);
+            ledgerRoot.classList.toggle('hidden', !isLedger);
+            document.getElementById('moduleEmployeeBtn').className = isLedger
+                ? 'px-3 py-2 rounded-lg text-xs font-bold bg-slate-700 text-slate-200 hover:bg-slate-600'
+                : 'px-3 py-2 rounded-lg text-xs font-bold bg-amber-500 text-slate-900';
+            document.getElementById('moduleLedgerBtn').className = isLedger
+                ? 'px-3 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white'
+                : 'px-3 py-2 rounded-lg text-xs font-bold bg-slate-700 text-slate-200 hover:bg-slate-600';
+            if (isLedger && ledgerUser) renderDashboard();
+            window.scrollTo(0, 0);
+        }
+
+
         let currentUser = null;
         let ownerUid = null;
         let staffList = [];
@@ -1373,6 +1495,10 @@
                         throw new Error('직원 계정 권한이 비활성화되었습니다. 사장님께 문의해 주세요.');
                     }
                     currentUser = { role: 'staff', id: staff.id, name: staff.name, wage: Number(staff.wage || 0), uid: user.uid };
+                    document.getElementById('moduleSwitch').classList.add('hidden');
+                    document.getElementById('ledgerModuleRoot').classList.add('hidden');
+                    document.getElementById('employeeModuleRoot').classList.remove('hidden');
+                    resetLedgerForLogout();
                     showDashboard();
                     initRealtimeListeners();
                 } catch (error) {
@@ -1385,6 +1511,10 @@
         });
 
         function showLoginOnly() {
+            document.getElementById('moduleSwitch').classList.add('hidden');
+            document.getElementById('ledgerModuleRoot').classList.add('hidden');
+            document.getElementById('employeeModuleRoot').classList.remove('hidden');
+            resetLedgerForLogout();
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('userInfoHeader').classList.add('hidden');
             document.getElementById('staffDashboard').classList.add('hidden');
@@ -1398,10 +1528,14 @@
         }
 
         function completeAdminLogin(user) {
-            currentUser = { role: 'admin', name: user.displayName || '사장님', uid: user.uid };
+            currentUser = { role: 'admin', name: user.displayName || '사장님', uid: user.uid, email: user.email || '' };
             document.getElementById('adminStoreCodeText').textContent = user.uid;
+            document.getElementById('moduleSwitch').classList.remove('hidden');
+            document.getElementById('moduleSwitch').classList.add('flex');
             showDashboard();
+            setAppModule('employee');
             initRealtimeListeners();
+            initLedgerForOwner(user).catch(err => { console.error('가게부 초기화 실패:', err); alert('가게부 데이터를 불러오지 못했습니다. Firebase 권한을 확인해 주세요.'); });
         }
 
         function openTermsModal() {
@@ -1748,6 +1882,10 @@
         async function logout() {
             stopRealtimeListeners();
             currentUser = null;
+            resetLedgerForLogout();
+            document.getElementById('moduleSwitch').classList.add('hidden');
+            document.getElementById('ledgerModuleRoot').classList.add('hidden');
+            document.getElementById('employeeModuleRoot').classList.remove('hidden');
             await auth.signOut();
             showLoginOnly();
             document.getElementById('staffPassword').value = '';
@@ -3498,5 +3636,1320 @@
             return `${yy}년${mm}월${dd}일 ${hh}시${min}분`;
         }
     </script>
+
+        </div>
+
+<div id="ledgerModuleRoot" class="hidden">
+ Login Modal 
+ 약관 상세보기 모달 
+
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4" id="privacyModal">
+<div class="ios-card bg-white w-full max-w-md p-5 space-y-4 shadow-2xl max-h-[80vh] flex flex-col">
+<div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+<h3 class="text-sm font-bold text-slate-900">📄 서비스 이용약관 및 개인정보 처리방침</h3>
+<button class="text-slate-400 hover:text-slate-600" onclick="closePrivacyModal()"><i class="fa-solid fa-xmark text-lg"></i></button>
+</div>
+<div class="overflow-y-auto space-y-3 text-xs text-slate-600 pr-1 flex-1 leading-relaxed">
+<div class="bg-slate-50 p-3 rounded-xl space-y-1">
+<p class="font-bold text-slate-800">1. 개인정보 수집 및 이용 목적</p>
+<p class="text-[11px] text-slate-500">- 사용자 식별 및 서비스 이용자 본인 확인</p>
+<p class="text-[11px] text-slate-500">- 가게 장부 및 가계부 데이터(수입/지출 내역) 기기 간 실시간 동기화</p>
+</div>
+<div class="bg-slate-50 p-3 rounded-xl space-y-1">
+<p class="font-bold text-slate-800">2. 수집하는 개인정보 항목</p>
+<p class="text-[11px] text-slate-500">- Google 계정 이메일 주소, Google 고유 사용자 ID(UID)</p>
+<p class="text-[11px] text-slate-500">- 사용자가 직접 입력한 명칭, 업종/용도, 수입 및 지출 내역</p>
+</div>
+<div class="bg-slate-50 p-3 rounded-xl space-y-1">
+<p class="font-bold text-slate-800">3. 개인정보의 보유 및 이용 기간</p>
+<p class="text-[11px] text-slate-500">- 회원 탈퇴 신청 시 또는 서비스 종료 시까지 영구 안전 보관</p>
+</div>
+</div>
+<button class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-md" onclick="closePrivacyModal()">
+                확인 및 닫기
+            </button>
+</div>
+</div>
+
+ 👤 내정보 모달 
+
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4" id="userInfoModal">
+<div class="ios-card bg-white w-full max-w-sm p-6 space-y-5 text-center shadow-2xl">
+<div class="flex justify-between items-center border-b border-slate-100 pb-3">
+<h3 class="text-sm font-bold text-slate-900"><i class="fa-solid fa-user-gear text-blue-500 mr-1.5"></i>내정보 &amp; 계정 관리</h3>
+<button class="text-slate-400 hover:text-slate-600" onclick="closeUserInfoModal()"><i class="fa-solid fa-xmark text-lg"></i></button>
+</div>
+<div class="space-y-3">
+<div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto text-3xl border-2 border-blue-200">
+<i class="fa-solid fa-user"></i>
+</div>
+<div>
+<span class="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">Google 계정 로그인 중</span>
+<p class="text-sm font-bold text-slate-800 mt-1.5 break-all" id="modalUserEmail">user@gmail.com</p>
+</div>
+</div>
+<div class="bg-slate-50 rounded-xl p-3 text-left space-y-1 border border-slate-100 text-[11px] text-slate-500">
+<p><i class="fa-solid fa-shield-halved text-blue-500 mr-1"></i> 모든 장부 데이터는 위 구글 계정에 실시간 동기화되어 안전하게 보관됩니다.</p>
+</div>
+<div class="space-y-2 pt-1">
+<button class="w-full py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition" onclick="handleLogout()">
+<i class="fa-solid fa-right-from-bracket"></i> 로그아웃
+                </button>
+<button class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs" onclick="closeUserInfoModal()">
+                    닫기
+                </button>
+</div>
+</div>
+</div>
+
+ 💬 자유 게시판 및 건의사항 모달 
+
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4" id="boardModal">
+<div class="ios-card bg-white w-full max-w-lg p-5 space-y-3 shadow-2xl max-h-[85vh] flex flex-col">
+<div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+<div class="flex items-center gap-2">
+<h3 class="text-sm font-bold text-slate-900"><i class="fa-solid fa-comments text-blue-600 mr-1.5"></i>자유 게시판 &amp; 소통방</h3>
+<span class="hidden text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-full" id="adminBadge">👑 관리자</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-xs text-slate-400 hover:text-purple-600 p-1" id="adminLoginBtn" onclick="loginAdminMode()" title="관리자 인증">
+<i class="fa-solid fa-key"></i>
+</button>
+<button class="text-slate-400 hover:text-slate-600" onclick="closeBoardModal()"><i class="fa-solid fa-xmark text-lg"></i></button>
+</div>
+</div>
+<!-- 글 작성 버튼 (기본 목록 보기 시 상단 노출) -->
+<div class="flex justify-between items-center" id="boardHeaderActions">
+<span class="text-xs font-semibold text-slate-500" id="boardPostCount">총 0개의 게시글</span>
+<button class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1" onclick="togglePostForm(true)">
+<i class="fa-solid fa-pen-to-square"></i> 글쓰기 / 의견남기기
+                </button>
+</div>
+<!-- 글쓰기 폼 (기본값 숨김) -->
+<form class="hidden bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5" id="boardPostForm" onsubmit="handleSaveBoardPost(event)">
+<div class="flex justify-between items-center pb-1 border-b border-slate-200">
+<span class="text-xs font-bold text-slate-800">✍️ 게시글 작성</span>
+<button class="text-[11px] text-slate-400 hover:text-slate-600" onclick="togglePostForm(false)" type="button">취소</button>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<input class="text-xs rounded-xl p-2 font-medium" id="postAuthor" placeholder="작성자 닉네임" required="" type="text"/>
+<input class="text-xs rounded-xl p-2 font-medium" id="postPw" maxlength="8" placeholder="글 비밀번호 (4자리)" required="" type="password"/>
+</div>
+<textarea class="w-full text-xs rounded-xl p-2.5 resize-none" id="postContent" placeholder="앱 사용 피드백, 불편한 점, 기능 추가 요청 등을 자유롭게 남겨주세요." required="" rows="3"></textarea>
+<div class="flex items-center justify-between pt-0.5">
+<label class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 font-medium">
+<input class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5" id="postIsPrivate" type="checkbox"/>
+<span>🔒 비공개글 (작성자/관리자만 보기)</span>
+</label>
+<button class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition" type="submit">
+                        게시글 등록
+                    </button>
+</div>
+</form>
+<!-- 게시글 리스트 영역 (우선 노출) -->
+<div class="overflow-y-auto flex-1 space-y-2.5 pr-1 min-h-[220px]" id="boardListContainer">
+<p class="text-center text-xs text-slate-400 py-8">게시글을 불러오는 중입니다...</p>
+</div>
+<button class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs" onclick="closeBoardModal()">
+                닫기
+            </button>
+</div>
+</div>
+
+ 특정 날짜 상세내역 팝업 모달 
+
+<div class="fixed inset-0 bg-slate-900/50 backdrop-blur-md z-50 hidden flex items-center justify-center p-4" id="dayDetailModal">
+<div class="ios-card bg-white w-full max-w-sm p-5 space-y-3 shadow-2xl max-h-[80vh] flex flex-col">
+<div class="flex justify-between items-center border-b border-slate-100 pb-2">
+<h3 class="text-xs font-bold text-slate-900" id="dayDetailTitle">📅 날짜 상세 내역</h3>
+<button class="text-slate-400 hover:text-slate-600" onclick="closeDayDetailModal()"><i class="fa-solid fa-xmark text-lg"></i></button>
+</div>
+<div class="overflow-y-auto flex-1 space-y-2 text-xs" id="dayDetailList"></div>
+<button class="w-full py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs" onclick="closeDayDetailModal()">닫기</button>
+</div>
+</div>
+
+ 항목 커스텀 관리 모달 
+
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4" id="categoryManageModal">
+<div class="ios-card bg-white w-full max-w-sm p-5 space-y-4 shadow-2xl">
+<div class="flex justify-between items-center border-b border-slate-100 pb-2">
+<h3 class="text-sm font-bold text-slate-900" id="categoryModalTitle">⚙️ 항목 관리</h3>
+<button class="text-slate-400 hover:text-slate-600" onclick="closeCategoryModal()"><i class="fa-solid fa-xmark text-lg"></i></button>
+</div>
+<div class="flex gap-2">
+<input class="flex-1 text-xs rounded-xl p-2.5 border border-slate-300" id="newCategoryInput" placeholder="새 항목 입력" type="text"/>
+<button class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-sm transition whitespace-nowrap" onclick="addNewCategory()">
+                    추가
+                </button>
+</div>
+<div class="space-y-1.5 max-h-56 overflow-y-auto pr-1" id="categoryListContainer"></div>
+<button class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs" onclick="closeCategoryModal()">
+                완료 및 닫기
+            </button>
+</div>
+</div>
+
+ Setup Wizard Modal 
+
+<div class="fixed inset-0 bg-slate-900/50 backdrop-blur-md z-40 hidden flex items-center justify-center p-4" id="wizardModal">
+<div class="ios-card bg-white w-full max-w-sm p-6 space-y-4 shadow-2xl">
+<div class="text-center">
+<div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-2xl mb-2">
+<i class="fa-solid fa-house-user"></i>
+</div>
+<h2 class="text-lg font-bold text-slate-900">사용 용도 및 맞춤 템플릿</h2>
+<p class="text-xs text-slate-500 mt-1">가게 상호명이나 개인 가계부 이름을 설정해 주세요.</p>
+</div>
+<div class="space-y-3 pt-2">
+<div>
+<label class="text-xs font-semibold text-slate-700 mb-1 block">이름 (상호명 또는 가계부 명칭)</label>
+<input class="w-full text-xs rounded-xl p-3 border border-slate-300" id="setupStoreName" placeholder="예: 우리집 가계부 / 대박 맛집" type="text"/>
+</div>
+<div>
+<label class="text-xs font-semibold text-slate-700 mb-1 block">업종 / 용도 템플릿 선택</label>
+<select class="w-full text-xs rounded-xl p-3 border border-slate-300" id="setupIndustry">
+<option value="home">🏠 일반가정 / 개인 가계부</option>
+<option value="korean">🍱 한식 / 정식 / 식당</option>
+<option value="western">🍝 양식 / 파스타 / 버거</option>
+<option value="japanese">🍣 일식 / 초밥 / 돈까스</option>
+<option value="bunsik">떡 분식 / 야식 / 분식집</option>
+<option value="meat">🥩 고깃집 / 삼겹살 / 구이</option>
+<option value="hof">🍺 호프집 / 주점 / 포차</option>
+<option value="cafe">☕ 카페 / 디저트 / 베이커리</option>
+<option value="general">✂️ 미용 / 뷰티 / 일반 자영업</option>
+</select>
+</div>
+<button class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-md transition mt-2" onclick="saveStoreOnboarding()">
+                    저장 및 설정 적용하기
+                </button>
+</div>
+</div>
+</div>
+
+ Header Navigation 
+
+<header class="sticky top-0 z-30 ios-header px-4 py-3.5 flex justify-between items-center">
+<div class="flex items-center gap-2.5 cursor-pointer" onclick="openWizardModal()">
+<div class="w-9 h-9 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-base shadow-sm">
+                📈
+            </div>
+<div>
+<div class="flex items-center gap-1.5">
+<h1 class="text-base font-bold text-slate-900 leading-tight" id="displayStoreName">스마트 장부</h1>
+<i class="fa-solid fa-pen text-[10px] text-slate-400"></i>
+</div>
+<p class="text-xs text-slate-500" id="displayIndustry">클릭하여 명칭/용도 변경</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl text-xs font-bold border border-blue-200 flex items-center gap-1 transition" onclick="openBoardModal()">
+<i class="fa-solid fa-comments"></i> 게시판
+            </button>
+<button class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 flex items-center gap-1 transition" onclick="openUserInfoModal()">
+<i class="fa-solid fa-circle-user text-blue-600 text-sm"></i> 내정보
+            </button>
+</div>
+</header>
+
+ Main Container 
+
+<main class="max-w-4xl mx-auto px-4 pt-4 space-y-4">
+<!-- Date Selection Filter -->
+<section class="ios-card flex flex-wrap gap-2 justify-between items-center">
+<div class="flex items-center gap-2 w-full sm:w-auto">
+<select class="text-xs font-semibold rounded-xl px-3 py-2" id="yearSelect" onchange="renderDashboard()"></select>
+<select class="text-xs font-semibold rounded-xl px-3 py-2 flex-1" id="monthSelect" onchange="renderDashboard()">
+<option value="ALL">📅 연간 전체 (1년 누적)</option>
+<option value="01">1월</option><option value="02">2월</option><option value="03">3월</option>
+<option value="04">4월</option><option value="05">5월</option><option value="06">6월</option>
+<option value="07">07월</option><option value="08">08월</option><option value="09">09월</option>
+<option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+</select>
+</div>
+<span class="text-[11px] text-slate-500"><i class="fa-solid fa-cloud text-blue-500 mr-1"></i>클라우드 안전 동기화 중</span>
+</section>
+<!-- KPI Summary Cards -->
+<section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+<div class="ios-card border-l-4 border-blue-500">
+<p class="text-[11px] font-semibold text-slate-400" id="labelSalesCard">총 수입(매출)</p>
+<p class="text-lg font-bold text-slate-900 mt-1" id="totalSales">0원</p>
+</div>
+<div class="ios-card border-l-4 border-rose-500">
+<p class="text-[11px] font-semibold text-slate-400">총 지출</p>
+<p class="text-lg font-bold text-rose-600 mt-1" id="totalExpense">0원</p>
+</div>
+<div class="ios-card border-l-4 border-emerald-500">
+<p class="text-[11px] font-semibold text-slate-400" id="labelNetCard">순잔액(순이익)</p>
+<p class="text-lg font-bold text-emerald-600 mt-1" id="netProfit">0원</p>
+</div>
+<div class="ios-card border-l-4 border-amber-500">
+<p class="text-[11px] font-semibold text-slate-400" id="labelMarginCard">저축/이익률</p>
+<p class="text-lg font-bold text-amber-600 mt-1" id="profitMargin">0%</p>
+</div>
+</section>
+<!-- 수동 입력 폼 -->
+<section class="ios-card">
+<div class="flex border-b border-slate-100 pb-3 gap-1 overflow-x-auto">
+<button class="tab-btn active" id="tab-sales" onclick="switchTab('sales')">수입/매출 입력</button>
+<button class="tab-btn" id="tab-fixed" onclick="switchTab('fixed')">고정비 입력</button>
+<button class="tab-btn" id="tab-variable" onclick="switchTab('variable')">변동비/생활비 입력</button>
+</div>
+<div class="mt-4" id="form-container"></div>
+</section>
+<!-- Chart Section -->
+<section class="ios-card space-y-2">
+<h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5" id="chartTitle">
+<i class="fa-solid fa-chart-pie text-blue-500"></i> 지출 항목별 분석
+            </h3>
+<div class="h-52 relative">
+<canvas id="expenseChart"></canvas>
+</div>
+</section>
+<!-- 🔍 쿠팡 파트너스 최저가 검색 배너 -->
+<section class="ios-card overflow-hidden p-0 border-none shadow-md bg-white">
+<div class="p-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+<span class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                    🔍 식자재/소모품 쿠팡 최저가 검색
+                </span>
+<span class="text-[10px] text-slate-400">쿠팡 파트너스</span>
+</div>
+<div class="w-full flex justify-center items-center bg-white py-1">
+<iframe frameborder="0" height="75" referrerpolicy="unsafe-url" scrolling="no" src="https://coupa.ng/cqC4zG" width="100%"></iframe>
+</div>
+<div class="px-3 py-1.5 bg-slate-50 border-t border-slate-100 text-center">
+<p class="text-[9px] text-slate-400">
+                    이 배너는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+                </p>
+</div>
+</section>
+<!-- 수입 및 지출 상세 내역 -->
+<section class="ios-card space-y-3">
+<div class="flex flex-wrap justify-between items-center border-b border-slate-100 pb-2.5 gap-2">
+<h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+<i class="fa-solid fa-list-check text-blue-500"></i> 수입 및 지출 상세 내역
+                </h3>
+<div class="flex items-center gap-2">
+<div class="flex bg-slate-100 p-0.5 rounded-lg">
+<button class="sub-tab-btn active" id="subtab-calendar" onclick="switchHistoryView('calendar')">
+<i class="fa-solid fa-calendar-days mr-1"></i>달력
+                        </button>
+<button class="sub-tab-btn" id="subtab-list" onclick="switchHistoryView('list')">
+<i class="fa-solid fa-list mr-1"></i>목록
+                        </button>
+</div>
+<span class="text-[11px] text-slate-400" id="historyCount">0건</span>
+</div>
+</div>
+<!-- 목록/달력 렌더링 컨테이너 -->
+<div id="history-container"></div>
+</section>
+<!-- 🛒 Coupang Partners Dynamic Banner Section -->
+<section class="ios-card overflow-hidden p-0 border-none shadow-md bg-white">
+<div class="p-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+<span class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                    🛒 고객 관심 맞춤 상품 추천 (쿠팡)
+                </span>
+<span class="text-[10px] text-slate-400">쿠팡 파트너스 연동</span>
+</div>
+<div class="w-full flex justify-center items-center bg-white py-2 overflow-x-auto">
+
+
+</div>
+<div class="px-3 py-1.5 bg-slate-50 border-t border-slate-100 text-center">
+<p class="text-[9px] text-slate-400">
+                    이 배너는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+                </p>
+</div>
+</section>
+<!-- 💡 개발자 안내 및 자유 게시판 이동 카드 -->
+<section class="ios-card bg-gradient-to-br from-slate-900 to-slate-800 text-white space-y-3 shadow-lg border-none">
+<div class="flex items-start justify-between">
+<div class="space-y-1">
+<span class="text-[10px] font-bold bg-blue-500/30 text-blue-300 border border-blue-400/30 px-2 py-0.5 rounded-full">개발자 한마디</span>
+<h3 class="text-sm font-bold text-white pt-1">자유롭게 사용하시고 소중한 의견을 남겨주세요!</h3>
+</div>
+<button class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition shadow-md whitespace-nowrap" onclick="openBoardModal()">
+<i class="fa-solid fa-comments mr-1"></i> 게시판 열기
+                </button>
+</div>
+<p class="text-xs text-slate-300 leading-relaxed">
+                기존 가계부 앱들이 답답해서 직접 만든 앱입니다. 자유롭게 공유하고 무료로 사용하세요. 쿠팡 검색으로 인한 소정의 수수료를 쿠팡으로부터 제공받지만 이용자에게는 어떠한 불이익도 없습니다. 앱은 계속해서 업데이트 됩니다. 불편한 사항을 게시판에 자유롭게 남겨주세요.
+            </p>
+</section>
+<!-- Footer -->
+<footer class="text-center py-4 space-y-1">
+<p class="text-[10px] text-slate-400">
+                이 포스팅/배너는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+            </p>
+<p class="text-[10px] text-slate-300">© 손익장부 &amp; 가계부. All rights reserved.</p>
+</footer>
+</main>
+
+ Application Script 
+
+</div>
+
+<script>
+
+        const COUPANG_TRACKING_CODE = "AF4185384";
+        const ADMIN_PASS = "2039";
+        let ledgerUser = null;
+        let storeConfig = null;
+        let dbData = [];
+        let boardPosts = [];
+        let currentTab = 'sales';
+        let currentHistoryView = 'calendar';
+        let expenseChartObj = null;
+        let activeManageCategoryType = 'sales';
+        let isAdmin = false;
+
+        let currentActiveDetailDate = '';
+        let calendarYear = new Date().getFullYear();
+        let calendarMonth = new Date().getMonth() + 1;
+
+        const getTodayStr = () => new Date().toISOString().split('T')[0];
+
+        function openPrivacyModal() { document.getElementById('privacyModal').classList.remove('hidden'); }
+        function closePrivacyModal() { document.getElementById('privacyModal').classList.add('hidden'); }
+
+        function openUserInfoModal() {
+            if (ledgerUser) {
+                document.getElementById('modalUserEmail').innerText = ledgerUser.email || '구글 계정 정보 없음';
+            }
+            document.getElementById('userInfoModal').classList.remove('hidden');
+        }
+
+        function closeUserInfoModal() {
+            document.getElementById('userInfoModal').classList.add('hidden');
+        }
+
+        function closeDayDetailModal() {
+            document.getElementById('dayDetailModal').classList.add('hidden');
+            currentActiveDetailDate = '';
+        }
+
+        /* ----- 💬 자유 게시판 제어 함수 ----- */
+        function openBoardModal() {
+            document.getElementById('boardModal').classList.remove('hidden');
+            togglePostForm(false);
+            loadBoardPosts();
+        }
+
+        function closeBoardModal() {
+            document.getElementById('boardModal').classList.add('hidden');
+        }
+
+        function togglePostForm(show) {
+            const form = document.getElementById('boardPostForm');
+            if (show) {
+                form.classList.remove('hidden');
+            } else {
+                form.classList.add('hidden');
+                document.getElementById('postContent').value = '';
+                document.getElementById('postPw').value = '';
+            }
+        }
+
+        function loginAdminMode() {
+            if (isAdmin) {
+                if (confirm('관리자 모드를 해제하시겠습니까?')) {
+                    isAdmin = false;
+                    document.getElementById('adminBadge').classList.add('hidden');
+                    renderBoardList();
+                }
+                return;
+            }
+            const input = prompt('관리자 비밀번호 4자리를 입력하세요:');
+            if (input === ADMIN_PASS) {
+                isAdmin = true;
+                document.getElementById('adminBadge').classList.remove('hidden');
+                alert('관리자 인증이 완료되었습니다.');
+                renderBoardList();
+            } else if (input !== null) {
+                alert('비밀번호가 올바르지 않습니다.');
+            }
+        }
+
+        async function loadBoardPosts() {
+            const container = document.getElementById('boardListContainer');
+            try {
+                if (!window.firebaseDb) {
+                    container.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">데이터베이스 연결에 실패했습니다.</p>`;
+                    return;
+                }
+                const snap = await window.getDocs(window.collection(window.firebaseDb, "community_board"));
+                boardPosts = [];
+                snap.forEach(docSnap => {
+                    boardPosts.push(docSnap.data());
+                });
+                renderBoardList();
+            } catch(e) {
+                console.error("Board load error:", e);
+                container.innerHTML = `<p class="text-center text-xs text-rose-500 py-6">게시글을 불러오는 중 오류가 발생했습니다.</p>`;
+            }
+        }
+
+        function renderBoardList() {
+            const container = document.getElementById('boardListContainer');
+            const countEl = document.getElementById('boardPostCount');
+            if (!container) return;
+
+            countEl.innerText = `총 ${boardPosts.length}개의 게시글`;
+            
+            if (boardPosts.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-400 py-10">등록된 게시글이 없습니다. 첫 의견을 남겨주세요!</p>`;
+                return;
+            }
+
+            boardPosts.sort((a,b) => b.createdAt - a.createdAt);
+
+            let html = '';
+            boardPosts.forEach(post => {
+                const isPrivate = post.isPrivate;
+                const canView = !isPrivate || isAdmin || (ledgerUser && post.uid === ledgerUser.uid);
+
+                html += `
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1.5">
+                        <div class="flex justify-between items-center text-slate-500 text-[11px]">
+                            <div class="flex items-center gap-1.5 font-bold text-slate-700">
+                                <i class="fa-solid fa-user-circle text-blue-500"></i>
+                                <span>${post.author}</span>
+                                ${isPrivate ? `<span class="text-[10px] bg-amber-100 text-amber-700 font-bold px-1.5 py-0.2 rounded">🔒 비공개</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span>${post.dateStr || ''}</span>
+                                <button onclick="deleteBoardPost('${post.id}', '${post.pw}')" class="text-slate-400 hover:text-rose-600 transition" title="삭제">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-slate-800 leading-relaxed pt-1">
+                            ${canView ? post.content : `<span class="text-slate-400 italic"><i class="fa-solid fa-lock mr-1"></i>비공개글입니다. (작성자 및 관리자만 조회 가능)</span>`}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function handleSaveBoardPost(e) {
+            e.preventDefault();
+            const author = document.getElementById('postAuthor').value.trim();
+            const pw = document.getElementById('postPw').value.trim();
+            const content = document.getElementById('postContent').value.trim();
+            const isPrivate = document.getElementById('postIsPrivate').checked;
+
+            if (!author || !pw || !content) {
+                alert('모든 항목을 작성해 주세요.');
+                return;
+            }
+
+            const newPost = {
+                id: Date.now().toString(),
+                uid: ledgerUser ? ledgerUser.uid : 'anonymous',
+                author: author,
+                pw: pw,
+                content: content,
+                isPrivate: isPrivate,
+                createdAt: Date.now(),
+                dateStr: new Date().toLocaleDateString('ko-KR')
+            };
+
+            await window.setDoc(window.doc(window.firebaseDb, "community_board", newPost.id), newPost);
+            boardPosts.push(newPost);
+            
+            togglePostForm(false);
+            alert('게시글이 성공적으로 등록되었습니다!');
+            renderBoardList();
+        }
+
+        async function deleteBoardPost(id, postPw) {
+            if (isAdmin) {
+                if (confirm('[관리자 권한] 이 게시글을 삭제하시겠습니까?')) {
+                    await window.deleteDoc(window.doc(window.firebaseDb, "community_board", id));
+                    boardPosts = boardPosts.filter(p => p.id !== id);
+                    renderBoardList();
+                }
+                return;
+            }
+
+            const inputPw = prompt('글 작성 시 설정한 비밀번호를 입력해 주세요:');
+            if (inputPw === postPw) {
+                await window.deleteDoc(window.doc(window.firebaseDb, "community_board", id));
+                boardPosts = boardPosts.filter(p => p.id !== id);
+                alert('삭제되었습니다.');
+                renderBoardList();
+            } else if (inputPw !== null) {
+                alert('비밀번호가 일치하지 않습니다.');
+            }
+        }
+
+        /* ----- 항목 커스텀 관리 모달 ----- */
+        function openCategoryModal(type) {
+            activeManageCategoryType = type;
+            const titleEl = document.getElementById('categoryModalTitle');
+            if (type === 'sales') titleEl.innerText = '⚙️ 수입/매출 항목 추가 / 관리';
+            else if (type === 'fixed') titleEl.innerText = '⚙️ 고정비 항목 추가 / 관리';
+            else titleEl.innerText = '⚙️ 변동비 항목 추가 / 관리';
+
+            renderCategoryManageList();
+            document.getElementById('categoryManageModal').classList.remove('hidden');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryManageModal').classList.add('hidden');
+            document.getElementById('newCategoryInput').value = '';
+            switchTab(currentTab);
+        }
+
+        function renderCategoryManageList() {
+            const container = document.getElementById('categoryListContainer');
+            if (!storeConfig) return;
+
+            const list = storeConfig[activeManageCategoryType] || [];
+            if (list.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-400 py-3">등록된 항목이 없습니다.</p>`;
+                return;
+            }
+
+            let html = '';
+            list.forEach((item, index) => {
+                html += `
+                    <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl text-xs">
+                        <span class="font-medium text-slate-700">${item}</span>
+                        <button onclick="removeCategory(${index})" class="text-rose-500 hover:text-rose-700 font-bold px-1 text-[11px]">
+                            <i class="fa-solid fa-trash-can mr-1"></i>삭제
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function addNewCategory() {
+            const input = document.getElementById('newCategoryInput');
+            const catName = input.value.trim();
+
+            if (!catName) {
+                alert('추가할 항목명을 입력해 주세요.');
+                return;
+            }
+
+            if (!storeConfig[activeManageCategoryType]) {
+                storeConfig[activeManageCategoryType] = [];
+            }
+
+            if (storeConfig[activeManageCategoryType].includes(catName)) {
+                alert('이미 존재해 있는 항목입니다.');
+                return;
+            }
+
+            storeConfig[activeManageCategoryType].push(catName);
+
+            if (ledgerUser) {
+                await window.setDoc(window.doc(window.firebaseDb, "users", ledgerUser.uid, "settings", "config"), storeConfig);
+            }
+
+            input.value = '';
+            renderCategoryManageList();
+        }
+
+        async function removeCategory(index) {
+            if (confirm('이 항목을 삭제하시겠습니까?')) {
+                storeConfig[activeManageCategoryType].splice(index, 1);
+                if (ledgerUser) {
+                    await window.setDoc(window.doc(window.firebaseDb, "users", ledgerUser.uid, "settings", "config"), storeConfig);
+                }
+                renderCategoryManageList();
+            }
+        }
+
+        function openCoupangSearch(keyword) {
+            const cleanKeyword = encodeURIComponent(keyword);
+            const coupangUrl = `https://www.coupang.com/np/search?q=${cleanKeyword}&lptag=${COUPANG_TRACKING_CODE}&subid=craftburgers`;
+            window.open(coupangUrl, '_blank');
+        }
+
+        function initYearAndMonthOptions() {
+            const yearSelect = document.getElementById('yearSelect');
+            const monthSelect = document.getElementById('monthSelect');
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonthStr = (now.getMonth() + 1).toString().padStart(2, '0');
+
+            yearSelect.innerHTML = '';
+            for (let y = 2020; y <= 2040; y++) {
+                const opt = document.createElement('option');
+                opt.value = y.toString();
+                opt.innerText = y + '년';
+                if (y === currentYear) opt.selected = true;
+                yearSelect.appendChild(opt);
+            }
+
+            monthSelect.value = currentMonthStr;
+        }
+        // 통합 앱에서는 직원관리 앱의 동일한 사장님 인증 세션을 사용합니다.
+        async function initLedgerForOwner(user) {
+            if (!user || !user.uid) return;
+            ledgerUser = user;
+            const modal = document.getElementById('userInfoModal');
+            const email = document.getElementById('modalUserEmail');
+            if (email) email.innerText = user.email || '';
+            await loadUserDataFromCloud();
+        }
+        function resetLedgerForLogout() {
+            ledgerUser = null;
+            dbData = [];
+            storeConfig = null;
+        }
+        async function handleLogout() { await logout(); }
+
+        async function loadUserDataFromCloud() {
+            if (!ledgerUser) return;
+
+            const configSnap = await window.getDocs(window.collection(window.firebaseDb, "users", ledgerUser.uid, "settings"));
+            let foundConfig = false;
+            configSnap.forEach(docSnap => {
+                if (docSnap.id === 'config') {
+                    storeConfig = docSnap.data();
+                    foundConfig = true;
+                }
+            });
+
+            if (!foundConfig) {
+                openWizardModal();
+            } else {
+                applyStoreConfigUI();
+            }
+
+            const ledgerRef = window.collection(window.firebaseDb, "users", ledgerUser.uid, "ledger");
+            const ledgerSnap = await window.getDocs(ledgerRef);
+            dbData = [];
+            ledgerSnap.forEach(docSnap => {
+                dbData.push(docSnap.data());
+            });
+
+            switchTab('sales');
+            renderDashboard();
+        }
+
+        function openWizardModal() { document.getElementById('wizardModal').classList.remove('hidden'); }
+
+        async function saveStoreOnboarding() {
+            const nameInput = document.getElementById('setupStoreName').value.trim();
+            const indKey = document.getElementById('setupIndustry').value;
+
+            if (!nameInput) {
+                alert('이름 또는 상호명을 입력해 주세요!');
+                return;
+            }
+
+            const industryTemplates = {
+                home: { 
+                    icon: '🏠', name: '일반가정 / 개인 가계부', 
+                    sales: ['월급 / 급여', '부수입 / 용돈', '금융 / 이자수익'],
+                    fixed: ['아파트 관리비', '월세/대출이자', '통신비/인터넷', '보험료', 'OTT/구독료'], 
+                    variable: ['식비/장보기', '외식/배달비', '교통/유류비', '생필품 구매', '문화/소비'] 
+                },
+                korean: { 
+                    icon: '🍱', name: '한식 / 정식 / 식당', 
+                    sales: ['일일 총매출', '홀 매출', '배달 매출'],
+                    fixed: ['가게 임대료', '상가 관리비', '도시가스 요금', '세무 회계비용'], 
+                    variable: ['쌀/잡곡 매입', '육류/정육 식자재', '포장 용기', '배달앱 수수료'] 
+                },
+                western: { 
+                    icon: '🍝', name: '양식 / 파스타 / 버거', 
+                    sales: ['일일 총매출', '홀 매출', '배달 매출'],
+                    fixed: ['가게 임대료', '상가 관리비', '도시가스 요금', '세무 회계비용'], 
+                    variable: ['원육/정육/패티', '파스타/버거번', '포장 용기', '배달 수수료'] 
+                },
+                japanese: { 
+                    icon: '🍣', name: '일식 / 초밥 / 돈까스', 
+                    sales: ['일일 총매출', '홀 매출', '배달 매출'],
+                    fixed: ['가게 임대료', '상가 관리비', '가스/수도 요금', '세무사 수수료'], 
+                    variable: ['초밥용 횟감', '돈까스용 생고기', '튀김유', '포장 용기'] 
+                },
+                bunsik: { 
+                    icon: '떡', name: '분식 / 야식 / 분식집', 
+                    sales: ['일일 총매출', '홀 매출', '배달 매출'],
+                    fixed: ['가게 임대료', '상가 관리비', '도시가스 요금', '세무사 수수료'], 
+                    variable: ['떡볶이 떡/어묵', '튀김 재료/식용유', '순대/내장', '포장 용기'] 
+                },
+                meat: { 
+                    icon: '🥩', name: '고깃집 / 삼겹살 / 구이', 
+                    sales: ['일일 총매출', '홀 매출', '배달 매출'],
+                    fixed: ['가게 임대료', '상가 관리비', '가스/전기 요금', '세무사 수수료'], 
+                    variable: ['돼지고기/삼겹살', '소고기/갈비', '숯/불판 소모품', '음료/주류'] 
+                },
+                hof: { 
+                    icon: '🍺', name: '호프집 / 주점 / 포차', 
+                    sales: ['일일 총매출', '홀 매출', '배달 매출'],
+                    fixed: ['가게 임대료', '상가 관리비', '전기/가스 공과금', '세무사 수수료'], 
+                    variable: ['생맥주/병맥주', '소주/하이볼', '안주 식재료', '포장 용기'] 
+                },
+                cafe: { 
+                    icon: '☕', name: '카페 / 디저트 / 베이커리', 
+                    sales: ['일일 총매출', '홀 매출', '배달 매출'],
+                    fixed: ['가게 임대료', '상가 관리비', '전기/수도 요금', '세무 회계비용'], 
+                    variable: ['원두', '우유/시럽', '베이커리 디저트', '테이크아웃 컵/빨대'] 
+                },
+                general: { 
+                    icon: '✂️', name: '미용 / 뷰티 / 일반 자영업', 
+                    sales: ['일일 총매출', '시술/서비스 매출', '제품 판매 매출'],
+                    fixed: ['매장 임대료', '상가 관리비', '전기/가스 공과금', '세무사 비용'], 
+                    variable: ['소모품', '마케팅/광고비', '카드 수수료', '기타 변동비'] 
+                }
+            };
+
+            const template = industryTemplates[indKey] || industryTemplates.home;
+            storeConfig = {
+                name: nameInput,
+                industryKey: indKey,
+                icon: template.icon,
+                industryName: template.name,
+                sales: [...template.sales],
+                fixed: [...template.fixed],
+                variable: [...template.variable]
+            };
+
+            if (ledgerUser) {
+                await window.setDoc(window.doc(window.firebaseDb, "users", ledgerUser.uid, "settings", "config"), storeConfig);
+            }
+
+            document.getElementById('wizardModal').classList.add('hidden');
+            applyStoreConfigUI();
+            switchTab('sales');
+        }
+
+        function applyStoreConfigUI() {
+            if (!storeConfig) return;
+            document.getElementById('displayStoreName').innerText = storeConfig.name;
+            document.getElementById('displayIndustry').innerText = `${storeConfig.icon} ${storeConfig.industryName}`;
+        }
+
+        async function handleSaveEntry(e, type) {
+            e.preventDefault();
+            if (!ledgerUser) return;
+
+            const date = document.getElementById('inputDate').value;
+            const amount = parseInt(document.getElementById('inputAmount').value) || 0;
+            const memo = document.getElementById('inputMemo').value || '';
+            const category = type === 'sales' ? document.getElementById('salesType').value : document.getElementById('inputCategory').value;
+
+            const newEntry = {
+                id: Date.now().toString(),
+                type: type,
+                date: date,
+                category: category,
+                amount: amount,
+                memo: memo
+            };
+
+            await window.setDoc(window.doc(window.firebaseDb, "users", ledgerUser.uid, "ledger", newEntry.id), newEntry);
+            
+            dbData.push(newEntry);
+            document.getElementById('inputAmount').value = '';
+            document.getElementById('inputMemo').value = '';
+            alert('클라우드에 안전하게 저장되었습니다.');
+
+            renderDashboard();
+        }
+
+        async function deleteEntry(id) {
+            if (confirm('이 내역을 삭제하시겠습니까?')) {
+                if (ledgerUser) {
+                    await window.deleteDoc(window.doc(window.firebaseDb, "users", ledgerUser.uid, "ledger", id));
+                }
+                dbData = dbData.filter(item => item.id !== id);
+
+                if (currentActiveDetailDate) {
+                    openDayDetailModal(currentActiveDetailDate);
+                }
+
+                renderDashboard();
+            }
+        }
+
+        async function checkAndCopyPrevFixedExpenses() {
+            const currentYearStr = document.getElementById('yearSelect').value;
+            const currentMonthStr = document.getElementById('monthSelect').value;
+
+            if (currentMonthStr === 'ALL') {
+                alert('특정 월(예: 11월)을 선택하신 후 지난달 고정비를 가져올 수 있습니다.');
+                return;
+            }
+
+            let curY = parseInt(currentYearStr);
+            let curM = parseInt(currentMonthStr);
+
+            let prevY = curY;
+            let prevM = curM - 1;
+            if (prevM < 1) {
+                prevM = 12;
+                prevY = curY - 1;
+            }
+
+            const prevYStr = prevY.toString();
+            const prevMStr = prevM.toString().padStart(2, '0');
+
+            const prevFixedEntries = dbData.filter(item => {
+                if (item.type !== 'fixed' || !item.date) return false;
+                const p = item.date.split('-');
+                return p[0] === prevYStr && p[1] === prevMStr;
+            });
+
+            if (prevFixedEntries.length === 0) {
+                alert(`지난달(${prevM}월)에 등록된 고정비 내역이 없습니다.`);
+                return;
+            }
+
+            const currentFixedEntries = dbData.filter(item => {
+                if (item.type !== 'fixed' || !item.date) return false;
+                const p = item.date.split('-');
+                return p[0] === currentYearStr && p[1] === currentMonthStr;
+            });
+
+            if (currentFixedEntries.length > 0) {
+                if (!confirm(`이번달(${curM}월)에 이미 ${currentFixedEntries.length}건의 고정비가 있습니다.\n지난달(${prevM}월) 고정비 ${prevFixedEntries.length}건을 추가로 가져올까요?`)) {
+                    return;
+                }
+            } else {
+                if (!confirm(`지난달(${prevM}월) 고정비 내역이 ${prevFixedEntries.length}건 존재합니다.\n이번달(${curM}월)에도 그대로 자동 입력할까요?`)) {
+                    return;
+                }
+            }
+
+            const targetDate = `${currentYearStr}-${currentMonthStr}-01`;
+            for (const item of prevFixedEntries) {
+                const newEntry = {
+                    id: Date.now().toString() + Math.random().toString(36).substring(2, 5),
+                    type: 'fixed',
+                    date: targetDate,
+                    category: item.category,
+                    amount: item.amount,
+                    memo: item.memo ? `(지난달 복사) ${item.memo}` : '(지난달 복사)'
+                };
+
+                if (ledgerUser) {
+                    await window.setDoc(window.doc(window.firebaseDb, "users", ledgerUser.uid, "ledger", newEntry.id), newEntry);
+                }
+                dbData.push(newEntry);
+            }
+
+            alert(`지난달(${prevM}월) 고정지출 ${prevFixedEntries.length}건이 이번달(${curM}월)로 자동 입력되었습니다!`);
+            renderDashboard();
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const container = document.getElementById('form-container');
+            if (tab === 'sales') renderSalesForm(container);
+            else if (tab === 'fixed') renderExpenseForm(container, 'fixed', storeConfig ? storeConfig.fixed : []);
+            else if (tab === 'variable') renderExpenseForm(container, 'variable', storeConfig ? storeConfig.variable : []);
+        }
+
+        function renderSalesForm(container) {
+            let salesCategories = (storeConfig && storeConfig.sales && storeConfig.sales.length > 0) 
+                ? storeConfig.sales 
+                : ['일일 총매출', '홀 매출', '배달 매출'];
+
+            const options = salesCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+            
+            container.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <button type="button" onclick="openCategoryModal('sales')" class="text-[11px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-2.5 py-1 rounded-lg transition">
+                        <i class="fa-solid fa-gear mr-1"></i>수입/매출 항목 관리/추가
+                    </button>
+                </div>
+                <form onsubmit="handleSaveEntry(event, 'sales')" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[11px] text-slate-500 font-medium">날짜</label>
+                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full text-xs rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-500 font-medium">수입/매출 구분</label>
+                            <select id="salesType" class="w-full text-xs rounded-xl p-2.5">${options}</select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-500 font-medium">금액 (원)</label>
+                        <input type="number" id="inputAmount" placeholder="예: 3000000" required class="w-full text-xs font-bold text-emerald-600 rounded-xl p-2.5">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-500 font-medium">메모</label>
+                        <input type="text" id="inputMemo" placeholder="예: 11월 월급 / 토요일 매출" class="w-full text-xs rounded-xl p-2.5">
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow-md">
+                        <i class="fa-solid fa-plus mr-1"></i> 수입/매출 등록하기
+                    </button>
+                </form>
+            `;
+        }
+
+        function renderExpenseForm(container, type, categories) {
+            const options = (categories && categories.length > 0) 
+                ? categories.map(c => `<option value="${c}">${c}</option>`).join('') 
+                : `<option value="기타 지출">기타 지출</option>`;
+
+            container.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <button type="button" onclick="openCategoryModal('${type}')" class="text-[11px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-2.5 py-1 rounded-lg transition">
+                        <i class="fa-solid fa-gear mr-1"></i>${type === 'fixed' ? '고정비' : '변동비'} 항목 관리/추가
+                    </button>
+                    ${type === 'fixed' ? `
+                        <button type="button" onclick="checkAndCopyPrevFixedExpenses()" class="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 transition">
+                            <i class="fa-solid fa-copy mr-1"></i>지난달 고정비 불러오기
+                        </button>
+                    ` : ''}
+                </div>
+                <form onsubmit="handleSaveEntry(event, '${type}')" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[11px] text-slate-500 font-medium">날짜</label>
+                            <input type="date" id="inputDate" value="${getTodayStr()}" required class="w-full text-xs rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-500 font-medium">지출 항목</label>
+                            <select id="inputCategory" class="w-full text-xs rounded-xl p-2.5">${options}</select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-500 font-medium">지출 금액 (원)</label>
+                        <input type="number" id="inputAmount" placeholder="예: 155000" required class="w-full text-xs font-bold text-rose-600 rounded-xl p-2.5">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-500 font-medium">적요 / 사용처</label>
+                        <input type="text" id="inputMemo" placeholder="예: 마트 장보기" class="w-full text-xs rounded-xl p-2.5">
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition shadow-md">
+                        <i class="fa-solid fa-minus mr-1"></i> 지출 내역 저장
+                    </button>
+                </form>
+            `;
+        }
+
+        function getFilteredData() {
+            const year = document.getElementById('yearSelect').value;
+            const month = document.getElementById('monthSelect').value;
+
+            return dbData.filter(item => {
+                if (!item.date) return false;
+                const parts = item.date.split('-');
+                return month === 'ALL' ? parts[0] === year : (parts[0] === year && parts[1] === month);
+            });
+        }
+
+        function renderDashboard() {
+            const filtered = getFilteredData();
+            let sales = 0, expense = 0, categories = {};
+
+            filtered.forEach(item => {
+                if (item.type === 'sales') sales += item.amount;
+                else {
+                    expense += item.amount;
+                    categories[item.category] = (categories[item.category] || 0) + item.amount;
+                }
+            });
+
+            const net = sales - expense;
+            const margin = sales > 0 ? ((net / sales) * 100).toFixed(1) : 0;
+
+            document.getElementById('totalSales').innerText = sales.toLocaleString() + '원';
+            document.getElementById('totalExpense').innerText = expense.toLocaleString() + '원';
+            document.getElementById('netProfit').innerText = net.toLocaleString() + '원';
+            document.getElementById('profitMargin').innerText = margin + '%';
+
+            renderChart(categories);
+            renderHistorySection();
+        }
+
+        function switchHistoryView(view) {
+            currentHistoryView = view;
+            document.getElementById('subtab-list').classList.remove('active');
+            document.getElementById('subtab-calendar').classList.remove('active');
+            document.getElementById(`subtab-${view}`).classList.add('active');
+
+            renderHistorySection();
+        }
+
+        function renderHistorySection() {
+            const container = document.getElementById('history-container');
+            const countEl = document.getElementById('historyCount');
+            const filtered = getFilteredData();
+
+            countEl.innerText = `${filtered.length}건`;
+
+            if (currentHistoryView === 'calendar') {
+                renderCalendarView(container);
+            } else {
+                renderListView(container, filtered);
+            }
+        }
+
+        function renderListView(container, filtered) {
+            if (filtered.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">등록된 내역이 없습니다.</p>`;
+                return;
+            }
+
+            filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            let html = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="text-slate-400 border-b border-slate-100">
+                                <th class="pb-2 font-medium">날짜</th>
+                                <th class="pb-2 font-medium">구분</th>
+                                <th class="pb-2 font-medium">항목</th>
+                                <th class="pb-2 text-right font-medium">금액</th>
+                                <th class="pb-2 text-center font-medium">더싼 식자재/필수품</th>
+                                <th class="pb-2 text-center font-medium">삭제</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+            `;
+
+            filtered.forEach(item => {
+                const isSales = item.type === 'sales';
+                html += `
+                    <tr>
+                        <td class="py-2.5 text-slate-600 font-medium">${item.date}</td>
+                        <td class="py-2.5"><span class="px-1.5 py-0.5 rounded text-[10px] ${isSales ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'}">${isSales ? '수입' : '지출'}</span></td>
+                        <td class="py-2.5 text-slate-900 font-medium">${item.category} <span class="text-[10px] text-slate-400">${item.memo ? '('+item.memo+')' : ''}</span></td>
+                        <td class="py-2.5 text-right font-bold ${isSales ? 'text-emerald-600' : 'text-rose-600'}">${item.amount.toLocaleString()}원</td>
+                        <td class="py-2.5 text-center">
+                            ${!isSales ? `<button onclick="openCoupangSearch('${item.category}')" class="text-[10px] font-bold text-orange-600 hover:underline bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded">🛒 최저가</button>` : '-'}
+                        </td>
+                        <td class="py-2.5 text-center"><button onclick="deleteEntry('${item.id}')" class="text-slate-400 hover:text-rose-600 px-2 py-1"><i class="fa-solid fa-trash-can"></i></button></td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        }
+
+        function onCalendarDateSelectChange() {
+            calendarYear = parseInt(document.getElementById('calYearSelect').value);
+            calendarMonth = parseInt(document.getElementById('calMonthSelect').value);
+            renderCalendarView(document.getElementById('history-container'));
+        }
+
+        function renderCalendarView(container) {
+            let yearOptionsHtml = '';
+            for (let y = 2020; y <= 2040; y++) {
+                yearOptionsHtml += `<option value="${y}" ${y === calendarYear ? 'selected' : ''}>${y}년</option>`;
+            }
+
+            let monthOptionsHtml = '';
+            for (let m = 1; m <= 12; m++) {
+                monthOptionsHtml += `<option value="${m}" ${m === calendarMonth ? 'selected' : ''}>${m}월</option>`;
+            }
+
+            const firstDayIndex = new Date(calendarYear, calendarMonth - 1, 1).getDay();
+            const lastDate = new Date(calendarYear, calendarMonth, 0).getDate();
+
+            const dayMap = {};
+            dbData.forEach(item => {
+                if (!item.date) return;
+                const p = item.date.split('-');
+                if (parseInt(p[0]) === calendarYear && parseInt(p[1]) === calendarMonth) {
+                    const day = parseInt(p[2]);
+                    if (!dayMap[day]) dayMap[day] = { sales: 0, expense: 0, entries: [] };
+                    if (item.type === 'sales') dayMap[day].sales += item.amount;
+                    else dayMap[day].expense += item.amount;
+                    dayMap[day].entries.push(item);
+                }
+            });
+
+            let html = `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <div class="flex items-center gap-1.5">
+                            <select id="calYearSelect" onchange="onCalendarDateSelectChange()" class="text-xs font-bold rounded-lg px-2.5 py-1.5 bg-white border border-slate-300">
+                                ${yearOptionsHtml}
+                            </select>
+                            <select id="calMonthSelect" onchange="onCalendarDateSelectChange()" class="text-xs font-bold rounded-lg px-2.5 py-1.5 bg-white border border-slate-300">
+                                ${monthOptionsHtml}
+                            </select>
+                        </div>
+                        <span class="text-[11px] font-semibold text-slate-500">날짜를 클릭하면 상세내역 확인 및 삭제 가능</span>
+                    </div>
+
+                    <div class="calendar-grid text-center text-[11px] font-bold text-slate-400 py-1 border-b border-slate-100">
+                        <span class="text-rose-500">일</span>
+                        <span>월</span><span>화</span><span>수</span><span>목</span><span>금</span>
+                        <span class="text-blue-500">토</span>
+                    </div>
+
+                    <div class="calendar-grid">
+            `;
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                html += `<div class="h-16 bg-slate-50/50 rounded-lg"></div>`;
+            }
+
+            for (let d = 1; d <= lastDate; d++) {
+                const dayData = dayMap[d];
+                const dayOfWeek = (firstDayIndex + d - 1) % 7;
+                let textColor = 'text-slate-700';
+                if (dayOfWeek === 0) textColor = 'text-rose-500 font-bold';
+                else if (dayOfWeek === 6) textColor = 'text-blue-500 font-bold';
+
+                const hasData = dayData && (dayData.sales > 0 || dayData.expense > 0);
+
+                html += `
+                    <div onclick="openDayDetailModal('${calendarYear}-${calendarMonth.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}')" 
+                         class="h-16 p-1 border border-slate-100 rounded-lg hover:bg-blue-50/60 cursor-pointer transition flex flex-col justify-between ${hasData ? 'bg-white shadow-2xs' : 'bg-slate-50/30'}">
+                        <span class="text-[10px] ${textColor}">${d}</span>
+                        <div class="space-y-0.5 text-right">
+                            ${dayData && dayData.sales > 0 ? `<p class="text-[9px] font-bold text-emerald-600 truncate">+${(dayData.sales/10000).toFixed(0)}만</p>` : ''}
+                            ${dayData && dayData.expense > 0 ? `<p class="text-[9px] font-bold text-rose-500 truncate">-${(dayData.expense/10000).toFixed(0)}만</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        function openDayDetailModal(dateStr) {
+            currentActiveDetailDate = dateStr;
+            const dayEntries = dbData.filter(item => item.date === dateStr);
+            document.getElementById('dayDetailTitle').innerText = `📅 ${dateStr} 내역 (${dayEntries.length}건)`;
+            
+            const container = document.getElementById('dayDetailList');
+            if (dayEntries.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-400 py-4">등록된 수입/지출 내역이 없습니다.</p>`;
+            } else {
+                let html = '<div class="space-y-1.5">';
+                dayEntries.forEach(item => {
+                    const isSales = item.type === 'sales';
+                    html += `
+                        <div class="flex justify-between items-center p-2.5 rounded-xl ${isSales ? 'bg-emerald-50 text-emerald-900 border border-emerald-100' : 'bg-rose-50 text-rose-900 border border-rose-100'}">
+                            <div class="flex-1 pr-2">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${isSales ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${isSales ? '수입' : '지출'}</span>
+                                    <span class="font-bold text-slate-800">${item.category}</span>
+                                </div>
+                                ${item.memo ? `<p class="text-[10px] text-slate-500 mt-0.5">${item.memo}</p>` : ''}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-xs ${isSales ? 'text-emerald-600' : 'text-rose-600'}">
+                                    ${isSales ? '+' : '-'}${item.amount.toLocaleString()}원
+                                </span>
+                                <button onclick="deleteEntry('${item.id}')" class="text-slate-400 hover:text-rose-600 p-1 transition" title="삭제">
+                                    <i class="fa-solid fa-trash-can text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            }
+
+            document.getElementById('dayDetailModal').classList.remove('hidden');
+        }
+
+        function renderChart(categoryMap) {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            const labels = Object.keys(categoryMap);
+            const dataValues = Object.values(categoryMap);
+
+            if (expenseChartObj) expenseChartObj.destroy();
+
+            if (labels.length === 0) {
+                document.getElementById('chartTitle').innerText = "지출 항목별 분석 (내역 없음)";
+                return;
+            }
+
+            const month = document.getElementById('monthSelect').value;
+            document.getElementById('chartTitle').innerText = month === 'ALL' ? '📅 연간 지출 항목별 분석' : '📊 월간 지출 항목별 분석';
+
+            expenseChartObj = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: ['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#64748b', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+    
+</script>
+
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, doc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const legacyConfig = {
+ apiKey: "AIzaSyAemJzk3V5hKH0cb0jP_XxtVRaYOZzL848",
+ authDomain: "alluser-77808.firebaseapp.com",
+ projectId: "alluser-77808",
+ storageBucket: "alluser-77808.firebasestorage.app",
+ messagingSenderId: "327718577440",
+ appId: "1:327718577440:web:c1b4717066a8434d30a345",
+ measurementId: "G-VT2NKC3ZY2"
+};
+window.startLegacyLedgerMigration = async function() {
+ const owner = window.firebase && window.firebase.auth && window.firebase.auth().currentUser;
+ if (!owner || !window.firebaseDb) return alert('사장님 계정으로 먼저 로그인해 주세요.');
+ if (!confirm('기존 가게부 프로젝트(alluser-77808)에 저장된 설정과 장부 내역을 현재 계정으로 복사합니다. 기존 데이터는 삭제하지 않습니다. 진행할까요?')) return;
+ let legacyApp;
+ try {
+  legacyApp = getApps().find(a => a.name === 'legacyLedgerImport') || initializeApp(legacyConfig, 'legacyLedgerImport');
+  const legacyAuth = getAuth(legacyApp);
+  const legacyDb = getFirestore(legacyApp);
+  const provider = new GoogleAuthProvider();
+  const result = await signInWithPopup(legacyAuth, provider);
+  const oldUid = result.user.uid;
+  const settingsSnap = await getDocs(collection(legacyDb, 'users', oldUid, 'settings'));
+  const ledgerSnap = await getDocs(collection(legacyDb, 'users', oldUid, 'ledger'));
+  const dest = window.firebaseDb;
+  let copied = 0, skipped = 0;
+  for (const item of settingsSnap.docs) {
+   const target = dest.collection('users').doc(owner.uid).collection('settings').doc(item.id);
+   const exists = await target.get();
+   if (exists.exists) { skipped++; continue; }
+   await target.set(item.data()); copied++;
+  }
+  for (const item of ledgerSnap.docs) {
+   const target = dest.collection('users').doc(owner.uid).collection('ledger').doc(item.id);
+   const exists = await target.get();
+   if (exists.exists) { skipped++; continue; }
+   await target.set(item.data()); copied++;
+  }
+  await signOut(legacyAuth);
+  alert(`가져오기 완료
+복사: ${copied}건
+기존 항목과 ID가 겹쳐 건너뜀: ${skipped}건
+기존 프로젝트의 데이터는 그대로 보존됩니다.`);
+  if (typeof initLedgerForOwner === 'function') await initLedgerForOwner(owner);
+ } catch (err) {
+  console.error('기존 장부 가져오기 실패:', err);
+  alert('데이터 가져오기에 실패했습니다. 기존 프로젝트의 로그인 및 Firestore 읽기 권한, 통합 프로젝트의 쓰기 권한을 확인해 주세요.
+' + (err.message || err));
+ }
+};
+</script>
 </body>
 </html>
