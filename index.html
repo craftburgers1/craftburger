@@ -356,13 +356,16 @@
                             <div>
                                 <label class="block font-bold text-gray-700 mb-1">☕ 휴게시간 차감 선택</label>
                                 <select id="staffBreakSelect" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-lg p-2 font-semibold bg-white">
-                                    <option value="auto">자동 계산 (4h: 30분 / 8h: 1시간)</option>
+                                    
                                     <option value="0">0분 (차감 안 함)</option>
                                     <option value="30">30분 (수동 차감)</option>
                                     <option value="60">1시간 (수동 차감)</option>
                                     <option value="90">1시간 30분 (수동 차감)</option>
                                     <option value="120">2시간 (수동 차감)</option>
-                                </select>
+                                
+                                    <option value="150">2시간 30분</option>
+                                    <option value="180">3시간</option>
+</select>
                             </div>
                             <div class="flex items-center">
                                 <label class="flex items-center space-x-2 cursor-pointer bg-white p-2.5 rounded-lg border border-gray-300 w-full mt-auto">
@@ -513,7 +516,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 mb-1">알바생 선택</label>
-                                <select id="adminInputStaffSelect" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm font-bold bg-amber-50/50">
+                                <select id="adminInputStaffSelect" onchange="setAdminBreakFromSelectedStaff()" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm font-bold bg-amber-50/50">
                                     <option value="">알바생을 선택하세요</option>
                                 </select>
                             </div>
@@ -533,13 +536,16 @@
                                 <div>
                                     <label class="block font-bold text-gray-700 mb-1">☕ 휴게시간 차감 선택</label>
                                     <select id="adminBreakSelect" class="w-full border border-gray-300 rounded-lg p-2 font-semibold bg-white">
-                                        <option value="auto">자동 계산 (4h: 30분 / 8h: 1시간)</option>
+                                        
                                         <option value="0">0분 (차감 안 함)</option>
                                         <option value="30">30분 (수동 차감)</option>
                                         <option value="60">1시간 (수동 차감)</option>
                                         <option value="90">1시간 30분 (수동 차감)</option>
                                         <option value="120">2시간 (수동 차감)</option>
-                                    </select>
+                                    
+                                    <option value="150">2시간 30분</option>
+                                    <option value="180">3시간</option>
+</select>
                                 </div>
                                 <div class="flex items-center">
                                     <label class="flex items-center space-x-2 cursor-pointer bg-white p-2.5 rounded-lg border border-gray-300 w-full mt-auto">
@@ -892,15 +898,33 @@
                                 <input type="time" id="contractEndTime" value="19:00" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block font-semibold text-gray-700 mb-0.5">휴게 시간</label>
-                                <input type="text" id="contractBreakTime" value="15:00 ~ 16:00 (1시간)" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
+                        <div class="rounded-lg border border-amber-200 bg-amber-50/60 p-3 space-y-2">
+                            <label class="flex items-center gap-2 font-bold text-gray-800">
+                                <input type="checkbox" id="contractBreakDeductCheck" onchange="toggleContractBreakSelect(); updateContractPreview();" class="w-4 h-4 text-amber-500 rounded">
+                                휴게시간(식사시간)을 근로시간에서 차감합니다.
+                            </label>
+                            <div class="grid grid-cols-2 gap-2 items-end">
+                                <div>
+                                    <label for="contractBreakMinutes" class="block font-semibold text-gray-700 mb-1">차감할 휴게시간</label>
+                                    <select id="contractBreakMinutes" onchange="updateContractPreview()" disabled class="w-full border border-gray-300 rounded p-2 bg-gray-100">
+                                        <option value="30">30분</option><option value="60">60분</option><option value="90">90분</option>
+                                        <option value="120">120분</option><option value="150">150분</option><option value="180">180분</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-gray-700 mb-1">계약서 기재 내용</label>
+                                    <input type="text" id="contractBreakTime" value="휴게시간 차감 없음" readonly class="w-full border border-gray-300 rounded p-2 bg-white font-semibold">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block font-semibold text-gray-700 mb-0.5">1일 / 1주 근로시간</label>
-                                <input type="text" id="contractDailyHours" value="1일 8시간 / 1주 40시간" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
-                            </div>
+                            <label class="flex items-start gap-2 text-[11px] text-gray-700">
+                                <input type="checkbox" id="contractBreakWaiverCheck" onchange="updateContractPreview()" class="w-3.5 h-3.5 mt-0.5 text-amber-500 rounded">
+                                <span>4시간 근로 시, 근로자가 휴게시간 미사용을 명시적으로 요청했습니다. <b class="text-amber-700">(2026.12.10 시행 예정)</b></span>
+                            </label>
+                            <p class="text-[10px] text-gray-500">휴게시간은 근로 도중에 실제로 자유롭게 이용할 수 있어야 합니다. 위 요청 항목은 정확히 4시간 근로 시에만 적용됩니다.</p>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-0.5">1일 소정근로시간 (자동 계산)</label>
+                            <input type="text" id="contractDailyHours" value="1일 8시간" readonly class="w-full border border-gray-300 rounded p-2 bg-gray-100">
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
@@ -1314,6 +1338,7 @@
         let attendanceList = [];
         let manualList = [];
         let contractList = [];
+        let contractsLoaded = false;
         let contractChangeContext = null;
         let currentActiveContract = null;
         let pendingUserObj = null;
@@ -1466,6 +1491,7 @@
 
         function initRealtimeListeners() {
             stopRealtimeListeners();
+            contractsLoaded = false;
             if (!ownerUid || !currentUser || !auth.currentUser) return;
 
             const staffsRef = getDBRef('staffs');
@@ -1485,6 +1511,8 @@
                 }, handleFirestoreError));
                 realtimeUnsubscribers.push(contractsRef.onSnapshot(snapshot => {
                     contractList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    contractsLoaded = true;
+                    setAdminBreakFromSelectedStaff();
                     renderAdminDashboard();
                 }, handleFirestoreError));
             } else {
@@ -1504,6 +1532,8 @@
                 }, handleFirestoreError));
                 realtimeUnsubscribers.push(contractsRef.where('staffId', '==', currentUser.id).onSnapshot(snapshot => {
                     contractList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    contractsLoaded = true;
+                    currentUser.breakDefaultApplied = false;
                     const signedTerms = getLatestStaffContract(currentUser.id, true);
                     if (signedTerms) currentUser.wage = Number(signedTerms.wage || currentUser.wage);
                     renderStaffDashboard();
@@ -1952,6 +1982,7 @@
         }
 
         function renderStaffDashboard() {
+            applyStaffContractBreakDefault();
             document.getElementById('staffNameDisplay').textContent = `${currentUser.name} 님`;
             document.getElementById('staffWageDisplay').textContent = `${currentUser.wage.toLocaleString()}원`;
 
@@ -2275,7 +2306,51 @@
         }
         function formatWorkDays(days) { return ['월','화','수','목','금','토','일'].filter(d => (days || []).includes(d)).join(', ') || '미설정'; }
         function formatRestDays(days) { const off = ['월','화','수','목','금','토','일'].filter(d => !(days || []).includes(d)); return off.length ? `매주 ${off.join(', ')} 휴무` : '휴무일 별도 협의'; }
-        function calculateContractDailyHours(start, end, breakText = '') { const toMin = v => { const [h,m] = String(v || '0:0').split(':').map(Number); return h*60+(m||0); }; let mins = Math.max(0, toMin(end)-toMin(start)); const h = breakText.match(/(\d+)\s*시간/); const m = breakText.match(/(\d+)\s*분/); mins = Math.max(0, mins-(h?Number(h[1])*60:0)-(m?Number(m[1]):0)); const dh=Math.floor(mins/60), dm=mins%60; const weekly=mins*0; return `1일 ${dh}시간${dm ? ` ${dm}분` : ''}`; }
+        function calculateContractDailyHours(start, end, breakMinutes = 0) {
+            const toMin = v => { const [h,m] = String(v || '0:0').split(':').map(Number); return h*60+(m||0); };
+            const startMinutes = toMin(start), endMinutes = toMin(end);
+            if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes)) return '시간 미설정';
+            const grossMinutes = Math.max(0, endMinutes-startMinutes);
+            const deduction = Math.max(0, Number(breakMinutes) || 0);
+            const mins = Math.max(0, grossMinutes-deduction);
+            const dh=Math.floor(mins/60), dm=mins%60;
+            return `1일 ${dh}시간${dm ? ` ${dm}분` : ''}`;
+        }
+        function getContractBreakMinutes() {
+            return document.getElementById('contractBreakDeductCheck').checked
+                ? Number(document.getElementById('contractBreakMinutes').value) || 0 : 0;
+        }
+        function toggleContractBreakSelect() {
+            const enabled = document.getElementById('contractBreakDeductCheck').checked;
+            const select = document.getElementById('contractBreakMinutes');
+            select.disabled = !enabled;
+            select.classList.toggle('bg-gray-100', !enabled);
+            select.classList.toggle('bg-white', enabled);
+        }
+        function legacyContractBreakMinutes(contract) {
+            if (Number.isFinite(Number(contract?.breakMinutes))) return Number(contract.breakMinutes);
+            const text = String(contract?.breakTime || '');
+            const hours = text.match(/(\d+)\s*시간/);
+            const minutes = text.match(/(\d+)\s*분/);
+            return (hours ? Number(hours[1])*60 : 0) + (minutes ? Number(minutes[1]) : 0);
+        }
+        function getStaffContractBreakMinutes(staffId) {
+            const signedContract = getLatestStaffContract(staffId, true);
+            return signedContract ? legacyContractBreakMinutes(signedContract) : 0;
+        }
+        function applyStaffContractBreakDefault() {
+            if (!currentUser || currentUser.role !== 'staff' || !contractsLoaded || currentUser.breakDefaultApplied) return;
+            const select = document.getElementById('staffBreakSelect');
+            if (select) select.value = String(getStaffContractBreakMinutes(currentUser.id));
+            currentUser.breakDefaultApplied = true;
+            if (document.getElementById('workStart').value && document.getElementById('workEnd').value) calculateWorkDuration();
+        }
+        function setAdminBreakFromSelectedStaff() {
+            const staffId = document.getElementById('adminInputStaffSelect').value;
+            if (!staffId || !contractsLoaded) return;
+            const select = document.getElementById('adminBreakSelect');
+            if (select) select.value = String(getStaffContractBreakMinutes(staffId));
+        }
         function renderStaffingSnapshot() {
             const now = new Date();
             const dateKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -2808,8 +2883,19 @@
             const startT = document.getElementById('contractStartTime').value || "__:__";
             const endT = document.getElementById('contractEndTime').value || "__:__";
             document.getElementById('prevWorkHours').textContent = `${startT} ~ ${endT}`;
-            document.getElementById('prevBreakTime').textContent = document.getElementById('contractBreakTime').value;
-            document.getElementById('prevDailyHours').textContent = document.getElementById('contractDailyHours').value;
+            const breakMinutes = getContractBreakMinutes();
+            const startMinutes = Number(startT.slice(0,2))*60 + Number(startT.slice(3,5));
+            const endMinutes = Number(endT.slice(0,2))*60 + Number(endT.slice(3,5));
+            const grossMinutes = Math.max(0, endMinutes-startMinutes);
+            const waiverRequested = document.getElementById('contractBreakWaiverCheck').checked;
+            const breakLabel = breakMinutes > 0
+                ? `휴게시간 ${breakMinutes}분 차감`
+                : (grossMinutes === 240 && waiverRequested ? '휴게시간 차감 없음 (근로자 명시적 요청)' : '휴게시간 차감 없음');
+            document.getElementById('contractBreakTime').value = breakLabel;
+            document.getElementById('prevBreakTime').textContent = breakLabel;
+            const dailyHours = calculateContractDailyHours(startT, endT, breakMinutes);
+            document.getElementById('contractDailyHours').value = dailyHours;
+            document.getElementById('prevDailyHours').textContent = dailyHours;
             document.getElementById('prevRestDay').textContent = document.getElementById('contractRestDay').value;
             
             const wage = Number(document.getElementById('contractWage').value) || 0;
@@ -2852,6 +2938,11 @@
 
             const previous = isAmendment ? getLatestStaffContract(staffId, true) : null;
             const terms = isAmendment && contractChangeContext ? contractChangeContext : null;
+            document.getElementById('contractBreakDeductCheck').checked = false;
+            document.getElementById('contractBreakWaiverCheck').checked = false;
+            document.getElementById('contractBreakMinutes').value = '30';
+            toggleContractBreakSelect();
+            document.getElementById('contractBreakTime').value = '휴게시간 차감 없음';
             document.getElementById('contractShopName').value = previous?.shopName || localStorage.getItem('default_shop_name') || '';
             document.getElementById('contractShopAddress').value = previous?.shopAddress || localStorage.getItem('default_shop_address') || '';
             document.getElementById('contractTask').value = previous?.task || localStorage.getItem('default_shop_task') || '';
@@ -2863,14 +2954,19 @@
                 document.getElementById('contractRestDay').value = formatRestDays(amendmentDays);
                 document.getElementById('contractStartTime').value = terms?.start || previous.startTime || '10:00';
                 document.getElementById('contractEndTime').value = terms?.end || previous.endTime || '18:00';
-                document.getElementById('contractBreakTime').value = previous.breakTime || '휴게시간 별도 협의';
+                const previousBreakMinutes = legacyContractBreakMinutes(previous);
+                document.getElementById('contractBreakDeductCheck').checked = previousBreakMinutes > 0;
+                document.getElementById('contractBreakWaiverCheck').checked = !!previous.breakWaiverRequested;
+                document.getElementById('contractBreakMinutes').value = String([30,60,90,120,150,180].includes(previousBreakMinutes) ? previousBreakMinutes : 30);
+                toggleContractBreakSelect();
+                document.getElementById('contractBreakTime').value = previousBreakMinutes > 0 ? `휴게시간 ${previousBreakMinutes}분 차감` : '휴게시간 차감 없음';
                 document.getElementById('contractDailyHours').value = previous.dailyHours || '';
                 document.getElementById('contractTask').value = previous.task || document.getElementById('contractTask').value;
                 document.getElementById('contractMonthlyBase').value = previous.monthlyBase || '해당없음 (시급제)';
                 document.getElementById('contractPayDay').value = previous.payDay || '매월 말일 지급';
                 document.getElementById('contractPayMethod').value = previous.payMethod || '계좌이체';
                 document.getElementById('contractWage').value = terms?.wage || previous.wage || staff.wage;
-                document.getElementById('contractDailyHours').value = calculateContractDailyHours(document.getElementById('contractStartTime').value, document.getElementById('contractEndTime').value, document.getElementById('contractBreakTime').value);
+                document.getElementById('contractDailyHours').value = calculateContractDailyHours(document.getElementById('contractStartTime').value, document.getElementById('contractEndTime').value, previousBreakMinutes);
                 document.querySelector(`input[name="companyType"][value="${previous.companyType || 'under5'}"]`).checked = true;
             } else {
                 const termsNow = getStaffEffectiveTerms(staff);
@@ -2932,6 +3028,19 @@
             const contractWageValue = Number(document.getElementById('contractWage').value);
             if (!Number.isFinite(contractWageValue) || contractWageValue <= 0) return alert('계약 시급을 올바르게 입력해주세요.');
 
+            const startClock = document.getElementById('contractStartTime').value;
+            const endClock = document.getElementById('contractEndTime').value;
+            const toMinutes = value => { const [h,m] = String(value || '').split(':').map(Number); return h*60+(m||0); };
+            const grossMinutes = Math.max(0, toMinutes(endClock)-toMinutes(startClock));
+            const agreedBreakMinutes = getContractBreakMinutes();
+            const netMinutes = Math.max(0, grossMinutes-agreedBreakMinutes);
+            const waiverRequested = document.getElementById('contractBreakWaiverCheck').checked;
+            if (netMinutes >= 480 && agreedBreakMinutes < 60) return alert('1일 실근로시간이 8시간 이상이면 휴게시간을 최소 60분 정해야 합니다.');
+            const waiverExceptionEffective = startDate >= '2026-12-10';
+            if (netMinutes >= 240 && netMinutes < 480 && agreedBreakMinutes < 30 && !(grossMinutes === 240 && waiverRequested && waiverExceptionEffective)) return alert(waiverRequested && grossMinutes === 240 && !waiverExceptionEffective
+                ? '4시간 근로자의 휴게시간 미사용 요청 예외는 2026년 12월 10일부터 시행됩니다. 그 이전 시작 계약은 30분 이상 휴게시간을 정해야 합니다.'
+                : '1일 실근로시간이 4시간 이상이면 휴게시간을 최소 30분 정해야 합니다.');
+
             if (isCanvasEmpty('ownerCanvas')) return alert('사장님 서명을 해주세요.');
 
             if (document.getElementById('saveShopDefaultCheck').checked) {
@@ -2960,6 +3069,8 @@
                 startTime: document.getElementById('contractStartTime').value,
                 endTime: document.getElementById('contractEndTime').value,
                 breakTime: document.getElementById('contractBreakTime').value,
+                breakMinutes: getContractBreakMinutes(),
+                breakWaiverRequested: document.getElementById('contractBreakWaiverCheck').checked,
                 dailyHours: document.getElementById('contractDailyHours').value,
                 wage: Number(document.getElementById('contractWage').value),
                 monthlyBase: document.getElementById('contractMonthlyBase').value,
