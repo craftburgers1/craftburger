@@ -1609,28 +1609,28 @@
         function getRecordMinutes(record) {
             if (!record) return 0;
             if (Number.isFinite(Number(record.minutes))) return Number(record.minutes);
-            const calc = calculateDetailedWork(record.startTime, record.endTime, record.breakOption || 'auto', !!record.isExtraPayChecked, Number(record.wageAtTime) || 10030);
+            const calc = calculateDetailedWork(record.startTime, record.endTime, record.breakOption ?? 'auto', !!record.isExtraPayChecked, Number(record.wageAtTime) || 10030);
             return calc ? calc.minutes : 0;
         }
 
         function getRecordPay(record) {
             if (!record) return 0;
             if (Number.isFinite(Number(record.pay))) return Number(record.pay);
-            const calc = calculateDetailedWork(record.startTime, record.endTime, record.breakOption || 'auto', !!record.isExtraPayChecked, Number(record.wageAtTime) || 10030);
+            const calc = calculateDetailedWork(record.startTime, record.endTime, record.breakOption ?? 'auto', !!record.isExtraPayChecked, Number(record.wageAtTime) || 10030);
             return calc ? calc.totalPay : 0;
         }
 
         function getRecordBasePay(record) {
             if (!record) return 0;
             if (Number.isFinite(Number(record.basePay))) return Number(record.basePay);
-            const calc = calculateDetailedWork(record.startTime, record.endTime, record.breakOption || 'auto', !!record.isExtraPayChecked, Number(record.wageAtTime) || 10030);
+            const calc = calculateDetailedWork(record.startTime, record.endTime, record.breakOption ?? 'auto', !!record.isExtraPayChecked, Number(record.wageAtTime) || 10030);
             return calc ? calc.basePay : getRecordPay(record);
         }
 
         function getRecordExtraPay(record) {
             if (!record) return 0;
             if (Number.isFinite(Number(record.extraPay))) return Number(record.extraPay);
-            const calc = calculateDetailedWork(record.startTime, record.endTime, record.breakOption || 'auto', !!record.isExtraPayChecked, Number(record.wageAtTime) || 10030);
+            const calc = calculateDetailedWork(record.startTime, record.endTime, record.breakOption ?? 'auto', !!record.isExtraPayChecked, Number(record.wageAtTime) || 10030);
             return calc ? calc.extraPay : 0;
         }
 
@@ -2575,89 +2575,134 @@
                 return alert('유효한 근로계약서에 근무요일과 출퇴근 시간이 등록되어 있어야 합니다.');
             }
 
-            // 날짜는 브라우저의 현지 날짜 기준으로 판단하며, 오늘 이후는 절대 생성하지 않습니다.
-            const now = new Date();
-            const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            const [year, month] = selectedMonth.split('-').map(Number);
-            const daysInMonth = new Date(year, month, 0).getDate();
-            const contract = terms.contract;
-            const breakText = String(contract?.breakTime || '');
-            const breakHourMatch = breakText.match(/(\d+)\s*시간/);
-            const breakMinuteMatch = breakText.match(/(\d+)\s*분/);
-            const hasExplicitBreak = !!(breakHourMatch || breakMinuteMatch);
-            const contractBreakOption = hasExplicitBreak
-                ? (Number(breakHourMatch?.[1] || 0) * 60 + Number(breakMinuteMatch?.[1] || 0))
-                : 'auto';
-            const existingDates = new Set(
-                attendanceList
-                    .filter(record => record.staffId === staffId)
-                    .map(record => String(record.startTime || '').slice(0, 10))
+            // 일괄 입력은 기본적으로 휴게시간을 차감하지 않습니다.
+            // 사장님이 차감을 선택한 경우에만 직접 시간을 선택합니다.
+            const shouldDeductBreak = confirm(
+                `[${staff.name}] 계약시간 일괄 입력\n\n휴게시간을 차감하시겠습니까?\n\n[확인] 차감하기\n[취소] 차감하지 않기`
             );
 
-            const recordsToCreate = [];
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateKey = `${selectedMonth}-${String(day).padStart(2, '0')}`;
-                if (dateKey > todayKey) continue; // 미래 날짜는 입력 금지
-                if (existingDates.has(dateKey)) continue; // 해당 날짜에 기록이 있으면 덮어쓰지 않음
+            if (shouldDeductBreak) {
+                const overlay = document.createElement('div');
+                overlay.id = 'bulkBreakSelectModal';
+                overlay.className = 'fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[100]';
+                overlay.innerHTML = `
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4">
+                        <div>
+                            <h3 class="text-base font-extrabold text-gray-900">휴게시간 차감 설정</h3>
+                            <p class="text-xs text-gray-500 mt-1">일괄 입력할 모든 근무일에 동일하게 적용됩니다.</p>
+                        </div>
+                        <div>
+                            <label for="bulkBreakMinutesSelect" class="block text-xs font-bold text-gray-700 mb-2">차감할 휴게시간</label>
+                            <select id="bulkBreakMinutesSelect" class="w-full border border-gray-300 rounded-xl p-3 text-sm font-semibold">
+                                <option value="30">30분</option>
+                                <option value="60">1시간</option>
+                                <option value="90">1시간 30분</option>
+                                <option value="120">2시간</option>
+                                <option value="150">2시간 30분</option>
+                                <option value="180">3시간</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" id="bulkBreakCancelBtn" class="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm">취소</button>
+                            <button type="button" id="bulkBreakApplyBtn" class="flex-1 py-3 rounded-xl bg-amber-500 text-white font-bold text-sm">선택 시간 차감</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(overlay);
 
-                const date = new Date(year, month - 1, day);
-                const weekday = WEEKDAY_KO[date.getDay()];
-                if (!terms.scheduleDays.includes(weekday)) continue;
+                overlay.querySelector('#bulkBreakCancelBtn').onclick = () => overlay.remove();
+                overlay.addEventListener('click', event => {
+                    if (event.target === overlay) overlay.remove();
+                });
+                overlay.querySelector('#bulkBreakApplyBtn').onclick = () => {
+                    const selectedBreakMinutes = Number(overlay.querySelector('#bulkBreakMinutesSelect').value);
+                    overlay.remove();
+                    executeBulkEntry(selectedBreakMinutes);
+                };
+            } else {
+                executeBulkEntry(0);
+            }
 
-                const contractStart = contract?.startDate || contract?.contractDate || '';
-                const contractEnd = contract?.endDate || '';
-                if (contractStart && contractStart !== '기간의 정함 없음' && dateKey < contractStart) continue;
-                if (contractEnd && contractEnd !== '기간의 정함 없음' && dateKey > contractEnd) continue;
+            function executeBulkEntry(breakMinutesToDeduct) {
+                // 날짜는 브라우저의 현지 날짜 기준이며, 오늘 이후는 생성하지 않습니다.
+                const now = new Date();
+                const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const [year, month] = selectedMonth.split('-').map(Number);
+                const daysInMonth = new Date(year, month, 0).getDate();
+                const existingDates = new Set(
+                    attendanceList
+                        .filter(record => record.staffId === staffId)
+                        .map(record => String(record.startTime || '').slice(0, 10))
+                );
 
-                const startVal = `${dateKey}T${terms.startTime}`;
-                let endDateKey = dateKey;
-                if (terms.endTime <= terms.startTime) {
-                    const nextDate = new Date(year, month - 1, day + 1);
-                    endDateKey = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+                const recordsToCreate = [];
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dateKey = `${selectedMonth}-${String(day).padStart(2, '0')}`;
+                    if (dateKey > todayKey) continue;
+                    if (existingDates.has(dateKey)) continue;
+
+                    const date = new Date(year, month - 1, day);
+                    const weekday = WEEKDAY_KO[date.getDay()];
+                    if (!terms.scheduleDays.includes(weekday)) continue;
+
+                    const contract = terms.contract;
+                    const contractStart = contract?.startDate || contract?.contractDate || '';
+                    const contractEnd = contract?.endDate || '';
+                    if (contractStart && contractStart !== '기간의 정함 없음' && dateKey < contractStart) continue;
+                    if (contractEnd && contractEnd !== '기간의 정함 없음' && dateKey > contractEnd) continue;
+
+                    const startVal = `${dateKey}T${terms.startTime}`;
+                    let endDateKey = dateKey;
+                    if (terms.endTime <= terms.startTime) {
+                        const nextDate = new Date(year, month - 1, day + 1);
+                        endDateKey = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+                    }
+                    const endVal = `${endDateKey}T${terms.endTime}`;
+                    const wage = Number(terms.wage || 0);
+                    const work = calculateDetailedWork(startVal, endVal, breakMinutesToDeduct, false, wage);
+                    if (!work) continue;
+
+                    recordsToCreate.push({
+                        staffId: staff.id,
+                        staffName: staff.name,
+                        startTime: startVal,
+                        endTime: endVal,
+                        grossMinutes: work.grossMinutes,
+                        breakMinutes: work.breakMinutes,
+                        minutes: work.minutes,
+                        wageAtTime: wage,
+                        basePay: work.basePay,
+                        extraPay: work.extraPay,
+                        pay: work.totalPay,
+                        extraDesc: work.extraDesc,
+                        isExtraPayChecked: false,
+                        breakOption: breakMinutesToDeduct,
+                        isEdited: false,
+                        editHistory: [],
+                        createdAt: new Date().toISOString(),
+                        createdBy: `계약시간 일괄 입력 - 사장님 (${currentUser.name})`
+                    });
                 }
-                const endVal = `${endDateKey}T${terms.endTime}`;
-                const wage = Number(terms.wage || 0);
-                const work = calculateDetailedWork(startVal, endVal, contractBreakOption, false, wage);
-                if (!work) continue;
 
-                recordsToCreate.push({
-                    staffId: staff.id,
-                    staffName: staff.name,
-                    startTime: startVal,
-                    endTime: endVal,
-                    grossMinutes: work.grossMinutes,
-                    breakMinutes: work.breakMinutes,
-                    minutes: work.minutes,
-                    wageAtTime: wage,
-                    basePay: work.basePay,
-                    extraPay: work.extraPay,
-                    pay: work.totalPay,
-                    extraDesc: work.extraDesc,
-                    isExtraPayChecked: false,
-                    breakOption: contractBreakOption,
-                    isEdited: false,
-                    editHistory: [],
-                    createdAt: new Date().toISOString(),
-                    createdBy: `계약시간 일괄 입력 - 사장님 (${currentUser.name})`
-                });
+                if (!recordsToCreate.length) {
+                    return alert('입력할 날짜가 없습니다.\n오늘 이후 날짜, 휴무일, 이미 근태가 등록된 날짜, 계약기간 밖의 날짜는 제외됩니다.');
+                }
+
+                const breakLabel = breakMinutesToDeduct > 0
+                    ? `${breakMinutesToDeduct}분 차감`
+                    : '휴게시간 차감 없음';
+                const confirmMessage = `[${staff.name}] 근무기록 ${recordsToCreate.length}건을 입력합니다.\n\n- 계약 근무요일 및 출퇴근 시간 적용\n- 오늘 날짜까지의 날짜만 입력\n- 기존 근태 기록이 있는 날짜는 건너뜀\n- 휴게시간: ${breakLabel}\n\n계속하시겠습니까?`;
+                if (!confirm(confirmMessage)) return;
+
+                Promise.all(recordsToCreate.map(record => getDBRef('attendance').add(record)))
+                    .then(() => {
+                        alert(`${recordsToCreate.length}건의 근무기록을 입력했습니다.\n휴게시간: ${breakLabel}\n미래 날짜는 입력하지 않았습니다.`);
+                        renderAdminStaffCalendar();
+                    })
+                    .catch(error => {
+                        console.error('계약시간 일괄 입력 오류:', error);
+                        alert('일괄 입력 중 오류가 발생했습니다. 일부 기록이 저장되었을 수 있으니 달력을 확인해 주세요.');
+                    });
             }
-
-            if (!recordsToCreate.length) {
-                return alert('입력할 날짜가 없습니다.\n오늘 이후 날짜, 휴무일, 이미 근태가 등록된 날짜, 계약기간 밖의 날짜는 제외됩니다.');
-            }
-
-            const confirmMessage = `[${staff.name}] 근무기록 ${recordsToCreate.length}건을 입력합니다.\n\n- 계약 근무요일 및 출퇴근 시간 적용\n- 오늘 날짜까지의 날짜만 입력\n- 기존 근태 기록이 있는 날짜는 건너뜀\n- 계약서에 휴게시간이 있으면 해당 시간 적용, 없으면 자동 기준 적용\n\n계속하시겠습니까?`;
-            if (!confirm(confirmMessage)) return;
-
-            Promise.all(recordsToCreate.map(record => getDBRef('attendance').add(record)))
-                .then(() => {
-                    alert(`${recordsToCreate.length}건의 근무기록을 입력했습니다.\n미래 날짜는 입력하지 않았습니다.`);
-                    renderAdminStaffCalendar();
-                })
-                .catch(error => {
-                    console.error('계약시간 일괄 입력 오류:', error);
-                    alert('일괄 입력 중 오류가 발생했습니다. 일부 기록이 저장되었을 수 있으니 달력을 확인해 주세요.');
-                });
         }
 
         function setupCanvasDrawing(canvasId) {
@@ -3290,7 +3335,7 @@
             document.getElementById('editStaffWage').value = record.wageAtTime;
             document.getElementById('editWorkStart').value = record.startTime;
             document.getElementById('editWorkEnd').value = record.endTime;
-            document.getElementById('editBreakSelect').value = record.breakOption || 'auto';
+            document.getElementById('editBreakSelect').value = record.breakOption ?? 'auto';
             document.getElementById('editExtraPayCheck').checked = !!record.isExtraPayChecked;
             document.getElementById('editReason').value = '';
 
