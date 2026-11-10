@@ -269,8 +269,23 @@
                     </div>
                 </div>
 
-                <!-- ANNUAL LEAVE: STAFF VIEW -->
-                <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-3">
+                <!-- STAFF LEAVE TAB ENTRY: 휴가는 필요할 때만 열어보도록 별도 탭으로 분리 -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <button type="button" onclick="toggleStaffLeaveTab(true)" class="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-slate-50 transition">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-calendar-check text-lg"></i></span>
+                            <span class="min-w-0"><span class="block text-sm font-extrabold text-slate-900">휴가 신청 · 내역</span><span class="block text-[11px] text-slate-500 mt-0.5">연차 잔여시간 확인 및 휴가 신청</span></span>
+                        </div>
+                        <span class="flex items-center gap-2 shrink-0"><span id="staffLeaveTabPendingBadge" class="hidden text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 px-2 py-1"></span><i class="fa-solid fa-chevron-right text-slate-400"></i></span>
+                    </button>
+                </div>
+
+                <!-- ANNUAL LEAVE: STAFF VIEW (별도 탭 안에서만 표시) -->
+                <section id="staffLeaveTabPanel" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-100 space-y-3">
+                    <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                        <div><h3 class="text-base font-extrabold text-slate-900"><i class="fa-solid fa-calendar-check text-emerald-600 mr-2"></i>휴가 신청 · 내역</h3><p class="text-[11px] text-gray-500 mt-1">승인된 휴가와 잔여 시간을 확인하고 휴가를 신청할 수 있습니다.</p></div>
+                        <button type="button" onclick="toggleStaffLeaveTab(false)" class="shrink-0 text-xs font-bold text-slate-500 hover:text-slate-900 px-3 py-2 rounded-lg bg-slate-100"><i class="fa-solid fa-arrow-left mr-1"></i>돌아가기</button>
+                    </div>
                     <div class="flex items-center justify-between gap-2">
                         <div><h3 class="text-base font-extrabold text-slate-900"><i class="fa-solid fa-calendar-check text-emerald-600 mr-2"></i>내 연차·휴가</h3><p class="text-[11px] text-gray-500 mt-1">승인된 휴가와 잔여 시간을 확인하고 휴가를 신청할 수 있습니다.</p></div>
                         <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-full">시간 단위 관리</span>
@@ -2279,12 +2294,25 @@
                 + (c.monthlyPositionOrdinary !== false ? Number(c.monthlyPositionAllowance || 0) : 0);
             return Number(c.monthlyOrdinaryHours) > 0 ? ordinary / Number(c.monthlyOrdinaryHours) : Number(c.wage || 0);
         }
+        function toggleStaffLeaveTab(open) {
+            const panel = document.getElementById('staffLeaveTabPanel');
+            if (!panel) return;
+            const shouldOpen = typeof open === 'boolean' ? open : panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !shouldOpen);
+            if (shouldOpen) {
+                renderStaffLeavePanel();
+                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
         function renderStaffLeavePanel() {
             if (!currentUser || currentUser.role !== 'staff') return;
             const legal = Math.max(0, leaveHoursFor(currentUser.id, 'statutory'));
             const company = Math.max(0, leaveHoursFor(currentUser.id, 'company'));
             const expiredReview = leaveBalanceBreakdown(currentUser.id,'statutory').expired + leaveBalanceBreakdown(currentUser.id,'company').expired;
             const pending = leaveList.filter(x => x.type === 'request' && x.status === 'pending').length;
+            const pendingBadge = document.getElementById('staffLeaveTabPendingBadge');
+            if (pendingBadge) { pendingBadge.textContent = `승인 대기 ${pending}건`; pendingBadge.classList.toggle('hidden', pending < 1); }
             const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
             set('staffStatutoryLeaveBalance', `${legal}시간`);
             set('staffCompanyLeaveBalance', `${company}시간`);
