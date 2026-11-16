@@ -5138,5 +5138,48 @@ renderStaffContractHistory = function () {
   return r;
 };
 </script>
+
+<script>
+/* ===== 급여명세서 PDF 저장 v20: html2pdf(모바일 호환) + 실패 시 인쇄창 ===== */
+async function downloadPayslipPDFv20() {
+    if (!activePayslipData) return alert('급여명세서 데이터가 없습니다.');
+    const printElement = document.getElementById('payslipPrintArea');
+    if (!printElement) return alert('급여명세서 영역을 찾을 수 없습니다.');
+    const staffName = activePayslipData.staffName || '근로자';
+    const startDate = activePayslipData.startDate || '';
+    const endDate = activePayslipData.endDate || '';
+    const fileBase = `급여명세서_${staffName}_${startDate}~${endDate}`;
+    const host = document.createElement('div');
+    host.style.cssText = 'position:fixed;left:0;top:0;width:718px;min-width:718px;max-width:718px;background:#fff;z-index:2147483000;pointer-events:none;overflow:hidden;';
+    const clone = printElement.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.style.width = '718px'; clone.style.maxWidth = '718px'; clone.style.boxSizing = 'border-box'; clone.style.margin = '0'; clone.style.overflow = 'hidden';
+    clone.querySelectorAll('td, th, p, span, div').forEach(el => { el.style.overflowWrap = 'anywhere'; el.style.minWidth = '0'; });
+    clone.querySelectorAll('table').forEach(t => { t.style.maxWidth = '100%'; });
+    host.appendChild(clone);
+    document.body.appendChild(host);
+    try {
+        window.scrollTo(0, 0);
+        if (document.fonts?.ready) await document.fonts.ready;
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: fileBase + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, x: 0, y: 0, width: 718, windowWidth: 718 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        await html2pdf().set(opt).from(clone).save();
+        if (endDate && activePayslipData.staffId) { try { localStorage.setItem(`last_settlement_end_${activePayslipData.staffId}`, endDate); } catch (_) {} }
+    } catch (err) {
+        console.error('급여명세서 PDF 생성 오류:', err);
+        try { await printElementAsPdf(printElement, fileBase); }
+        catch (e2) { alert('PDF 생성에 실패했습니다. 브라우저를 새로고침한 뒤 다시 시도해 주세요.'); }
+    } finally {
+        host.remove();
+    }
+}
+downloadPayslipPDFFromModal = downloadPayslipPDFv20;
+</script>
 </body>
 </html>
