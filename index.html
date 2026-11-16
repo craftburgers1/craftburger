@@ -5181,5 +5181,29 @@ async function downloadPayslipPDFv20() {
 }
 downloadPayslipPDFFromModal = downloadPayslipPDFv20;
 </script>
+
+<style id="tabbar-v21">
+@media (max-width:767px){
+  .admin-tabbar{overflow:visible !important;gap:2px !important;padding:4px !important;}
+  .admin-tabbar > *{flex:1 1 0 !important;min-width:0;flex-direction:column !important;gap:3px !important;
+    padding:8px 2px 6px !important;font-size:10.5px !important;line-height:1.2;white-space:normal !important;text-align:center;}
+  .admin-tabbar > * i.fa-solid:first-child{font-size:18px !important;}
+  .admin-tabbar .tab-full{display:none;}
+  .admin-tabbar .ext-ic{display:none !important;}
+}
+@media (min-width:768px){ .admin-tabbar .tab-short{display:none;} }
+</style>
+<script>
+(function(){
+  const L={adminTabStatusBtn:['알바 현황 및 급여 관리','현황·급여'],adminTabManualBtn:['알바 업무 매뉴얼 관리','업무매뉴얼'],
+           adminTabLawBtn:['노동법·계산 기준','노동법'],adminTabLeaveBtn:['연차·휴가 관리','연차·휴가']};
+  Object.keys(L).forEach(id=>{const b=document.getElementById(id); if(!b) return;
+    const ic=b.querySelector('i'); const icHtml=ic?ic.outerHTML:'';
+    b.innerHTML=icHtml+'<span class="tab-full">'+L[id][0]+'</span><span class="tab-short">'+L[id][1]+'</span>';});
+  const a=document.getElementById('bookkeepingExternalLink');
+  if(a){ const ic=a.querySelector('i'); const ext=a.querySelector('i.fa-arrow-up-right-from-square');
+    if(ext) ext.classList.add('ext-ic'); const sp=a.querySelector('span'); if(sp) sp.className='tab-short'; }
+})();
+</script>
 </body>
 </html>
