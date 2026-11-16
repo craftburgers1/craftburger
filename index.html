@@ -979,11 +979,18 @@
                                 <input type="text" id="contractWorkDays" value="월, 화, 수, 목, 금, 일 (주 5일)" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
                             </div>
                             <div>
-                                <label class="block font-semibold text-gray-700 mb-0.5">주휴일</label>
+                                <label class="block font-semibold text-gray-700 mb-0.5">휴무일 (비근무일)</label>
                                 <input type="text" id="contractRestDay" value="매주 토요일" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block font-semibold text-gray-700 mb-0.5">법정 주휴일 (주 1일)</label>
+                                <select id="contractWeeklyHoliday" onchange="updateContractPreview()" class="w-full border border-gray-300 rounded p-2 bg-white">
+                                    <option value="일">일요일</option><option value="월">월요일</option><option value="화">화요일</option><option value="수">수요일</option><option value="목">목요일</option><option value="금">금요일</option><option value="토">토요일</option>
+                                </select>
+                                <p class="text-[10px] text-gray-500 mt-1">주휴일 근로와 단순 휴무일 근로를 구분하기 위한 설정입니다.</p>
+                            </div>
                             <div>
                                 <label class="block font-semibold text-gray-700 mb-0.5">출근 시각</label>
                                 <input type="time" id="contractStartTime" value="10:00" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
@@ -2573,7 +2580,7 @@
                     <td class="p-2.5">${formatDateTime(r.endTime)}</td>
                     <td class="p-2.5 text-gray-500">${r.breakMinutes || 0}분</td>
                     <td class="p-2.5 font-semibold">${Math.floor(getRecordMinutes(r)/60)}시간 ${getRecordMinutes(r)%60}분</td>
-                    <td class="p-2.5 text-right font-bold text-amber-600">${getRecordPay(r).toLocaleString()}원</td>
+                    <td class="p-2.5 text-right font-bold text-amber-600">${isMonthlyStaff ? '월급제 정산' : `${getRecordPay(r).toLocaleString()}원`}</td>
                     <td class="p-2.5 text-center">${historyTag}</td>
                 `;
                 tableBody.appendChild(tr);
@@ -2613,7 +2620,7 @@
                     contentHtml += `
                         <div class="mt-0.5 bg-amber-100 text-amber-900 p-0.5 sm:p-1 rounded text-[9px] sm:text-[10px] leading-tight">
                             <p class="font-bold">${hrs}h ${mins}m</p>
-                            <p class="text-amber-700 hidden sm:block font-medium">${workInfo.pay.toLocaleString()}원</p>
+                            <p class="text-amber-700 hidden sm:block font-medium">${isMonthlyStaff ? '월급제 근태기록' : `${workInfo.pay.toLocaleString()}원`}</p>
                         </div>
                     `;
                 }
@@ -3064,7 +3071,11 @@
 
             detailCard.classList.remove('hidden');
             const effectiveTerms = getStaffEffectiveTerms(staff);
-            document.getElementById('detailStaffWage').textContent = `${effectiveTerms.wage.toLocaleString()}원`;
+            const activeContract = effectiveTerms.contract || {};
+            const isMonthlyStaff = activeContract.wageType === 'monthly';
+            document.getElementById('detailStaffWage').textContent = isMonthlyStaff
+                ? `통상시급 약 ${Math.round(effectiveTerms.wage).toLocaleString()}원`
+                : `${effectiveTerms.wage.toLocaleString()}원`;
             const scheduleText = `${formatWorkDays(effectiveTerms.scheduleDays)} · ${effectiveTerms.startTime || '--:--'} ~ ${effectiveTerms.endTime || '--:--'}`;
             document.getElementById('detailStaffSchedule').textContent = scheduleText;
             renderStaffContractHistory(selectedStaffId);
@@ -3084,12 +3095,16 @@
                 totalExtraPay += getRecordExtraPay(r);
             });
 
-            const weeklyAllowance = calculateWeeklyAllowance(filteredRecords, effectiveTerms.wage);
+            const weeklyAllowance = isMonthlyStaff ? 0 : calculateWeeklyAllowance(filteredRecords, effectiveTerms.wage);
             const totalPay = totalBasePay + totalExtraPay + weeklyAllowance;
 
             document.getElementById('detailStaffHours').textContent = `${Math.floor(totalMinutes/60)}시간 ${totalMinutes%60}분`;
-            document.getElementById('detailStaffPay').textContent = `${totalPay.toLocaleString()}원`;
-            document.getElementById('detailStaffAllowance').textContent = `(주휴수당: ${weeklyAllowance.toLocaleString()}원 / 가산금: ${totalExtraPay.toLocaleString()}원)`;
+            document.getElementById('detailStaffPay').textContent = isMonthlyStaff
+                ? '월급제 · 정산 미리보기에서 계산'
+                : `${totalPay.toLocaleString()}원`;
+            document.getElementById('detailStaffAllowance').textContent = isMonthlyStaff
+                ? '(월 약정급여 + 실제 연장·야간·휴일수당 별도 정산)'
+                : `(주휴수당: ${weeklyAllowance.toLocaleString()}원 / 가산금: ${totalExtraPay.toLocaleString()}원)`;
 
             const [yearStr, monthStr] = selectedMonth.split('-');
             const year = parseInt(yearStr);
@@ -3265,6 +3280,7 @@
                         endDateKey = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
                     }
                     const endVal = `${endDateKey}T${terms.endTime}`;
+                    const isMonthlyWage = contract.wageType === 'monthly';
                     const wage = Number(terms.wage || 0);
                     const work = calculateDetailedWork(startVal, endVal, breakMinutesToDeduct, false, wage);
                     if (!work) continue;
@@ -3278,10 +3294,13 @@
                         breakMinutes: work.breakMinutes,
                         minutes: work.minutes,
                         wageAtTime: wage,
-                        basePay: work.basePay,
-                        extraPay: work.extraPay,
-                        pay: work.totalPay,
-                        extraDesc: work.extraDesc,
+                        wageTypeAtTime: isMonthlyWage ? 'monthly' : 'hourly',
+                        contractIdAtTime: contract.id || null,
+                        // 월급제는 일별 근태기록에서 일급을 산출하지 않습니다. 월급과 추가수당은 정산 화면에서 월 단위로 계산합니다.
+                        basePay: isMonthlyWage ? 0 : work.basePay,
+                        extraPay: isMonthlyWage ? 0 : work.extraPay,
+                        pay: isMonthlyWage ? 0 : work.totalPay,
+                        extraDesc: isMonthlyWage ? '월급제 근태기록 · 월 단위 정산' : work.extraDesc,
                         isExtraPayChecked: false,
                         breakOption: breakMinutesToDeduct,
                         isEdited: false,
@@ -3456,7 +3475,7 @@
             const dailyHours = calculateContractDailyHours(startT, endT, breakMinutes);
             document.getElementById('contractDailyHours').value = dailyHours;
             document.getElementById('prevDailyHours').textContent = dailyHours;
-            document.getElementById('prevRestDay').textContent = document.getElementById('contractRestDay').value;
+            document.getElementById('prevRestDay').textContent = `${document.getElementById('contractRestDay').value} · 법정 주휴일: 매주 ${document.getElementById('contractWeeklyHoliday').value}요일`;
             
             const wageType = getContractWageType();
             if (wageType === 'monthly') {
@@ -3524,6 +3543,8 @@
                 const amendmentDays = terms?.days || getStaffEffectiveTerms(staff).scheduleDays;
                 document.getElementById('contractWorkDays').value = formatWorkDays(amendmentDays);
                 document.getElementById('contractRestDay').value = formatRestDays(amendmentDays);
+                const legacyWeeklyHolidayMatch = String(previous.restDay || '').match(/(?:매주\s*)?([월화수목금토일])요일/);
+                document.getElementById('contractWeeklyHoliday').value = previous.weeklyHoliday || (legacyWeeklyHolidayMatch ? legacyWeeklyHolidayMatch[1] : '일');
                 document.getElementById('contractStartTime').value = terms?.start || previous.startTime || '10:00';
                 document.getElementById('contractEndTime').value = terms?.end || previous.endTime || '18:00';
                 const previousBreakMinutes = legacyContractBreakMinutes(previous);
@@ -3555,6 +3576,7 @@
                 const termsNow = getStaffEffectiveTerms(staff);
                 document.getElementById('contractWorkDays').value = formatWorkDays(termsNow.scheduleDays);
                 document.getElementById('contractRestDay').value = formatRestDays(termsNow.scheduleDays);
+                document.getElementById('contractWeeklyHoliday').value = termsNow.contract?.weeklyHoliday || '일';
                 document.getElementById('contractStartTime').value = termsNow.startTime || '10:00';
                 document.getElementById('contractEndTime').value = termsNow.endTime || '18:00';
                 document.getElementById('contractWage').value = termsNow.wage;
@@ -3670,6 +3692,7 @@
                 task: document.getElementById('contractTask').value.trim(),
                 workDays: document.getElementById('contractWorkDays').value,
                 restDay: document.getElementById('contractRestDay').value,
+                weeklyHoliday: document.getElementById('contractWeeklyHoliday').value,
                 startTime: document.getElementById('contractStartTime').value,
                 endTime: document.getElementById('contractEndTime').value,
                 breakTime: document.getElementById('contractBreakTime').value,
@@ -3838,9 +3861,9 @@
 
         // 월급제 법정 추가수당 산출: 5인 이상 사업장 기준. 고정 연장수당과 실제 발생액을 대조한다.
         function calculateMonthlyPremiums(allRecords, contract, ordinaryHourly, startDate, endDate) {
-            const dayNames = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
-            const restText = String(contract.restDay || '');
-            const restDayIndex = dayNames.findIndex(d => restText.includes(d));
+            const weekdayIndex = { '일':0, '월':1, '화':2, '수':3, '목':4, '금':5, '토':6 };
+            const restDayIndex = Object.prototype.hasOwnProperty.call(weekdayIndex, contract.weeklyHoliday)
+                ? weekdayIndex[contract.weeklyHoliday] : -1;
             const all = allRecords.filter(r => r && r.startTime && r.endTime)
                 .map(r => {
                     const start = new Date(r.startTime), end = new Date(r.endTime);
@@ -3974,8 +3997,11 @@
                 }
                 const amount = Math.round(prorated || monthlyTotal);
                 const fixedOTProrated = monthlyTotal > 0 ? Math.round(amount * fixedOT / monthlyTotal) : 0;
-                const ordinaryMonthly = monthBase + meal + transport + position;
-                const ordinaryHourly = Number(effectiveTerms.wage) || (Number(contract.monthlyOrdinaryHours) > 0 ? ordinaryMonthly / Number(contract.monthlyOrdinaryHours) : 0);
+                const ordinaryMonthly = monthBase
+                    + (contract.monthlyMealOrdinary !== false ? meal : 0)
+                    + (contract.monthlyTransportOrdinary !== false ? transport : 0)
+                    + (contract.monthlyPositionOrdinary !== false ? position : 0);
+                const ordinaryHourly = Number(contract.wage) || Number(effectiveTerms.wage) || (Number(contract.monthlyOrdinaryHours) > 0 ? ordinaryMonthly / Number(contract.monthlyOrdinaryHours) : 0);
                 scheduleVariance = calculateMonthlyScheduleVariance(records, contract, startDate, endDate, ordinaryHourly);
                 const isOver5 = contract.companyType === 'over5';
                 const premium = isOver5
@@ -3990,10 +4016,10 @@
                 const hours = mins => `${Math.floor(mins/60)}시간 ${mins%60}분`;
                 const topUp = Math.max(0, premium.statutoryRequired-fixedOTProrated);
                 const fixedHours = Number(contract.monthlyFixedOvertimeHours||0);
-                payslipNote = `월 기본급 ${monthBase.toLocaleString()}원 · 식대 ${meal.toLocaleString()}원 · 교통비 ${transport.toLocaleString()}원 · 직책수당 ${position.toLocaleString()}원 · 고정 연장근로수당 ${fixedOTProrated.toLocaleString()}원(월 약정 ${fixedHours}시간, 정산기간 비례). ` +
+                payslipNote = `월 기본급 ${monthBase.toLocaleString()}원 · 식대 ${meal.toLocaleString()}원 · 교통비 ${transport.toLocaleString()}원 · 직책수당 ${position.toLocaleString()}원 · 고정 연장근로수당 ${fixedOTProrated.toLocaleString()}원(월 약정 ${fixedHours}시간, 정산기간 비례). 통상임금 산입 월액 ${ordinaryMonthly.toLocaleString()}원 / 통상시급 ${Math.round(ordinaryHourly).toLocaleString()}원. ` +
                     (isOver5
-                        ? `실제 법정 추가수당 산출: 연장 ${hours(premium.overtimeMinutes)} ${premium.overtimePay.toLocaleString()}원 + 야간 ${hours(premium.nightMinutes)} ${premium.nightPay.toLocaleString()}원 + 계약상 주휴일 근로 ${hours(premium.holidayMinutes)} ${premium.holidayPay.toLocaleString()}원 = ${premium.statutoryRequired.toLocaleString()}원. 고정수당 반영 후 추가 지급액 ${topUp.toLocaleString()}원. `
-                        : '5인 미만 사업장으로 법정 1.5배 가산수당은 산출하지 않았습니다. 다만 약정 근로시간을 초과한 추가 근로의 기본 임금 및 별도 약정수당은 별도 확인이 필요합니다. ') +
+                        ? `근로시간별 법정수당: 연장 ${hours(premium.overtimeMinutes)} ${premium.overtimePay.toLocaleString()}원 + 야간 ${hours(premium.nightMinutes)} ${premium.nightPay.toLocaleString()}원 + 계약상 주휴일 근로 ${hours(premium.holidayMinutes)} ${premium.holidayPay.toLocaleString()}원 = ${premium.statutoryRequired.toLocaleString()}원. 고정 연장수당과 비교한 추가 지급액 ${topUp.toLocaleString()}원. `
+                        : '5인 미만 사업장으로 법정 가산수당은 자동 산출하지 않았습니다. 실제 추가 근로에 대한 기본 임금 및 별도 약정수당은 계약과 근로기록을 확인해야 합니다. ') +
                     (scheduleVariance.available
                         ? `계약 일정 대조: 예정 ${Math.floor(scheduleVariance.scheduledMinutes/60)}시간 ${scheduleVariance.scheduledMinutes%60}분 / 실제 기록 ${Math.floor(scheduleVariance.actualMinutes/60)}시간 ${scheduleVariance.actualMinutes%60}분. ` +
                           `기록 누락 ${scheduleVariance.missingDates.length}일${scheduleVariance.missingDates.length ? `(${scheduleVariance.missingDates.join(', ')})` : ''}, 단축 기록 ${scheduleVariance.shortDays.length}일, 초과 기록 ${scheduleVariance.extraDays.length}일. ` +
@@ -4077,7 +4103,7 @@
             document.getElementById('psExtraPay').textContent = `${data.extraPay.toLocaleString()}원`;
             document.getElementById('psAllowancePay').textContent = `${data.allowancePay.toLocaleString()}원`;
             const extraNote = document.getElementById('psExtraPayNote');
-            if (extraNote) extraNote.textContent = data.wageType === 'monthly' ? '고정 연장수당 및 실제 법정 추가수당(초과분)' : '야간 및 8h초과 연장근로 1.5배 가산분';
+            if (extraNote) extraNote.textContent = data.wageType === 'monthly' ? '고정 연장수당과 실제 연장·야간·휴일근로 법정수당 비교 정산' : '야간 및 8h초과 연장근로 가산분';
             const allowanceLabel = document.getElementById('psAllowanceLabel'); if (allowanceLabel) allowanceLabel.textContent = data.wageType === 'monthly' ? '기타 지급액' : '주휴수당 / 기타 지급액';
             const allowanceNote = document.getElementById('psAllowanceNote');
             if (allowanceNote) allowanceNote.textContent = data.wageType === 'monthly' ? (data.leavePayoutTotal>0 ? '미사용 연차수당 지급액' : '월급에 포함된 유급주휴분 (별도 산출 안 함)') : `주휴수당${data.leavePayoutTotal>0?' + 미사용 연차수당 포함':''}`;
@@ -4100,7 +4126,7 @@
                         <td class="border border-gray-300 p-1">${r.breakMinutes || 0}분</td>
                         <td class="border border-gray-300 p-1">${Math.floor(realMins/60)}h ${realMins%60}m</td>
                         <td class="border border-gray-300 p-1 text-[9px] text-gray-600">${r.extraDesc || '-'}</td>
-                        <td class="border border-gray-300 p-1 text-right pr-2 font-bold">${data.wageType === 'monthly' ? '월급에 포함' : `${pay.toLocaleString()}원`}</td>
+                        <td class="border border-gray-300 p-1 text-right pr-2 font-bold">${data.wageType === 'monthly' ? '월 단위 정산' : `${pay.toLocaleString()}원`}</td>
                     `;
                     detailBody.appendChild(tr);
                 });
