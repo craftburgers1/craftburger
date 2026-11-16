@@ -3559,6 +3559,22 @@
                 document.getElementById('contractEndTime').value = termsNow.endTime || '18:00';
                 document.getElementById('contractWage').value = termsNow.wage;
             }
+
+            // 근무조건 변경 계약서는 기존 계약서 값을 모두 불러온 뒤 변경 입력값을 마지막에 덮어쓴다.
+            // 그래야 이전 계약의 시급·요일·시간이 수정값을 되돌리는 일이 없다.
+            if (isAmendment && terms && terms.staffId === staffId) {
+                document.getElementById('contractWageType').value = 'hourly';
+                document.getElementById('contractWage').value = String(terms.wage);
+                document.getElementById('contractWorkDays').value = formatWorkDays(terms.days);
+                document.getElementById('contractRestDay').value = formatRestDays(terms.days);
+                document.getElementById('contractStartTime').value = terms.start;
+                document.getElementById('contractEndTime').value = terms.end;
+                document.getElementById('contractDailyHours').value = calculateContractDailyHours(
+                    terms.start,
+                    terms.end,
+                    getContractBreakMinutes()
+                );
+            }
             toggleContractWageType();
             document.getElementById('contractAmendmentNotice')?.classList.toggle('hidden', !isAmendment);
             
@@ -3682,7 +3698,9 @@
                 isStaffSigned: false,
                 isAmendment: !!contractChangeContext && contractChangeContext.staffId === staffId,
                 previousContractId: contractChangeContext?.staffId === staffId ? contractChangeContext.previousContractId : null,
-                scheduleDays: contractChangeContext?.staffId === staffId ? contractChangeContext.days : (staffList.find(s => s.id === staffId)?.scheduleDays || parseWorkDays(document.getElementById('contractWorkDays').value)),
+                scheduleDays: contractChangeContext?.staffId === staffId
+                    ? parseWorkDays(document.getElementById('contractWorkDays').value)
+                    : (staffList.find(s => s.id === staffId)?.scheduleDays || parseWorkDays(document.getElementById('contractWorkDays').value)),
                 createdAt: new Date().toISOString()
             };
 
