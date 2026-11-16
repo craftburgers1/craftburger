@@ -2016,9 +2016,9 @@
             if (currentUser.role === 'staff') {
                 document.getElementById('staffDashboard').classList.remove('hidden');
                 
-                const lastSettlementEnd = localStorage.getItem(`last_settlement_end_${currentUser.id}`);
+                const lastSettlementEnd = null; // 기본값은 항상 이번 달 1일
                 const now = new Date();
-                const todayStr = now.toISOString().split('T')[0];
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
                 if (lastSettlementEnd) {
                     const nextDay = new Date(lastSettlementEnd);
@@ -3115,9 +3115,9 @@
             const endInput = document.getElementById('adminSettlementEnd');
             
             if (!startInput.value) {
-                const lastSettlementEnd = localStorage.getItem(`last_settlement_end_${selectedStaffId}`);
+                const lastSettlementEnd = null; // 기본값은 항상 이번 달 1일
                 const now = new Date();
-                const todayStr = now.toISOString().split('T')[0];
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
                 if (lastSettlementEnd) {
                     const nextDay = new Date(lastSettlementEnd);
