@@ -1046,10 +1046,28 @@
                                     <input type="text" id="contractMonthlyBase" value="해당없음 (시급제)" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-2">
                                 </div>
                             </div>
-                            <div id="monthlyWageFields" class="hidden space-y-2">
+                            <div id="monthlyWageFields" class="hidden space-y-3">
+                                <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
+                                    <div class="font-bold text-sm text-slate-800">급여 입력 방법</div>
+                                    <p class="text-xs leading-relaxed text-slate-600">기본급·식대·교통비를 반드시 나눠서 지급해야 하는 것은 아닙니다. 직원과 합의한 월 급여를 한 금액으로 정해도 됩니다. 필요한 경우에만 항목을 나눠 입력하세요.</p>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <label class="flex items-center gap-2 rounded-lg border bg-white p-2 text-xs font-bold cursor-pointer"><input type="radio" name="monthlyWageMode" value="simple" checked onchange="toggleMonthlyWageMode()"> 간편하게 월급만 입력</label>
+                                        <label class="flex items-center gap-2 rounded-lg border bg-white p-2 text-xs font-bold cursor-pointer"><input type="radio" name="monthlyWageMode" value="detail" onchange="toggleMonthlyWageMode()"> 기본급·수당 구분 입력</label>
+                                    </div>
+                                </div>
+                                <div class="rounded-lg border border-slate-200 bg-white p-2">
+                                    <label class="block text-xs font-semibold mb-1">월 통상임금 산정시간</label>
+                                    <input type="number" min="1" id="monthlyOrdinaryHours" value="209" oninput="updateMonthlyWagePreview()" class="w-full border rounded-lg p-2">
+                                    <p class="mt-1 text-[10px] text-slate-500">209시간은 주 40시간 근무와 유급주휴 8시간을 전제로 한 예시입니다. 단시간 근로자는 실제 계약시간에 맞게 조정해야 합니다.</p>
+                                </div>
+                                <div id="monthlySimpleFields" class="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+                                    <label class="block text-sm font-bold text-slate-800">약정 월 급여 총액 (원)</label>
+                                    <input type="number" min="0" id="monthlySimpleTotal" value="0" oninput="updateMonthlyWagePreview()" class="w-full border rounded-lg p-3 text-lg font-extrabold">
+                                    <p class="text-xs leading-relaxed text-slate-500">정해진 근무일·근무시간에 대한 월 급여입니다. 별도로 약정한 연장근로수당이나 추가 근로수당이 있다면 상세 입력에서 구분해 주세요.</p>
+                                </div>
+                                <div id="monthlyDetailFields" class="hidden space-y-2">
                                 <div class="grid grid-cols-2 gap-2">
                                     <div><label class="block text-xs font-semibold mb-1">월 기본급 (원)</label><input type="number" min="0" id="monthlyBasePayInput" value="0" oninput="updateMonthlyWagePreview()" class="w-full border rounded-lg p-2 font-bold"></div>
-                                    <div><label class="block text-xs font-semibold mb-1">월 통상임금 산정시간</label><input type="number" min="1" id="monthlyOrdinaryHours" value="209" oninput="updateMonthlyWagePreview()" class="w-full border rounded-lg p-2"></div>
                                     <div><label class="block text-xs font-semibold mb-1">식대 (월, 원)</label><input type="number" min="0" id="monthlyMealAllowance" value="0" oninput="updateMonthlyWagePreview()" class="w-full border rounded-lg p-2"><label class="mt-1 flex items-center gap-1 text-[10px] text-gray-600"><input type="checkbox" id="monthlyMealOrdinaryCheck" checked onchange="updateMonthlyWagePreview()"> 통상임금 산입</label></div>
                                     <div><label class="block text-xs font-semibold mb-1">교통비 (월, 원)</label><input type="number" min="0" id="monthlyTransportAllowance" value="0" oninput="updateMonthlyWagePreview()" class="w-full border rounded-lg p-2"><label class="mt-1 flex items-center gap-1 text-[10px] text-gray-600"><input type="checkbox" id="monthlyTransportOrdinaryCheck" checked onchange="updateMonthlyWagePreview()"> 통상임금 산입</label></div>
                                     <div><label class="block text-xs font-semibold mb-1">직책수당 (월, 원)</label><input type="number" min="0" id="monthlyPositionAllowance" value="0" oninput="updateMonthlyWagePreview()" class="w-full border rounded-lg p-2"><label class="mt-1 flex items-center gap-1 text-[10px] text-gray-600"><input type="checkbox" id="monthlyPositionOrdinaryCheck" checked onchange="updateMonthlyWagePreview()"> 통상임금 산입</label></div>
@@ -1062,6 +1080,7 @@
                                     </div>
                                 </div>
                                 <p class="text-[10px] leading-relaxed text-gray-500">통상임금 산정시간 209시간은 주 40시간 근무와 유급주휴 8시간을 전제로 한 예시입니다. 실제 소정근로시간·유급시간에 맞게 확인해야 합니다. 식대·교통비·직책수당은 명칭이나 비과세 여부가 아니라 지급 조건과 실질에 따라 통상임금 해당 여부를 판단해야 합니다. 아래 산입 체크는 관리자 검토용 설정이며, 법적 판단을 자동 확정하지 않습니다. 고정 연장수당은 기본급과 분리해 약정시간·금액을 기록합니다. 실제 발생액과 비교할 때는 약정수당에 해당 근로의 기본임금과 가산분이 포함되는지 계약 내용을 확인해야 합니다.</p>
+                                </div>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
@@ -3415,16 +3434,34 @@
             document.getElementById('monthlyWageFields')?.classList.toggle('hidden', !monthly);
             updateMonthlyWagePreview();
         }
+        function getMonthlyWageMode() {
+            return document.querySelector('input[name="monthlyWageMode"]:checked')?.value || 'simple';
+        }
+        function toggleMonthlyWageMode(mode) {
+            if (mode) {
+                const radio = document.querySelector(`input[name="monthlyWageMode"][value="${mode}"]`);
+                if (radio) radio.checked = true;
+            }
+            const simple = getMonthlyWageMode() === 'simple';
+            document.getElementById('monthlySimpleFields')?.classList.toggle('hidden', !simple);
+            document.getElementById('monthlyDetailFields')?.classList.toggle('hidden', simple);
+            updateMonthlyWagePreview();
+        }
         function monthlyWageValues() {
             const val = id => Math.max(0, Number(document.getElementById(id)?.value) || 0);
-            const base = val('monthlyBasePayInput'), meal = val('monthlyMealAllowance'), transport = val('monthlyTransportAllowance'), position = val('monthlyPositionAllowance');
-            const fixedOT = val('monthlyFixedOvertimePay'), fixedHours = val('monthlyFixedOvertimeHours');
+            const mode = getMonthlyWageMode();
+            const base = mode === 'simple' ? val('monthlySimpleTotal') : val('monthlyBasePayInput');
+            const meal = mode === 'simple' ? 0 : val('monthlyMealAllowance');
+            const transport = mode === 'simple' ? 0 : val('monthlyTransportAllowance');
+            const position = mode === 'simple' ? 0 : val('monthlyPositionAllowance');
+            const fixedOT = mode === 'simple' ? 0 : val('monthlyFixedOvertimePay');
+            const fixedHours = mode === 'simple' ? 0 : val('monthlyFixedOvertimeHours');
             const divisor = Math.max(1, val('monthlyOrdinaryHours') || 209);
             const mealOrdinary = document.getElementById('monthlyMealOrdinaryCheck')?.checked !== false;
             const transportOrdinary = document.getElementById('monthlyTransportOrdinaryCheck')?.checked !== false;
             const positionOrdinary = document.getElementById('monthlyPositionOrdinaryCheck')?.checked !== false;
             const ordinary = base + (mealOrdinary ? meal : 0) + (transportOrdinary ? transport : 0) + (positionOrdinary ? position : 0);
-            return { base, meal, transport, position, fixedOT, fixedHours, divisor, mealOrdinary, transportOrdinary, positionOrdinary, ordinary, hourly: ordinary / divisor, total: ordinary + fixedOT };
+            return { mode, base, meal, transport, position, fixedOT, fixedHours, divisor, mealOrdinary, transportOrdinary, positionOrdinary, ordinary, hourly: ordinary / divisor, total: ordinary + fixedOT };
         }
         function updateMonthlyWagePreview() {
             const v = monthlyWageValues();
@@ -3481,7 +3518,9 @@
             if (wageType === 'monthly') {
                 const mv = monthlyWageValues();
                 document.getElementById('prevWage').textContent = `월급 ${Math.round(mv.total).toLocaleString()}원`;
-                document.getElementById('prevMonthlyBase').textContent = `(기본급 ${mv.base.toLocaleString()}원 · 식대 ${mv.meal.toLocaleString()}원${mv.mealOrdinary?'(통상임금 산입)':'(미산입)'} · 교통비 ${mv.transport.toLocaleString()}원${mv.transportOrdinary?'(통상임금 산입)':'(미산입)'} · 직책수당 ${mv.position.toLocaleString()}원${mv.positionOrdinary?'(통상임금 산입)':'(미산입)'} · 고정연장수당 ${mv.fixedOT.toLocaleString()}원)`;
+                document.getElementById('prevMonthlyBase').textContent = mv.mode === 'simple'
+                    ? `(월 급여 총액 ${mv.base.toLocaleString()}원 · 급여 항목 구분 없음)`
+                    : `(기본급 ${mv.base.toLocaleString()}원 · 식대 ${mv.meal.toLocaleString()}원${mv.mealOrdinary?'(통상임금 산입)':'(미산입)'} · 교통비 ${mv.transport.toLocaleString()}원${mv.transportOrdinary?'(통상임금 산입)':'(미산입)'} · 직책수당 ${mv.position.toLocaleString()}원${mv.positionOrdinary?'(통상임금 산입)':'(미산입)'} · 고정연장수당 ${mv.fixedOT.toLocaleString()}원)`;
             } else {
                 const wage = Number(document.getElementById('contractWage').value) || 0;
                 document.getElementById('prevWage').textContent = `시급 ${wage.toLocaleString()}원`;
@@ -3523,6 +3562,8 @@
             document.getElementById('contractMonthlyBase').value = '해당없음 (시급제)';
             ['monthlyBasePayInput','monthlyMealAllowance','monthlyTransportAllowance','monthlyPositionAllowance','monthlyFixedOvertimePay','monthlyFixedOvertimeHours'].forEach(id => { const el=document.getElementById(id); if(el) el.value='0'; });
             ['monthlyMealOrdinaryCheck','monthlyTransportOrdinaryCheck','monthlyPositionOrdinaryCheck'].forEach(id => { const el=document.getElementById(id); if(el) el.checked=true; });
+            document.getElementById('monthlySimpleTotal').value = '0';
+            toggleMonthlyWageMode('simple');
             document.getElementById('monthlyOrdinaryHours').value = '209';
             document.getElementById('contractStaffAddress').value = staff.address || '';
             document.getElementById('contractStaffPhone').value = staff.phone || '';
@@ -3561,6 +3602,8 @@
                 document.getElementById('contractWage').value = terms?.wage || previous.wage || staff.wage;
                 document.getElementById('contractWageType').value = previous.wageType || 'hourly';
                 document.getElementById('monthlyBasePayInput').value = previous.monthlyBasePay || 0;
+                document.getElementById('monthlySimpleTotal').value = previous.monthlyBasePay || 0;
+                toggleMonthlyWageMode(previous.monthlyWageMode || 'detail');
                 document.getElementById('monthlyMealAllowance').value = previous.monthlyMealAllowance || 0;
                 document.getElementById('monthlyTransportAllowance').value = previous.monthlyTransportAllowance || 0;
                 document.getElementById('monthlyPositionAllowance').value = previous.monthlyPositionAllowance || 0;
@@ -3651,7 +3694,7 @@
             const contractWageValue = Number(document.getElementById('contractWage').value);
             const monthlyValues = monthlyWageValues();
             if (wageType === 'hourly' && (!Number.isFinite(contractWageValue) || contractWageValue <= 0)) return alert('계약 시급을 올바르게 입력해주세요.');
-            if (wageType === 'monthly' && (monthlyValues.base <= 0 || monthlyValues.divisor <= 0)) return alert('월급제 기본급과 통상임금 산정시간을 올바르게 입력해주세요.');
+            if (wageType === 'monthly' && (monthlyValues.base <= 0 || monthlyValues.divisor <= 0)) return alert(monthlyValues.mode === 'simple' ? '월 급여 총액과 통상임금 산정시간을 올바르게 입력해주세요.' : '월급제 기본급과 통상임금 산정시간을 올바르게 입력해주세요.');
             if (wageType === 'monthly' && monthlyValues.fixedHours > 0 && monthlyValues.fixedOT <= 0) return alert('고정 연장근로 약정시간을 입력했다면 고정 연장근로수당도 입력해야 합니다.');
 
             const startClock = document.getElementById('contractStartTime').value;
@@ -3701,7 +3744,8 @@
                 dailyHours: document.getElementById('contractDailyHours').value,
                 wageType,
                 wage: wageType === 'monthly' ? monthlyValues.hourly : Number(document.getElementById('contractWage').value),
-                monthlyBase: wageType === 'monthly' ? `기본급 ${monthlyValues.base.toLocaleString()}원` : document.getElementById('contractMonthlyBase').value,
+                monthlyWageMode: wageType === 'monthly' ? monthlyValues.mode : null,
+                monthlyBase: wageType === 'monthly' ? (monthlyValues.mode === 'simple' ? `월 급여 총액 ${monthlyValues.base.toLocaleString()}원 (항목 구분 없음)` : `기본급 ${monthlyValues.base.toLocaleString()}원`) : document.getElementById('contractMonthlyBase').value,
                 monthlyBasePay: wageType === 'monthly' ? monthlyValues.base : 0,
                 monthlyMealAllowance: wageType === 'monthly' ? monthlyValues.meal : 0,
                 monthlyTransportAllowance: wageType === 'monthly' ? monthlyValues.transport : 0,
@@ -3756,7 +3800,9 @@
             document.getElementById('docRestDay').textContent = contract.restDay;
             document.getElementById('docWage').textContent = contract.wageType === 'monthly' ? `월급 ${Number(contract.monthlyContractTotal || 0).toLocaleString()}원` : `시급 ${Number(contract.wage).toLocaleString()}원`;
             document.getElementById('docMonthlyBase').textContent = contract.wageType === 'monthly'
-                ? `(기본급 ${Number(contract.monthlyBasePay||0).toLocaleString()}원 · 식대 ${Number(contract.monthlyMealAllowance||0).toLocaleString()}원${contract.monthlyMealOrdinary===false?'(통상임금 미산입)':'(통상임금 산입)'} · 교통비 ${Number(contract.monthlyTransportAllowance||0).toLocaleString()}원${contract.monthlyTransportOrdinary===false?'(통상임금 미산입)':'(통상임금 산입)'} · 직책수당 ${Number(contract.monthlyPositionAllowance||0).toLocaleString()}원${contract.monthlyPositionOrdinary===false?'(통상임금 미산입)':'(통상임금 산입)'} · 고정연장수당 ${Number(contract.monthlyFixedOvertimePay||0).toLocaleString()}원)`
+                ? (contract.monthlyWageMode === 'simple'
+                    ? `(월 급여 총액 ${Number(contract.monthlyBasePay||0).toLocaleString()}원 · 급여 항목 구분 없음)`
+                    : `(기본급 ${Number(contract.monthlyBasePay||0).toLocaleString()}원 · 식대 ${Number(contract.monthlyMealAllowance||0).toLocaleString()}원${contract.monthlyMealOrdinary===false?'(통상임금 미산입)':'(통상임금 산입)'} · 교통비 ${Number(contract.monthlyTransportAllowance||0).toLocaleString()}원${contract.monthlyTransportOrdinary===false?'(통상임금 미산입)':'(통상임금 산입)'} · 직책수당 ${Number(contract.monthlyPositionAllowance||0).toLocaleString()}원${contract.monthlyPositionOrdinary===false?'(통상임금 미산입)':'(통상임금 산입)'} · 고정연장수당 ${Number(contract.monthlyFixedOvertimePay||0).toLocaleString()}원)`)
                 : (contract.monthlyBase || '해당없음');
             document.getElementById('docPayDay').textContent = contract.payDay;
             document.getElementById('docPayMethod').textContent = contract.payMethod;
@@ -4012,11 +4058,14 @@
                 payslipExtraPay = payableExtra;
                 payslipAllowancePay = leavePayoutTotal;
                 totalPay = payslipBasePay + payslipExtraPay + leavePayoutTotal;
-                payslipHoursText = '월급제 약정 월급 + 실제 법정 추가수당';
+                payslipHoursText = contract.monthlyWageMode === 'simple' ? '약정 월 급여(정산기간 비례)' : '월급제 약정 월급 + 실제 법정 추가수당';
                 const hours = mins => `${Math.floor(mins/60)}시간 ${mins%60}분`;
                 const topUp = Math.max(0, premium.statutoryRequired-fixedOTProrated);
                 const fixedHours = Number(contract.monthlyFixedOvertimeHours||0);
-                payslipNote = `월 기본급 ${monthBase.toLocaleString()}원 · 식대 ${meal.toLocaleString()}원 · 교통비 ${transport.toLocaleString()}원 · 직책수당 ${position.toLocaleString()}원 · 고정 연장근로수당 ${fixedOTProrated.toLocaleString()}원(월 약정 ${fixedHours}시간, 정산기간 비례). 통상임금 산입 월액 ${ordinaryMonthly.toLocaleString()}원 / 통상시급 ${Math.round(ordinaryHourly).toLocaleString()}원. ` +
+                const wageComponentNote = contract.monthlyWageMode === 'simple'
+                    ? `월 급여 총액 ${monthBase.toLocaleString()}원(항목 구분 없음). `
+                    : `월 기본급 ${monthBase.toLocaleString()}원 · 식대 ${meal.toLocaleString()}원 · 교통비 ${transport.toLocaleString()}원 · 직책수당 ${position.toLocaleString()}원 · 고정 연장근로수당 ${fixedOTProrated.toLocaleString()}원(월 약정 ${fixedHours}시간, 정산기간 비례). `;
+                payslipNote = wageComponentNote + `통상임금 산입 월액 ${ordinaryMonthly.toLocaleString()}원 / 통상시급 ${Math.round(ordinaryHourly).toLocaleString()}원. ` +
                     (isOver5
                         ? `근로시간별 법정수당: 연장 ${hours(premium.overtimeMinutes)} ${premium.overtimePay.toLocaleString()}원 + 야간 ${hours(premium.nightMinutes)} ${premium.nightPay.toLocaleString()}원 + 계약상 주휴일 근로 ${hours(premium.holidayMinutes)} ${premium.holidayPay.toLocaleString()}원 = ${premium.statutoryRequired.toLocaleString()}원. 고정 연장수당과 비교한 추가 지급액 ${topUp.toLocaleString()}원. `
                         : '5인 미만 사업장으로 법정 가산수당은 자동 산출하지 않았습니다. 실제 추가 근로에 대한 기본 임금 및 별도 약정수당은 계약과 근로기록을 확인해야 합니다. ') +
@@ -4040,6 +4089,7 @@
                 staffName: staff.name,
                 wage: effectiveTerms.wage,
                 wageType: isMonthlyWage ? 'monthly' : 'hourly',
+                monthlyWageMode: contract.monthlyWageMode || 'detail',
                 baseHoursText: payslipHoursText,
                 basePay: payslipBasePay,
                 extraPay: payslipExtraPay,
@@ -4099,6 +4149,8 @@
             document.getElementById('psBaseHours').textContent = data.baseHoursText;
             
             // 세분화 항목 적용
+            const basePayLabel = document.querySelector('#psBasePay')?.parentElement?.querySelector('td:first-child');
+            if (basePayLabel) basePayLabel.textContent = data.wageType === 'monthly' && data.monthlyWageMode === 'simple' ? '월 급여(항목 구분 없음)' : '기본급';
             document.getElementById('psBasePay').textContent = `${data.basePay.toLocaleString()}원`;
             document.getElementById('psExtraPay').textContent = `${data.extraPay.toLocaleString()}원`;
             document.getElementById('psAllowancePay').textContent = `${data.allowancePay.toLocaleString()}원`;
