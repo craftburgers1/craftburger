@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>자영업자 홀로서기 · 근태·급여·계약 관리</title>
+    <title>솔로운영 · 근태·급여·계약 관리</title>
     <meta name="theme-color" content="#17243a">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -126,7 +126,7 @@
                     <i class="fa-solid fa-users-gear text-amber-500 text-2xl"></i>
                     <h1 class="text-lg sm:text-xl font-bold tracking-tight flex items-center gap-2">
                         매장 관리 <span class="text-xs text-amber-400 font-normal hidden sm:inline">통합 시스템</span>
-                        <span class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full border border-amber-500/30">자영업자 홀로서기</span>
+                        <span class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full border border-amber-500/30">솔로운영</span>
                     </h1>
                 </div>
                 <div id="userInfoHeader" class="hidden flex items-center space-x-2 sm:space-x-3">
@@ -4963,7 +4963,7 @@ renderAdminDashboard = function () {
 <script>
 /* ===== 이용약관·개인정보처리방침 ===== */
 const TERMS_VERSION = '2026-11-01';
-const OPERATOR_NAME = '자영업자 홀로서기';
+const OPERATOR_NAME = '솔로운영';
 const OPERATOR_EMAIL = 'solojayoungup@gmail.com';
 const LEGAL_DOCS = {
   terms: { title: '이용약관 (시행일 2026년 11월 1일)', items: [
@@ -4999,7 +4999,7 @@ const LEGAL_DOCS = {
   ]},
   staff: { title: '내 개인정보 처리 안내', items: [
     ['어떤 정보가 저장되나요', '이름, 주소, 전화번호, 시급, 정기 근무 요일·시간, 출퇴근 기록, 휴게시간, 산정 급여, 휴가 기록, 근로계약서(전자서명 포함), 로그인 코드와 비밀번호(암호화)가 저장됩니다.'],
-    ['누가 처리하나요', `내 정보를 입력하고 관리하는 주체는 근무하는 매장의 사장님이며, ${OPERATOR_NAME}는 사장님의 지시 범위 안에서 데이터를 보관하는 시스템을 제공합니다. 정보는 Google Firebase(미국)에 저장됩니다.`],
+    ['누가 처리하나요', `내 정보를 입력하고 관리하는 주체는 근무하는 매장의 사장님이며, ${OPERATOR_NAME}은 사장님의 지시 범위 안에서 데이터를 보관하는 시스템을 제공합니다. 정보는 Google Firebase(미국)에 저장됩니다.`],
     ['얼마나 보관되나요', '직원 삭제 또는 사장님 탈퇴 시까지 보관되며, 근로계약서는 법정 보존을 위해 근로관계가 끝난 뒤 3년까지 사장님이 보관할 수 있습니다.'],
     ['내 권리', `내 정보의 열람·정정·삭제를 사장님에게 요청할 수 있고, 해결되지 않으면 운영자(${OPERATOR_EMAIL})에게 요청할 수 있습니다. 로그인한 직원은 본인 기록만 조회할 수 있습니다.`]
   ]}
