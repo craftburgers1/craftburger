@@ -126,7 +126,7 @@
                     <i class="fa-solid fa-users-gear text-amber-500 text-2xl"></i>
                     <h1 class="text-lg sm:text-xl font-bold tracking-tight flex items-center gap-2">
                         매장 관리 <span class="text-xs text-amber-400 font-normal hidden sm:inline">통합 시스템</span>
-                        <span class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full border border-amber-500/30">Built by 더크래프트</span>
+                        <span class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full border border-amber-500/30">자영업자 홀로서기</span>
                     </h1>
                 </div>
                 <div id="userInfoHeader" class="hidden flex items-center space-x-2 sm:space-x-3">
@@ -916,7 +916,7 @@
                             <div>
                                 <label class="block font-semibold text-gray-700 text-[10px]">사업장명 & 주소</label>
                                 <input type="text" id="contractShopName" placeholder="예: 철수네 김밥집" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 mb-1 bg-white">
-                                <input type="text" id="contractShopAddress" placeholder="예: 세종00로 00-00 0층 00호" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 bg-white">
+                                <input type="text" id="contractShopAddress" placeholder="예: 00시 00로 00-00 0층 00호" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 bg-white">
                             </div>
                             <div class="grid grid-cols-2 gap-1.5">
                                 <div>
@@ -939,7 +939,7 @@
                             </div>
                             <div>
                                 <label class="block font-semibold text-gray-700 text-[10px]">근로자 주소</label>
-                                <input type="text" id="contractStaffAddress" placeholder="예: 세종특별자치시 00로 123" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 bg-white">
+                                <input type="text" id="contractStaffAddress" placeholder="예: 00시 00구 00로 123" oninput="updateContractPreview()" class="w-full border border-gray-300 rounded p-1.5 bg-white">
                             </div>
                             <div>
                                 <label class="block font-semibold text-gray-700 text-[10px]">근로자 연락처</label>
@@ -1449,7 +1449,7 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">주소</label>
-                <input type="text" id="newStaffAddress" placeholder="예: 세종특별자치시 00로 123" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
+                <input type="text" id="newStaffAddress" placeholder="예: 00시 00구 00로 123" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">연락처</label>
@@ -1506,6 +1506,27 @@
 
     <!-- JavaScript Logic -->
     <script>
+        /* KST_DATE_HELPERS_V24: 한국시간(Asia/Seoul) 기준 날짜. 한국은 UTC+9 고정(서머타임 없음)이라
+           기기 시간대와 상관없이 같은 날짜가 나옵니다. 이미 저장된 기록 값은 바꾸지 않습니다. */
+        function getKstParts(date) {
+            const base = (date instanceof Date && Number.isFinite(date.getTime())) ? date : new Date();
+            const k = new Date(base.getTime() + 9 * 60 * 60 * 1000);
+            const year = k.getUTCFullYear(), month = k.getUTCMonth() + 1, day = k.getUTCDate();
+            const p2 = n => String(n).padStart(2, '0');
+            return { year, month, day, weekday: k.getUTCDay(), hour: k.getUTCHours(), minute: k.getUTCMinutes(),
+                     monthKey: `${year}-${p2(month)}`, dateKey: `${year}-${p2(month)}-${p2(day)}` };
+        }
+        function getKstDateKey(date) { return getKstParts(date).dateKey; }
+        // 'YYYY-MM-DD'(또는 시간대 없는 'YYYY-MM-DDTHH:MM')는 적힌 날짜 그대로, 시간대가 붙은 시각은 한국 날짜로 바꾼 뒤 days일 이동
+        function kstShiftDateKey(value, days) {
+            const s = String(value || '');
+            let key;
+            if (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?)?$/.test(s)) key = s.slice(0, 10);
+            else { const t0 = new Date(s); if (!Number.isFinite(t0.getTime())) return ''; key = getKstDateKey(t0); }
+            const [y, m, d] = key.split('-').map(Number);
+            const t = new Date(Date.UTC(y, m - 1, d + (Number(days) || 0)));
+            return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
+        }
         const firebaseConfig = {
             apiKey: "AIzaSyCD4M452qAiF7JnG7Z9wcI_qjxNB6cwkbI",
             authDomain: "craftburgers-database.firebaseapp.com",
@@ -1548,11 +1569,11 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
-            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const currentMonthStr = getKstParts(now).monthKey;
             document.getElementById('adminMonthPicker').value = currentMonthStr;
-            const leaveDateInput = document.getElementById('adminLeaveDate'); if (leaveDateInput) leaveDateInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            const leaveDateInput = document.getElementById('adminLeaveDate'); if (leaveDateInput) leaveDateInput.value = getKstDateKey(now);
             const leaveExpiryInput = document.getElementById('adminLeaveExpiry'); if (leaveExpiryInput) leaveExpiryInput.value = '';
-            const staffLeaveDateInput = document.getElementById('staffLeaveDate'); if (staffLeaveDateInput) staffLeaveDateInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            const staffLeaveDateInput = document.getElementById('staffLeaveDate'); if (staffLeaveDateInput) staffLeaveDateInput.value = getKstDateKey(now);
             document.getElementById('staffMonthPicker').value = currentMonthStr;
             setupCanvasDrawing('ownerCanvas');
             setupCanvasDrawing('staffCanvas');
@@ -1941,7 +1962,7 @@
         const LABOR_LAW_BASELINE = '2026-11-10';
         function renderLaborLawStatus() {
             const now = new Date();
-            const year = now.getFullYear();
+            const year = getKstParts(now).year;
             const savedYear = localStorage.getItem('labor_law_checked_year');
             const banner = document.getElementById('laborLawAnnualBanner');
             if (banner) banner.classList.toggle('hidden', savedYear === String(year));
@@ -1957,7 +1978,7 @@
             if (status) status.textContent = savedYear === String(year) ? `${year}년 점검 완료로 기록되어 있습니다. (기록 기기: 현재 브라우저)` : `${year}년 법령 점검이 아직 완료 처리되지 않았습니다.`;
         }
         function runLaborLawAnnualCheck() {
-            const year = new Date().getFullYear();
+            const year = getKstParts().year;
             if (!confirm(`${year}년 노동법 개정사항을 공식 자료에서 직접 확인하셨습니까? 확인한 경우에만 완료로 표시하세요.`)) return;
             localStorage.setItem('labor_law_checked_year', String(year));
             localStorage.setItem('labor_law_checked_at', new Date().toISOString());
@@ -2010,14 +2031,12 @@
                 
                 const lastSettlementEnd = null; // 기본값은 항상 이번 달 1일
                 const now = new Date();
-                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const todayStr = getKstDateKey(now);
 
                 if (lastSettlementEnd) {
-                    const nextDay = new Date(lastSettlementEnd);
-                    nextDay.setDate(nextDay.getDate() + 1);
-                    document.getElementById('staffSettlementStart').value = nextDay.toISOString().split('T')[0];
+                    document.getElementById('staffSettlementStart').value = kstShiftDateKey(lastSettlementEnd, 1);
                 } else {
-                    const firstDayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+                    const firstDayStr = `${getKstParts(now).monthKey}-01`;
                     document.getElementById('staffSettlementStart').value = firstDayStr;
                 }
                 document.getElementById('staffSettlementEnd').value = todayStr;
@@ -2295,7 +2314,7 @@
         }
 
         // ===== 연차·약정휴가 관리 (별도 이력 컬렉션: leaveRecords) =====
-        function leaveLocalDateKey() { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+        function leaveLocalDateKey() { return getKstDateKey(); }
         function leaveBalanceBreakdown(staffId, kind, asOfDate = leaveLocalDateKey()) {
             const rows = leaveList.filter(x => x.staffId === staffId && x.kind === kind && x.id !== '__settings__')
                 .filter(x => x.type === 'grant' || x.type === 'adjustment' || (x.type === 'use' && x.status === 'approved') || x.type === 'payout')
@@ -2878,7 +2897,7 @@
 
         function contractIsActiveToday(contract, today = new Date()) {
             if (!contract || contract.isStaffSigned !== true) return false;
-            const dateKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            const dateKey = typeof today === 'string' ? today.slice(0, 10) : getKstDateKey(today);
             const start = contract.startDate || contract.contractDate || '';
             const end = contract.endDate || '';
             return (!start || start <= dateKey) && (!end || end === '기간의 정함 없음' || end >= dateKey);
@@ -2949,9 +2968,9 @@
         }
         function renderStaffingSnapshot() {
             const now = new Date();
-            const dateKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            const dateKey = getKstDateKey(now);
             const activeCount = staffList.filter(staff => contractIsActiveToday(getLatestStaffContract(staff.id, true), now)).length;
-            const todayDay = WEEKDAY_KO[now.getDay()];
+            const todayDay = WEEKDAY_KO[getKstParts(now).weekday];
             const scheduledStaff = staffList.filter(staff => {
                 const terms = getStaffEffectiveTerms(staff);
                 const c = terms.contract;
@@ -3109,14 +3128,12 @@
             if (!startInput.value) {
                 const lastSettlementEnd = null; // 기본값은 항상 이번 달 1일
                 const now = new Date();
-                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const todayStr = getKstDateKey(now);
 
                 if (lastSettlementEnd) {
-                    const nextDay = new Date(lastSettlementEnd);
-                    nextDay.setDate(nextDay.getDate() + 1);
-                    startInput.value = nextDay.toISOString().split('T')[0];
+                    startInput.value = kstShiftDateKey(lastSettlementEnd, 1);
                 } else {
-                    const firstDayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+                    const firstDayStr = `${getKstParts(now).monthKey}-01`;
                     startInput.value = firstDayStr;
                 }
                 endInput.value = todayStr;
@@ -3302,9 +3319,9 @@
             }
 
             function executeBulkEntry(breakMinutesToDeduct) {
-                // 날짜는 브라우저의 현지 날짜 기준이며, 오늘 이후는 생성하지 않습니다.
+                // 날짜는 한국시간 기준이며, 오늘 이후는 생성하지 않습니다.
                 const now = new Date();
-                const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const todayKey = getKstDateKey(now);
                 const [year, month] = selectedMonth.split('-').map(Number);
                 const daysInMonth = new Date(year, month, 0).getDate();
                 const existingDates = new Set(
@@ -3681,7 +3698,7 @@
             document.getElementById('contractAmendmentNotice')?.classList.toggle('hidden', !isAmendment);
             
             const now = new Date();
-            const todayValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const todayValue = getKstDateKey(now);
             document.getElementById('contractStartDate').value = todayValue;
             if (isAmendment && previous) {
                 const noEnd = !previous.endDate || previous.endDate === '기간의 정함 없음';
@@ -4745,7 +4762,7 @@ let attendanceFailedNeed = null, attendancePendingNeed = null;
 const attPad2 = n => String(n).padStart(2, '0');
 const attYmd = d => `${d.getFullYear()}-${attPad2(d.getMonth() + 1)}-${attPad2(d.getDate())}`;
 function attShiftDays(dateStr, days) { const [y, m, d] = dateStr.split('-').map(Number); return attYmd(new Date(y, m - 1, d + days)); }
-function attendanceDefaultFrom() { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - ATTENDANCE_WINDOW_MONTHS); return attYmd(d); }
+function attendanceDefaultFrom() { const k = getKstParts(); return attYmd(new Date(k.year, k.month - 1 - ATTENDANCE_WINDOW_MONTHS, 1, 12)); }
 
 function showAttendanceToast(msg) {
     let el = document.getElementById('attendanceToast');
