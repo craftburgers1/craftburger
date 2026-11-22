@@ -193,6 +193,8 @@
                         <span>Google 계정으로 사장님 로그인</span>
                     </button>
                 </div>
+                <!-- USER_MANUAL_V26: 로그인 화면 사용설명서 버튼 -->
+                <button type="button" onclick="openUserManualModal()" class="mt-5 w-full flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-bold text-sm py-3 rounded-xl transition">📖 사용설명서 보기</button>
             </div>
 
             <!-- 2. STAFF DASHBOARD -->
@@ -447,6 +449,7 @@
                         <div>
                             <h2 class="text-lg sm:text-xl font-bold">사장님 전용 통합 대시보드</h2>
                             <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">독립 매장 전용 데이터 영역입니다.</p>
+                            <button type="button" onclick="openUserManualModal()" class="mt-2 inline-flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg transition">📖 사용설명서</button>
                         </div>
                         <div class="flex items-center space-x-2 self-end sm:self-auto">
                             <label class="text-xs text-gray-300">조회 월:</label>
@@ -1504,8 +1507,66 @@
         </div>
     </div>
 
+    <!-- USER_MANUAL_V26: 사용설명서 모달 (로그인 화면·관리자 화면 공용) -->
+    <div id="userManualModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-3 sm:p-4 z-[70]" onclick="if (event.target === this) closeUserManualModal()" role="dialog" aria-modal="true" aria-labelledby="userManualTitle">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-5 shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 id="userManualTitle" class="text-base font-bold text-gray-900">📖 솔로운영 근태관리 사용설명서</h3>
+                <button type="button" onclick="closeUserManualModal()" aria-label="닫기" class="text-gray-400 hover:text-gray-700 text-lg font-bold px-2">&times;</button>
+            </div>
+            <div class="flex-1 overflow-y-auto text-xs sm:text-sm text-gray-700 leading-relaxed pt-3 space-y-3">
+                <p class="text-gray-600">사장님은 <b>구글 계정</b>으로, 알바생은 사장님이 알려준 <b>매장 연결 코드 + 직원 로그인 코드 + 비밀번호</b>로 접속합니다.</p>
+                <section class="rounded-xl border border-amber-200 bg-amber-50/60 p-3 sm:p-4 space-y-2">
+                    <h4 class="font-extrabold text-amber-900 text-sm sm:text-base">👔 사장님(관리자)</h4>
+                    <ol class="list-decimal pl-5 space-y-1.5">
+                        <li><b>로그인</b>: 로그인 화면에서 <b>[관리자(사장님) 접속]</b> → <b>[Google 계정으로 사장님 로그인]</b>. 처음 로그인하면 이용약관·개인정보처리방침 동의 창이 나옵니다.</li>
+                        <li><b>알바생 등록</b>: <b>[알바 현황 및 급여 관리]</b> 탭 → <b>[+ 신규 알바생]</b> → 이름·주소·연락처·기본 시급·정기 근무 요일·출근/퇴근 시간·초기 비밀번호(8자 이상)를 넣고 <b>[등록]</b>. 등록이 끝나면 <b>직원 로그인 코드(숫자 8자리)</b>가 화면에 나옵니다.</li>
+                        <li><b>직원에게 3가지 전달</b>: ① <b>매장 연결 코드</b> – 대시보드 위 “우리 매장 알바 전용 코드”의 <b>[코드 복사]</b> ② <b>직원 로그인 코드</b> – 알바생 목록에서 확인·<b>[코드 복사]</b> ③ <b>초기 비밀번호</b> – 등록할 때 정한 것을 따로 알려 주세요.</li>
+                        <li><b>출퇴근 기록</b>: 직원이 앱에서 출근·퇴근 시각을 입력해 제출하면 기록이 쌓입니다. 알바생을 선택하면 근무 달력에서 시각을 바로 고칠 수 있고, <b>[계약시간 일괄 입력]</b>으로 계약한 근무요일의 근무를 한 번에 넣을 수 있습니다(오늘까지, 기록 없는 날만).</li>
+                        <li><b>급여·주휴수당 계산</b>: 알바생 목록의 <b>[기간 정산 / 급여명세서]</b> → 정산 기간 선택 → <b>[정산 / 급여명세서 미리보기]</b>. 출퇴근 기록으로 기본급·주휴수당·가산금이 자동 계산됩니다. 공제 금액은 명세서 화면에서 확인하세요.</li>
+                        <li><b>급여명세서 PDF</b>: 명세서 창 아래 <b>[급여명세서 PDF 저장하기]</b>. 휴대폰에서 바로 저장이 안 되면 인쇄 창이 열리니, 거기서 “PDF로 저장”을 고르세요.</li>
+                        <li><b>전자근로계약서</b>: 알바생 목록의 <b>[+ 계약서 작성]</b> → 내용 확인 → 사장님 서명 후 저장. 직원이 앱에서 터치 서명하면 “서명 완료”로 바뀝니다. 시급·근무조건이 바뀌면 <b>[시급·근무조건 수정]</b>으로 변경 계약서를 새로 작성합니다.</li>
+                        <li><b>그 밖에</b>: <b>[연차·휴가 관리]</b> 탭에서 휴가 신청 승인, <b>[알바 업무 매뉴얼 관리]</b> 탭에서 직원 체크리스트 편집, <b>[전체 근무기록 백업 (CSV)]</b>으로 기록 내려받기. 직원이 비밀번호를 잊으면 목록의 <b>[초기화]</b>로 새 비밀번호를 정하면 <b>새 로그인 코드</b>가 발급됩니다.</li>
+                    </ol>
+                </section>
+                <section class="rounded-xl border border-blue-200 bg-blue-50/60 p-3 sm:p-4 space-y-2">
+                    <h4 class="font-extrabold text-blue-900 text-sm sm:text-base">🙋 직원(알바생)</h4>
+                    <ol class="list-decimal pl-5 space-y-1.5">
+                        <li><b>매장 연결</b>: 로그인 화면 <b>[알바생 접속]</b> → 사장님이 준 <b>매장 연결 코드</b> 입력 → <b>[조회]</b>. 코드는 휴대폰에 저장됩니다.</li>
+                        <li><b>로그인</b>: <b>직원 로그인 코드(숫자 8자리)</b>와 <b>비밀번호</b>를 넣고 <b>[알바생 로그인]</b>. 처음 로그인하면 내 개인정보 처리 안내가 나옵니다.</li>
+                        <li><b>출퇴근 기록</b>: <b>[근무 시간 등록]</b>에서 <b>출근 일시</b>·<b>퇴근 일시</b>를 넣고(근무 달력의 날짜를 누르면 날짜가 채워짐) 휴게시간을 고른 뒤 <b>[근태 기록 제출하기]</b>. 야간·연장 근무라면 가산수당 칸에 체크하세요.</li>
+                        <li><b>내 급여</b>: 맨 위에서 정산 기간을 고르고 <b>[정산 실행]</b> → <b>[급여명세서 미리보기]</b> → 필요하면 <b>[급여명세서 PDF 저장하기]</b>.</li>
+                        <li><b>근로계약서</b>: 맨 위 알림의 <b>[계약서 확인 및 서명하기]</b> → 내용 확인 → 손가락으로 서명 → <b>[터치 서명 완료하기]</b>. 서명한 뒤에는 <b>[계약서 보기 / 다운로드]</b>로 언제든 볼 수 있습니다.</li>
+                        <li><b>그 밖에</b>: <b>[휴가 신청 · 내역]</b>에서 휴가 신청, <b>알바 업무 체크리스트</b> 확인, <b>[내 근무이력 백업 (CSV)]</b>.</li>
+                    </ol>
+                </section>
+                <section class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 sm:p-4 space-y-2">
+                    <h4 class="font-extrabold text-emerald-900 text-sm sm:text-base">📒 가계부 연동</h4>
+                    <p>사장님 화면의 탭 줄 맨 오른쪽 <b>[가계부]</b> 버튼을 누르면 솔로운영 가계부(별도 앱)가 새 창으로 열립니다. 가계부는 따로 로그인합니다.</p>
+                </section>
+            </div>
+            <div class="pt-3 text-right"><button type="button" onclick="closeUserManualModal()" class="px-4 py-2 bg-gray-800 text-white text-xs font-bold rounded-xl">닫기</button></div>
+        </div>
+    </div>
+
     <!-- JavaScript Logic -->
     <script>
+        /* USER_MANUAL_V26: 사용설명서 모달 열기/닫기 (두 버튼 공용) */
+        function openUserManualModal() {
+            const m = document.getElementById('userManualModal');
+            if (!m) return;
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+        function closeUserManualModal() {
+            const m = document.getElementById('userManualModal');
+            if (!m) return;
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            const m = document.getElementById('userManualModal');
+            if (m && !m.classList.contains('hidden')) closeUserManualModal();
+        });
         /* KST_DATE_HELPERS_V24: 한국시간(Asia/Seoul) 기준 날짜. 한국은 UTC+9 고정(서머타임 없음)이라
            기기 시간대와 상관없이 같은 날짜가 나옵니다. 이미 저장된 기록 값은 바꾸지 않습니다. */
         function getKstParts(date) {
