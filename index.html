@@ -384,6 +384,8 @@
                             <input type="datetime-local" id="workEnd" onchange="calculateWorkDuration()" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                         </div>
                     </div>
+                    <!-- V28_PATCH: 계약 근무시간으로 채우기(입력칸만 채움, 저장은 기존 [근태 기록 제출하기]) -->
+                    <button type="button" onclick="fillStaffContractTimes()" class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-3 py-1.5 transition"><i class="fa-solid fa-wand-magic-sparkles"></i>오늘 계약시간으로 채우기</button>
 
                     <!-- 휴게시간 및 가산수당 선택 UI (알바생) -->
                     <div class="mt-3 bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-2 text-xs">
@@ -572,6 +574,8 @@
                                 <input type="datetime-local" id="adminWorkEnd" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs sm:text-sm">
                             </div>
                         </div>
+                        <!-- V28_PATCH: 선택한 알바생의 계약 근무시간으로 채우기 -->
+                        <button type="button" onclick="fillAdminContractTimes()" class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-3 py-1.5 transition"><i class="fa-solid fa-wand-magic-sparkles"></i>계약시간으로 채우기 (출근 날짜, 비어 있으면 오늘)</button>
 
                         <!-- 휴게시간 및 가산수당 선택 UI (사장님 대리입력) -->
                         <div class="mt-3 bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-2 text-xs">
@@ -1470,7 +1474,7 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">기본 시급 (원)</label>
-                <input type="number" id="newStaffWage" value="10030" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
+                <input type="number" id="newStaffWage" value="10320" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
             </div>
             <div class="rounded-xl border border-gray-200 p-3 space-y-2">
                 <label class="block text-xs font-semibold text-gray-700">정기 근무 요일</label>
@@ -5519,6 +5523,103 @@ function exitStaffDemoMode() {
     window.alert = function (msg) {
         if (isStaffDemoMode) { showDemoToast(String(msg == null ? '' : msg).split('\n')[0] || DEMO_BLOCK_MSG); return; }
         return __origAlert(msg);
+    };
+})();
+
+/* ===== V28_PATCH ===== */
+/* (1) 알바생별 상세 근태 & 달력 영역 초기화: 선택된 직원이 없으면 제목·요약·달력·상세표를 v27 처음 상태로 */
+const ADMIN_DETAIL_DEFAULT_TEXT = {
+    calendarTitle: '근무 달력',
+    detailStaffWage: '0원',
+    detailStaffHours: '0시간 0분',
+    detailStaffPay: '0원',
+    detailStaffAllowance: '(주휴수당: 0원 / 가산금: 0원)',
+    detailStaffSchedule: '근무요일 미설정 · 근무시간 미설정',
+    staffContractHistoryCount: '0건'
+};
+function resetAdminStaffDetailView() {
+    Object.keys(ADMIN_DETAIL_DEFAULT_TEXT).forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ADMIN_DETAIL_DEFAULT_TEXT[id]; });
+    const card = document.getElementById('staffDetailCard'); if (card) card.classList.add('hidden');
+    const history = document.getElementById('staffContractHistory');
+    if (history) history.innerHTML = '<p class="text-xs text-gray-400 py-2">계약서 이력을 불러오는 중입니다.</p>';
+    const grid = document.getElementById('adminCalendarGrid');
+    if (grid) grid.innerHTML = '<div class="col-span-7 p-6 text-center text-xs text-gray-400 bg-white">상단 드롭다운에서 알바생을 선택하면 근무 달력이 표시됩니다.</div>';
+    const table = document.getElementById('detailAttendanceTable'); if (table) table.innerHTML = '';
+}
+(function () {
+    // 선택 없음(또는 목록에 없는 직원)일 때 기존 함수는 제목을 그대로 두므로, 그린 뒤 초기화
+    const __v28OrigRenderCalendar = renderAdminStaffCalendar;
+    renderAdminStaffCalendar = function () {
+        const sel = document.getElementById('adminSelectedStaff');
+        const none = !sel || !sel.value || !staffList.some(s => s.id === sel.value);
+        const r = __v28OrigRenderCalendar.apply(this, arguments);
+        if (none) resetAdminStaffDetailView();
+        return r;
+    };
+    // 체험 시작 전·종료 후에도 상세 영역을 완전히 비움(실제 로그인 첫 화면에 체험 데이터가 남지 않게)
+    const __v28OrigStartDemo = startStaffDemoMode;
+    startStaffDemoMode = function () {
+        const sel = document.getElementById('adminSelectedStaff'); if (sel) sel.value = '';
+        resetAdminStaffDetailView();
+        return __v28OrigStartDemo.apply(this, arguments);
+    };
+    const __v28OrigExitDemo = exitStaffDemoMode;
+    exitStaffDemoMode = function () {
+        const r = __v28OrigExitDemo.apply(this, arguments);
+        const sel = document.getElementById('adminSelectedStaff'); if (sel) sel.value = '';
+        resetAdminStaffDetailView();
+        return r;
+    };
+})();
+
+/* (3) 출퇴근 입력 편의: 계약(또는 등록) 근무시간으로 출근·퇴근 칸을 채움. 저장은 하지 않음 */
+function contractTimesFor(staff, dateStr) {
+    const terms = staff ? getStaffEffectiveTerms(staff) : null;
+    const st = (terms && /^\d{2}:\d{2}$/.test(terms.startTime || '')) ? terms.startTime : '';
+    const et = (terms && /^\d{2}:\d{2}$/.test(terms.endTime || '')) ? terms.endTime : '';
+    if (!st || !et) return null;
+    const endDate = et <= st ? kstShiftDateKey(dateStr, 1) : dateStr;   // 자정 넘어 끝나는 근무
+    return { start: `${dateStr}T${st}`, end: `${endDate}T${et}` };
+}
+function fillStaffContractTimes(dateStr) {
+    if (!currentUser || currentUser.role !== 'staff') return;
+    const staff = staffList.find(s => s.id === currentUser.id);
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(dateStr || '') ? dateStr : getKstDateKey();
+    const t = contractTimesFor(staff, day);
+    if (!t) return alert('등록된 계약 근무시간이 없습니다. 출퇴근 시각을 직접 입력해 주세요.');
+    document.getElementById('workStart').value = t.start;
+    document.getElementById('workEnd').value = t.end;
+    const notice = document.getElementById('selectedDateNotice');
+    if (notice) notice.textContent = `📅 ${day} 계약시간(${t.start.slice(11)}~${t.end.slice(11)})으로 채웠습니다. 실제와 다르면 고친 뒤 제출해 주세요.`;
+    calculateWorkDuration();
+}
+function fillAdminContractTimes() {
+    const staffId = document.getElementById('adminInputStaffSelect').value;
+    const staff = staffList.find(s => s.id === staffId);
+    if (!staff) return alert('알바생을 먼저 선택해 주세요.');
+    const cur = document.getElementById('adminWorkStart').value || '';
+    const day = /^\d{4}-\d{2}-\d{2}/.test(cur) ? cur.slice(0, 10) : getKstDateKey();
+    const t = contractTimesFor(staff, day);
+    if (!t) return alert('이 알바생은 등록된 계약 근무시간이 없습니다. 직접 입력해 주세요.');
+    document.getElementById('adminWorkStart').value = t.start;
+    document.getElementById('adminWorkEnd').value = t.end;
+}
+(function () {
+    // 직원 달력에서 날짜를 누르면 09:00~18:00 대신 계약 근무시간으로(계약시간이 없으면 기존 09:00~18:00 그대로)
+    const __v28OrigSelectCalendarDate = selectCalendarDate;
+    selectCalendarDate = function (dateStr) {
+        const r = __v28OrigSelectCalendarDate.apply(this, arguments);
+        try {
+            if (currentUser && currentUser.role === 'staff') {
+                const t = contractTimesFor(staffList.find(s => s.id === currentUser.id), dateStr);
+                if (t) {
+                    document.getElementById('workStart').value = t.start;
+                    document.getElementById('workEnd').value = t.end;
+                    calculateWorkDuration();
+                }
+            }
+        } catch (e) { console.error(e); }
+        return r;
     };
 })();
 </script>
