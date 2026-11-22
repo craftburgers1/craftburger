@@ -1475,6 +1475,7 @@
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">기본 시급 (원)</label>
                 <input type="number" id="newStaffWage" value="10320" class="w-full border border-gray-300 rounded-lg p-2.5 text-xs sm:text-sm">
+                <p id="newStaffWageHint" class="mt-1 text-[11px] text-gray-400 leading-snug">2026년 최저시급 10,320원이 기본값입니다. 해가 바뀌면 자동 적용됩니다.</p><!-- V29_PATCH -->
             </div>
             <div class="rounded-xl border border-gray-200 p-3 space-y-2">
                 <label class="block text-xs font-semibold text-gray-700">정기 근무 요일</label>
@@ -1797,9 +1798,11 @@
             const leaveRef = getDBRef('leaveRecords');
 
             if (currentUser.role === 'admin') {
+                if (typeof resetStaffWageSyncSession === 'function') resetStaffWageSyncSession(); // V29_PATCH: 접속(세션)마다 시급 맞춤 기록 초기화
                 realtimeUnsubscribers.push(staffsRef.onSnapshot(snapshot => {
                     staffList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderAdminStaffSelectOptions();
+                    if (typeof markStaffsLoadedForWageSync === 'function') markStaffsLoadedForWageSync(); // V29_PATCH
                     renderAdminDashboard();
                     renderAdminLeavePanel();
                 }, handleFirestoreError));
@@ -1808,6 +1811,8 @@
                     contractList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     contractsLoaded = true;
                     setAdminBreakFromSelectedStaff();
+                    renderAdminStaffSelectOptions(); // V29_PATCH: 계약서 기준 시급으로 대리입력 드롭다운 다시 그림
+                    if (typeof syncStaffWageFromSignedContracts === 'function') syncStaffWageFromSignedContracts(); // V29_PATCH
                     renderAdminDashboard();
                     renderAdminLeavePanel();
                 }, handleFirestoreError));
@@ -3913,6 +3918,7 @@
             };
 
             getDBRef('contracts').add(contractData).then(() => {
+                if (typeof syncStaffWageAfterContractSave === 'function') syncStaffWageAfterContractSave(staffId, contractData.wage); // V29_PATCH: 계약서 저장 성공 후에만
                 alert(contractData.isAmendment ? '근무조건 변경 계약서가 생성되었습니다. 직원 서명이 완료되면 새 조건이 적용됩니다.' : '표준 근로계약서 작성이 완료되었습니다!\n알바생이 접속하여 확인 및 터치 서명 후 인쇄/다운로드할 수 있습니다.');
                 contractChangeContext = null;
                 closeCreateContractModal();
@@ -5619,6 +5625,111 @@ function fillAdminContractTimes() {
                 }
             }
         } catch (e) { console.error(e); }
+        return r;
+    };
+})();
+
+/* ===== V29_PATCH ===== */
+/* (1) 연도별 최저임금(시급). 새해 최저임금이 확정되면 아래 표에 한 줄만 추가하세요. 예) 2027: 00000,
+   표에 없는 연도는 그 해 이전의 마지막 확정 연도 값을 쓰고, 그것도 없으면 표의 최신 연도 값을 씁니다. */
+const MINIMUM_WAGE_BY_YEAR = {
+    2019: 8350,
+    2020: 8590,
+    2021: 8720,
+    2022: 9160,
+    2023: 9620,
+    2024: 9860,
+    2025: 10030,
+    2026: 10320
+};
+function getMinimumWage(year) {
+    const y = Number.isFinite(Number(year)) && year !== null && year !== '' ? Number(year) : getKstParts().year;
+    const years = Object.keys(MINIMUM_WAGE_BY_YEAR).map(Number).sort((a, b) => a - b);
+    if (MINIMUM_WAGE_BY_YEAR[y]) return { wage: MINIMUM_WAGE_BY_YEAR[y], year: y };
+    const prev = years.filter(v => v < y).pop();
+    const use = prev !== undefined ? prev : years[years.length - 1];
+    return { wage: MINIMUM_WAGE_BY_YEAR[use], year: use };
+}
+function applyMinimumWageDefault(onlyIfEmpty) {
+    const input = document.getElementById('newStaffWage');
+    const hint = document.getElementById('newStaffWageHint');
+    const thisYear = getKstParts().year;
+    const mw = getMinimumWage(thisYear);
+    if (input && (!onlyIfEmpty || String(input.value).trim() === '')) input.value = String(mw.wage);
+    if (hint) {
+        hint.textContent = `${mw.year}년 최저시급 ${mw.wage.toLocaleString()}원이 기본값입니다. 해가 바뀌면 자동 적용됩니다.`
+            + (mw.year !== thisYear ? ` (${thisYear}년 최저시급이 아직 표에 없어 ${mw.year}년 값을 사용 중)` : '');
+    }
+    return mw;
+}
+try { applyMinimumWageDefault(false); } catch (e) { console.error(e); }   // ① 페이지 로드 시
+(function () {
+    // ② [+ 신규 알바생] 창을 열 때 시급 칸이 비어 있으면 다시 채움(사장님이 고친 값은 그대로)
+    const __v29OrigOpenAddStaff = openAddStaffModal;
+    openAddStaffModal = function () {
+        const r = __v29OrigOpenAddStaff.apply(this, arguments);
+        try { applyMinimumWageDefault(true); } catch (e) { console.error(e); }
+        return r;
+    };
+})();
+
+/* (2) 계약서 금액 -> 알바생 설정 시급(staffs.wage) 연동. staffs 문서의 wage 한 칸만 씀. 근태 기록은 건드리지 않음 */
+const STAFF_WAGE_SYNC = { attempted: new Set(), staffsLoaded: false };
+function resetStaffWageSyncSession() { STAFF_WAGE_SYNC.attempted = new Set(); STAFF_WAGE_SYNC.staffsLoaded = false; }
+function markStaffsLoadedForWageSync() { STAFF_WAGE_SYNC.staffsLoaded = true; syncStaffWageFromSignedContracts(); }
+// A. 계약서 저장 성공 후(월급제는 통상시급 = 계약서 wage)
+function syncStaffWageAfterContractSave(staffId, wage) {
+    if (isStaffDemoMode) return;
+    const w = Number(wage);
+    if (!staffId || !Number.isFinite(w) || w <= 0) return;
+    const staff = staffList.find(s => s.id === staffId);
+    if (staff && Number.isFinite(Number(staff.wage)) && Math.abs(Number(staff.wage) - w) < 1) return;   // 이미 같으면 쓰지 않음
+    const warn = err => {
+        console.warn('[v29] 알바생 설정 시급 자동 반영 실패', err);
+        alert('계약서는 저장됐지만 알바생 설정 시급은 자동 반영되지 않았습니다');
+    };
+    try { getDBRef('staffs').doc(staffId).update({ wage: w }).catch(warn); } catch (err) { warn(err); }
+}
+// B. 관리자 접속 후 계약서·직원 목록이 모두 로드되면, 최신 서명 완료 계약서와 1원 이상 다른 직원만 1회 맞춤
+function syncStaffWageFromSignedContracts() {
+    if (isStaffDemoMode || !currentUser || currentUser.role !== 'admin') return;
+    if (!contractsLoaded || !STAFF_WAGE_SYNC.staffsLoaded) return;
+    staffList.forEach(staff => {
+        if (!staff || !staff.id || STAFF_WAGE_SYNC.attempted.has(staff.id)) return;
+        const signed = getLatestStaffContract(staff.id, true);
+        if (!signed) return;
+        const latest = getLatestStaffContract(staff.id, false);
+        if (!latest || latest.id !== signed.id) return;          // 서명 대기 중인 변경 계약서가 있으면 건드리지 않음
+        const w = Number(signed.wage);
+        if (!Number.isFinite(w) || w <= 0) return;
+        const cur = Number(staff.wage);
+        if (Number.isFinite(cur) && Math.abs(cur - w) < 1) return; // 같으면 쓰지 않음
+        STAFF_WAGE_SYNC.attempted.add(staff.id);                    // 세션당 직원별 1회만 시도
+        try {
+            getDBRef('staffs').doc(staff.id).update({ wage: w })
+                .catch(err => console.warn('[v29] 서명 계약서 기준 시급 맞춤 실패:', staff.name, err));
+        } catch (err) { console.warn('[v29] 서명 계약서 기준 시급 맞춤 실패:', staff.name, err); }
+    });
+}
+
+/* (3) 체험 시작·종료 시 대리입력 칸 비우기(v28 상세 영역 초기화는 그대로) */
+function resetAdminDirectInputFields() {
+    ['adminWorkStart', 'adminWorkEnd'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    const br = document.getElementById('adminBreakSelect'); if (br) br.value = '0';
+    const sel = document.getElementById('adminInputStaffSelect'); if (sel) sel.value = '';
+}
+(function () {
+    const __v29OrigStartDemo = startStaffDemoMode;
+    startStaffDemoMode = function () {
+        resetAdminDirectInputFields();
+        const r = __v29OrigStartDemo.apply(this, arguments);
+        resetAdminDirectInputFields();
+        return r;
+    };
+    const __v29OrigExitDemo = exitStaffDemoMode;
+    exitStaffDemoMode = function () {
+        const r = __v29OrigExitDemo.apply(this, arguments);
+        resetAdminDirectInputFields();
         return r;
     };
 })();
