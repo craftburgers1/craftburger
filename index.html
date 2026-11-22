@@ -137,6 +137,13 @@
                 </div>
             </div>
         </nav>
+        <!-- STAFF_DEMO_V27: 체험판 배너 (체험 모드일 때만 표시) -->
+        <div id="staffDemoBanner" class="hidden bg-amber-100 border-b border-amber-300 text-amber-900" role="status">
+            <div class="max-w-6xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+                <p class="text-xs sm:text-sm font-bold leading-snug">👀 체험판 둘러보기 중 <span class="font-semibold text-amber-800">(샘플 데이터 · 저장되지 않음)</span></p>
+                <button type="button" onclick="exitStaffDemoMode()" class="shrink-0 bg-white hover:bg-amber-50 border border-amber-400 text-amber-800 text-[11px] sm:text-xs font-bold px-3 py-1.5 rounded-lg transition">로그인 화면으로</button>
+            </div>
+        </div>
 
         <div class="max-w-6xl mx-auto px-3 py-4 sm:p-6 space-y-4 sm:space-y-6">
 
@@ -195,6 +202,9 @@
                 </div>
                 <!-- USER_MANUAL_V26: 로그인 화면 사용설명서 버튼 -->
                 <button type="button" onclick="openUserManualModal()" class="mt-5 w-full flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-bold text-sm py-3 rounded-xl transition">📖 사용설명서 보기</button>
+                <!-- STAFF_DEMO_V27: 로그인 없이 둘러보기(체험판) -->
+                <button type="button" id="btnStaffDemoMode" onclick="startStaffDemoMode()" class="mt-3 w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 border-2 border-dashed border-gray-300 text-gray-700 font-bold text-sm py-3 px-3 rounded-xl transition text-center leading-snug">👀 로그인 없이 먼저 둘러보기 (체험판)</button>
+                <p class="mt-2 text-[11px] text-gray-400 text-center leading-snug">체험판은 샘플 직원 2명 데이터로만 동작하며, 입력·수정한 내용은 저장되지 않습니다.</p>
             </div>
 
             <!-- 2. STAFF DASHBOARD -->
@@ -1618,6 +1628,7 @@
         let activePayslipData = null;
         let leaveList = [];
         let leaveBusinessSize = localStorage.getItem("leave_business_size") || "under5";
+        let isStaffDemoMode = false; // STAFF_DEMO_V27: 체험 모드 여부(메모리 전용, 저장 안 함)
 
         const defaultManuals = [
             { category: 'start', text: '매장 환기 및 테이블 청결 상태 확인', order: 1 },
@@ -1647,6 +1658,8 @@
             }
 
             auth.onAuthStateChanged(async user => {
+                // STAFF_DEMO_V27: 체험 중에는 로그아웃 상태 알림을 무시하고, 실제 로그인이 확인되면 체험을 끝내고 정상 흐름으로
+                if (isStaffDemoMode) { if (!user) return; exitStaffDemoMode(); }
                 stopRealtimeListeners();
                 currentUser = null;
                 if (!user) {
@@ -5272,6 +5285,241 @@ downloadPayslipPDFFromModal = downloadPayslipPDFv20;
   const a=document.getElementById('bookkeepingExternalLink');
   if(a){ const ic=a.querySelector('i'); const ext=a.querySelector('i.fa-arrow-up-right-from-square');
     if(ext) ext.classList.add('ext-ic'); const sp=a.querySelector('span'); if(sp) sp.className='tab-short'; }
+})();
+
+/* ===== STAFF_DEMO_V27: 👀 체험 모드 =====
+   - Firebase 인증·읽기·쓰기를 하지 않고, 메모리에 만든 샘플 데이터로만 관리자 화면을 보여 줍니다.
+   - initRealtimeListeners()는 부르지 않습니다. 저장 동작은 모두 막고 토스트만 띄웁니다. */
+const DEMO_WAGE = 10320;   // 체험용 시급(2026년 최저임금). 바꾸려면 이 숫자만 고치세요.
+const DEMO_BLOCK_MSG = '체험판에서는 서버에 저장되지 않습니다';
+let __demoSavedLeaveSize = null, __demoToastTimer = null;
+
+function showDemoToast(msg) {
+    let el = document.getElementById('staffDemoToast');
+    if (!msg) { if (el) el.remove(); return; }
+    if (!el) {
+        el = document.createElement('div'); el.id = 'staffDemoToast'; el.setAttribute('role', 'status');
+        el.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] bg-gray-900 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg text-center';
+        el.style.maxWidth = '90vw';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    clearTimeout(__demoToastTimer);
+    __demoToastTimer = setTimeout(() => { const t = document.getElementById('staffDemoToast'); if (t) t.remove(); }, 2600);
+}
+
+function demoSignatureDataUrl(variant) {
+    try {
+        const c = document.createElement('canvas'); c.width = 240; c.height = 80;
+        const g = c.getContext('2d');
+        g.strokeStyle = '#111827'; g.lineWidth = 3; g.lineCap = 'round'; g.lineJoin = 'round';
+        g.beginPath();
+        if (variant === 'owner') { g.moveTo(14, 52); g.bezierCurveTo(40, 8, 62, 74, 92, 34); g.bezierCurveTo(118, 6, 138, 66, 166, 38); g.bezierCurveTo(188, 18, 206, 56, 228, 26); }
+        else { g.moveTo(18, 46); g.bezierCurveTo(46, 14, 58, 70, 86, 44); g.bezierCurveTo(110, 22, 130, 62, 152, 40); g.lineTo(220, 36); }
+        g.stroke();
+        return c.toDataURL('image/png');
+    } catch (_) { return ''; }
+}
+
+function buildStaffDemoData() {
+    const k = getKstParts();
+    const p2 = n => String(n).padStart(2, '0');
+    const today = k.dateKey;
+    const keyOf = (y, m, d) => { const t = new Date(y, m - 1, d, 12); return `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}`; };
+    const dayOf = key => { const [y, m, d] = key.split('-').map(Number); return WEEKDAY_KO[new Date(y, m - 1, d, 12).getDay()]; };
+    // 해당 월 1일부터 (오늘 전날까지) 근무요일을 앞에서부터 count개
+    const pickDays = (y, m, days, count) => {
+        const out = [], mKey = `${y}-${p2(m)}`;
+        for (let d = 1; d <= 31 && out.length < count; d++) { const key = keyOf(y, m, d); if (!key.startsWith(mKey) || key >= today) break; if (days.includes(dayOf(key))) out.push(key); }
+        return out;
+    };
+    // 기준 월: 이번 달(어제까지 근무일이 충분할 때). 월초라 모자라면 지난달 전체를 기준으로 함
+    let baseY = k.year, baseM = k.month;
+    if (pickDays(baseY, baseM, ['화', '수', '목', '금', '토'], 9).length < 9 || pickDays(baseY, baseM, ['월', '수', '금'], 5).length < 5) {
+        baseM -= 1; if (baseM < 1) { baseM = 12; baseY -= 1; }
+    }
+    const baseMonthKey = `${baseY}-${p2(baseM)}`, monthStart = `${baseMonthKey}-01`;
+    const baseMonthEnd = keyOf(baseY, baseM + 1, 0);
+    const settleEnd = baseMonthKey === k.monthKey ? today : baseMonthEnd;
+    const nowIso = new Date().toISOString();
+    const staffs = [
+        { id: 'demo-staff-minji', name: '김민지', address: '00시 00구 00로 45', phone: '010-0000-1111', wage: DEMO_WAGE,
+          scheduleDays: ['화', '수', '목', '금', '토'], workStartTime: '10:00', workEndTime: '18:00', loginCode: '12345678',
+          authVersion: 1, authUid: 'demo-auth-minji', createdAt: nowIso },
+        { id: 'demo-staff-junho', name: '이준호', address: '00시 00구 00로 67', phone: '010-0000-2222', wage: DEMO_WAGE,
+          scheduleDays: ['월', '수', '금'], workStartTime: '17:00', workEndTime: '22:00', loginCode: '23456789',
+          authVersion: 1, authUid: 'demo-auth-junho', createdAt: nowIso }
+    ];
+    const att = [];
+    const mk = (staff, date, start, end, extra) => {
+        const startVal = `${date}T${start}`, endVal = `${date}T${end}`;
+        const w = calculateDetailedWork(startVal, endVal, 'auto', extra, DEMO_WAGE);   // 앱의 실제 계산 엔진 그대로
+        if (!w) return;
+        att.push({ id: `demo-att-${staff.id}-${date}`, staffId: staff.id, staffName: staff.name, startTime: startVal, endTime: endVal,
+            grossMinutes: w.grossMinutes, breakMinutes: w.breakMinutes, minutes: w.minutes, wageAtTime: DEMO_WAGE,
+            basePay: w.basePay, extraPay: w.extraPay, pay: w.totalPay, extraDesc: w.extraDesc, isExtraPayChecked: w.isExtraPayChecked,
+            breakOption: w.breakOption, isEdited: false, editHistory: [],
+            createdAt: new Date(`${endVal}:00+09:00`).toISOString(), createdBy: `알바생 (${staff.name})` });
+    };
+    pickDays(baseY, baseM, staffs[0].scheduleDays, 9).forEach(d => mk(staffs[0], d, '10:00', '18:00', false));
+    pickDays(baseY, baseM, staffs[1].scheduleDays, 5).forEach((d, i) => mk(staffs[1], d, '17:00', i === 1 ? '22:30' : (i === 3 ? '23:00' : '22:00'), true));
+
+    const ownerSign = demoSignatureDataUrl('owner'), staffSign = demoSignatureDataUrl('staff');
+    const mkContract = (staff, signed, ins) => {
+        const breakMin = legacyContractBreakMinutes({ breakMinutes: calculateDetailedWork(`${monthStart}T${staff.workStartTime}`, `${monthStart}T${staff.workEndTime}`, 'auto', false, DEMO_WAGE).breakMinutes });
+        return { id: `demo-contract-${staff.id}`, staffId: staff.id, staffName: staff.name,
+            insNP: ins, insHI: ins, insEI: ins, monthlyMealTaxFree: true, taxType: 'wage', dependents: 1, childCount: 0, withholdingRatio: 100, insBaseMonthly: 0,
+            staffAddress: staff.address, staffPhone: staff.phone, companyType: 'over5',
+            startDate: monthStart, endDate: '기간의 정함 없음',
+            shopName: '솔로운영 체험 매장', shopAddress: '00시 00로 123', ownerName: '김사장', ownerPhone: '010-0000-0000',
+            task: '매장 운영 보조(주문 응대·조리 보조·청소)',
+            workDays: formatWorkDays(staff.scheduleDays), restDay: formatRestDays(staff.scheduleDays), weeklyHoliday: '일',
+            startTime: staff.workStartTime, endTime: staff.workEndTime,
+            breakTime: breakMin > 0 ? `휴게시간 ${breakMin}분 차감` : '휴게시간 차감 없음', breakMinutes: breakMin, breakWaiverRequested: false,
+            dailyHours: calculateContractDailyHours(staff.workStartTime, staff.workEndTime, breakMin),
+            wageType: 'hourly', wage: DEMO_WAGE, monthlyWageMode: null, monthlyBase: '해당없음', monthlyBasePay: 0,
+            monthlyMealAllowance: 0, monthlyTransportAllowance: 0, monthlyPositionAllowance: 0,
+            monthlyMealOrdinary: true, monthlyTransportOrdinary: true, monthlyPositionOrdinary: true,
+            monthlyFixedOvertimePay: 0, monthlyFixedOvertimeHours: 0, monthlyOrdinaryHours: 209, monthlyContractTotal: 0,
+            payDay: '매월 10일 지급', payMethod: '계좌이체', contractDate: monthStart,
+            ownerSignImgData: ownerSign, staffSignImgData: signed ? staffSign : '', isStaffSigned: !!signed,
+            ...(signed ? { signedAt: nowIso } : {}),
+            isAmendment: false, previousContractId: null, scheduleDays: staff.scheduleDays.slice(), createdAt: `${monthStart}T09:00:00.000Z` };
+    };
+    const contracts = [mkContract(staffs[0], true, true), mkContract(staffs[1], false, false)];
+    const manuals = defaultManuals.map((m, i) => ({ id: `demo-manual-${i + 1}`, ...m, completedBy: [] })).sort((a, b) => (a.order || 0) - (b.order || 0));
+    const leaves = [
+        { id: '__settings__', type: 'settings', businessSize: '5plus' },
+        { id: 'demo-leave-grant', staffId: staffs[0].id, staffName: staffs[0].name, type: 'grant', kind: 'company', hours: 16, date: monthStart, expiresAt: '',
+          payoutAmount: 0, note: '체험용 회사 약정휴가 부여', status: 'approved', createdAt: `${monthStart}T09:00:00.000Z`, createdBy: 'demo-store' },
+        { id: 'demo-leave-request', staffId: staffs[0].id, staffName: staffs[0].name, type: 'request', kind: 'company', hours: 4, date: kstShiftDateKey(today, 7),
+          note: '개인 일정(체험용 신청)', status: 'pending', createdAt: nowIso, createdBy: staffs[0].id }
+    ];
+    return { staffList: staffs, attendanceList: att, contractList: contracts, manualList: manuals, leaveList: leaves,
+             monthKey: baseMonthKey, settleStart: monthStart, settleEnd };
+}
+
+function startStaffDemoMode() {
+    isStaffDemoMode = true;
+    try { stopRealtimeListeners(); } catch (_) {}
+    // 근무기록 범위 조회기가 예전 로그인 정보를 쓰지 않도록 비워 둠(체험 중에는 서버 조회 없음)
+    attendanceSession++; attendanceCtx = null; attendanceChunks = {}; attendanceLoadedFrom = null; attendanceFullLoaded = false;
+    attendanceFailedNeed = null; attendancePendingNeed = null;
+    __demoSavedLeaveSize = leaveBusinessSize;
+    const data = buildStaffDemoData();
+    currentUser = { role: 'admin', name: '사장님(체험)', uid: 'demo-store' };
+    ownerUid = 'demo-store';
+    staffList = data.staffList; attendanceList = data.attendanceList; contractList = data.contractList;
+    manualList = data.manualList; leaveList = data.leaveList;
+    contractsLoaded = true; leaveBusinessSize = '5plus';
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('staffDashboard').classList.add('hidden');
+    document.getElementById('userInfoHeader').classList.remove('hidden');
+    document.getElementById('loggedInBadge').textContent = '사장님(체험)';
+    document.getElementById('adminDashboard').classList.remove('hidden');
+    document.getElementById('adminStoreCodeText').textContent = 'DEMO-STORE';
+    document.getElementById('adminMonthPicker').value = data.monthKey;
+    document.getElementById('adminSettlementStart').value = data.settleStart;
+    document.getElementById('adminSettlementEnd').value = data.settleEnd;
+    renderAdminStaffSelectOptions();
+    document.getElementById('adminSelectedStaff').value = '';
+    switchAdminTab('status');
+    renderAdminDashboard();
+    renderAdminManualEditor();
+    renderAdminLeavePanel();
+    document.getElementById('staffDemoBanner').classList.remove('hidden');
+    try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0, 0); } catch (__) {} }
+}
+
+function exitStaffDemoMode() {
+    const wasDemo = isStaffDemoMode;
+    isStaffDemoMode = false;
+    document.querySelectorAll('[id$="Modal"]').forEach(m => { if (!m.classList.contains('hidden')) { m.classList.add('hidden'); m.classList.remove('flex'); } });
+    try { stopRealtimeListeners(); } catch (_) {}
+    leaveList = []; contractsLoaded = false; activePayslipData = null; currentActiveContract = null; contractChangeContext = null;
+    currentUser = null;
+    ownerUid = localStorage.getItem('connected_store_code') || null;
+    if (wasDemo && __demoSavedLeaveSize) leaveBusinessSize = __demoSavedLeaveSize;
+    __demoSavedLeaveSize = null;
+    const code = document.getElementById('adminStoreCodeText'); if (code) code.textContent = '';
+    const table = document.getElementById('adminStaffPayTable'); if (table) table.innerHTML = '';
+    try { renderAdminStaffSelectOptions(); } catch (_) {}
+    const sel = document.getElementById('adminSelectedStaff'); if (sel) sel.value = '';
+    ['adminSettlementStart', 'adminSettlementEnd'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    const mp = document.getElementById('adminMonthPicker'); if (mp) mp.value = getKstParts().monthKey;
+    document.getElementById('staffDemoBanner').classList.add('hidden');
+    showDemoToast('');
+    showLoginOnly();
+    try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0, 0); } catch (__) {} }
+}
+
+/* --- 체험판 안전장치: 저장(쓰기)·로그인 동작은 실행하지 않고 토스트만 --- */
+(function () {
+    const DEMO_WRITE_FUNCTIONS = [
+        'saveNewStaff', 'deleteStaff', 'resetStaffPassword', 'updateStaffWage',
+        'saveAdminDirectAttendance', 'saveAttendanceRecord', 'saveAttendanceEdit', 'deleteAttendance', 'bulkEnterContractAttendance',
+        'addNewManual', 'updateManualText', 'deleteManual', 'moveManualOrder', 'toggleManualCheck',
+        'saveLeaveBusinessSize', 'saveAdminLeaveRecord', 'submitStaffLeaveRequest', 'decideLeaveRequest',
+        'saveContractByOwner', 'saveStaffSignature', 'deleteArchivedContract',
+        'confirmTermsAndProceed', 'runLaborLawAnnualCheck',
+        'loginStaff', 'loginAdminGoogle', 'connectStoreCode'
+    ];
+    // 막은 뒤 화면을 원래 값으로 되돌릴 필요가 있는 것
+    const AFTER_BLOCK = { saveLeaveBusinessSize: () => renderAdminLeavePanel(), updateManualText: () => renderAdminManualEditor() };
+    DEMO_WRITE_FUNCTIONS.forEach(name => {
+        const orig = window[name];
+        if (typeof orig !== 'function') return;
+        const guarded = function () {
+            if (isStaffDemoMode) {
+                showDemoToast(DEMO_BLOCK_MSG);
+                if (AFTER_BLOCK[name]) { try { AFTER_BLOCK[name](); } catch (_) {} }
+                return;
+            }
+            return orig.apply(this, arguments);
+        };
+        guarded.__demoGuarded = true;
+        window[name] = guarded;
+    });
+
+    // 공통 가드: 데이터 경로를 얻는 getDBRef 자체를 체험 중에는 막음(빠뜨린 쓰기 지점이 있어도 서버로 안 나감)
+    const __origGetDBRef = getDBRef;
+    getDBRef = function () {
+        if (isStaffDemoMode) { const e = new Error(DEMO_BLOCK_MSG); e.demoBlocked = true; throw e; }
+        return __origGetDBRef.apply(this, arguments);
+    };
+    // Firestore·인증 객체의 진입점도 체험 중에는 막음(이중 안전장치)
+    const guardMethod = (obj, method) => {
+        try {
+            if (!obj || typeof obj[method] !== 'function') return;
+            const orig = obj[method];
+            obj[method] = function () {
+                if (isStaffDemoMode) { const e = new Error(DEMO_BLOCK_MSG); e.demoBlocked = true; throw e; }
+                return orig.apply(this, arguments);
+            };
+        } catch (_) {}
+    };
+    ['collection', 'collectionGroup', 'doc', 'batch', 'runTransaction'].forEach(m => guardMethod(db, m));
+    ['signInWithEmailAndPassword', 'signInWithPopup', 'signInWithRedirect', 'createUserWithEmailAndPassword'].forEach(m => guardMethod(auth, m));
+    ['signInWithEmailAndPassword', 'createUserWithEmailAndPassword'].forEach(m => guardMethod(staffProvisioningAuth, m));
+
+    // 체험 중 Firestore 오류 안내 alert 금지
+    const __origHandleFirestoreError = handleFirestoreError;
+    handleFirestoreError = function (error) {
+        if (isStaffDemoMode) { console.warn('[체험판] Firestore 접근 차단:', error && error.message); return; }
+        return __origHandleFirestoreError.apply(this, arguments);
+    };
+    // 로그아웃: 체험 중에는 로그인 화면으로 복귀만
+    const __origLogout = logout;
+    logout = function () {
+        if (isStaffDemoMode) { exitStaffDemoMode(); return; }
+        return __origLogout.apply(this, arguments);
+    };
+    // 체험 중에는 alert 대신 토스트(조회·복사 안내 문구는 그 내용 그대로 토스트로)
+    const __origAlert = window.alert.bind(window);
+    window.alert = function (msg) {
+        if (isStaffDemoMode) { showDemoToast(String(msg == null ? '' : msg).split('\n')[0] || DEMO_BLOCK_MSG); return; }
+        return __origAlert(msg);
+    };
 })();
 </script>
 <style id="hide-annual-banner">#laborLawAnnualBanner{display:none !important;}</style>
