@@ -137,6 +137,12 @@
                     </h1>
                 </div>
                 <div id="userInfoHeader" class="hidden flex items-center space-x-2 sm:space-x-3">
+                    <!-- SOLO_WALLET_V31: ✦ 크레딧 칩 (사장님 로그인일 때만, 640px 이상. 폰은 대시보드 머리에 같은 칩) -->
+                    <span id="soloWalletChipWrap" class="hidden items-center shrink-0 whitespace-nowrap max-sm:hidden">
+                        <button type="button" id="soloWalletChip" onclick="soloWalletChipClick()" class="hidden items-center gap-1 whitespace-nowrap bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-300 text-xs font-bold px-2 py-1 rounded-full transition" title="크레딧 안내 · 길게 누르면 연결 해제">✦<span id="soloWalletBalance"> 0</span></button>
+                        <button type="button" id="soloWalletUnlinkX" onclick="soloWalletDisconnect()" class="hidden items-center ml-0.5 text-[10px] text-slate-500 hover:text-slate-300 px-1" aria-label="크레딧 연결 해제" title="크레딧 연결 해제">✕</button>
+                        <button type="button" id="soloWalletConnectBtn" onclick="soloWalletConnect()" class="hidden items-center gap-1 whitespace-nowrap bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-300 text-xs font-bold px-2 py-1 rounded-full transition">✦ 크레딧 연결</button>
+                    </span>
                     <span id="loggedInBadge" class="bg-amber-500 text-slate-900 text-[11px] sm:text-xs font-bold px-2 py-1 sm:px-2.5 sm:py-1 rounded-full"></span>
                     <button onclick="logout()" class="text-[11px] sm:text-xs bg-slate-800 hover:bg-slate-700 text-gray-300 px-2.5 py-1.5 sm:px-3 rounded transition">
                         <i class="fa-solid fa-right-from-bracket mr-1"></i><span class="hidden sm:inline">로그아웃</span>
@@ -471,6 +477,11 @@
                             <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">독립 매장 전용 데이터 영역입니다.</p>
                             <button type="button" onclick="openUserManualModal()" class="mt-2 inline-flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg transition">📖 사용설명서</button>
                             <button type="button" id="btnInstallAppAdmin" onclick="openInstallAppModal()" class="mt-2 ml-1 inline-flex items-center gap-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-300 text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg transition">📲 홈 화면 추가</button><!-- PWA_INSTALL_V30 -->
+                            <!-- SOLO_WALLET_V31: 폰용 ✦ 크레딧 칩(640px 이상에서는 상단 메뉴줄 칩을 씀) -->
+                            <span id="soloWalletChipWrapM" class="hidden items-center sm:hidden">
+                                <button type="button" id="soloWalletChipM" onclick="soloWalletChipClick()" class="hidden mt-2 ml-1 items-center gap-1 whitespace-nowrap bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-300 text-[11px] font-bold px-2.5 py-1 rounded-lg transition" title="크레딧 안내 · 길게 누르면 연결 해제">✦ <span id="soloWalletBalanceM">0</span></button>
+                                <button type="button" id="soloWalletConnectBtnM" onclick="soloWalletConnect()" class="hidden mt-2 ml-1 items-center gap-1 whitespace-nowrap bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-300 text-[11px] font-bold px-2.5 py-1 rounded-lg transition">✦ 크레딧 연결</button>
+                            </span>
                         </div>
                         <div class="flex items-center space-x-2 self-end sm:self-auto">
                             <label class="text-xs text-gray-300">조회 월:</label>
@@ -1531,6 +1542,25 @@
         </div>
     </div>
 
+    <!-- SOLO_WALLET_V31: 크레딧 안내 모달 -->
+    <div id="soloWalletInfoModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-3 sm:p-4 z-[70]" onclick="if (event.target === this) closeSoloWalletInfo()" role="dialog" aria-modal="true" aria-labelledby="soloWalletInfoTitle">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="flex items-start justify-between border-b pb-3">
+                <h3 id="soloWalletInfoTitle" class="text-base font-bold text-gray-900">✦ 크레딧</h3>
+                <button type="button" onclick="closeSoloWalletInfo()" aria-label="닫기" class="text-gray-400 hover:text-gray-700 text-lg font-bold px-2">&times;</button>
+            </div>
+            <div class="flex-1 overflow-y-auto text-sm text-gray-700 leading-relaxed pt-3 space-y-2">
+                <p class="text-2xl font-extrabold text-amber-600">✦ <span id="soloWalletInfoBalance">0</span></p>
+                <p>출근 기록이 있으면 하루 <b>✦5</b> · 가계부 기록 <b>✦2</b>, 영수증 <b>✦3</b> · 3D 가게 꾸미기와 코스모 팡에서 써요</p>
+                <p id="soloWalletInfoAccount" class="text-xs text-gray-400"></p>
+            </div>
+            <div class="pt-3 flex justify-between gap-2">
+                <button type="button" onclick="soloWalletDisconnect()" class="px-3 py-2 border border-gray-200 text-gray-500 text-xs font-bold rounded-xl">연결 해제</button>
+                <button type="button" onclick="closeSoloWalletInfo()" class="px-4 py-2 bg-gray-800 text-white text-xs font-bold rounded-xl">닫기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- PWA_INSTALL_V30: 홈 화면 추가 안내 모달 (사용설명서 모달과 같은 형식) -->
     <div id="installAppModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-3 sm:p-4 z-[70]" onclick="if (event.target === this) closeInstallAppModal()" role="dialog" aria-modal="true" aria-labelledby="installAppTitle">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl max-h-[85vh] flex flex-col">
@@ -2303,6 +2333,7 @@
             };
 
             getDBRef('attendance').add(record).then(() => {
+                if (typeof soloWalletCreditClockIn === 'function') soloWalletCreditClockIn(); // SOLO_WALLET_V31: 사장 대리 등록 저장 성공 후
                 alert(`[${staff.name}] 알바생의 근무시간이 대리 등록되었습니다.`);
                 document.getElementById('adminWorkStart').value = '';
                 document.getElementById('adminWorkEnd').value = '';
@@ -2875,6 +2906,7 @@
             };
 
             getDBRef('attendance').add(record).then(() => {
+                if (typeof soloWalletCreditClockIn === 'function') soloWalletCreditClockIn(); // SOLO_WALLET_V31: 알바생 제출 저장 성공 후
                 alert('근태 기록이 저장되었습니다.');
                 document.getElementById('workStart').value = '';
                 document.getElementById('workEnd').value = '';
@@ -5885,6 +5917,224 @@ window.addEventListener('appinstalled', function () {
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
+
+/* ===== SOLO_WALLET_V31: ✦ 통합 크레딧 지갑 (alluser-77808, 두 번째 앱 soloWalletApp) =====
+   - 이 앱의 근태 데이터와 기존 Firebase 초기화는 그대로. 지갑은 users/{uid}/wallet, wallet_log 만 씀
+   - 지갑 주인은 항상 사장 계정(ownerUid). soloWalletApp 에 연결된 계정 uid 가 ownerUid 와 같을 때만 씀
+   - 둘러보기(데모)·비로그인·알바생 화면에서는 칩을 숨기고, 연결이 없으면 지갑 호출을 하지 않음 */
+const soloWalletConfig = {
+    apiKey: "AIzaSyAemJzk3V5hKH0cb0jP_XxtVRaYOZzL848",
+    authDomain: "alluser-77808.firebaseapp.com",
+    projectId: "alluser-77808",
+    storageBucket: "alluser-77808.firebasestorage.app",
+    messagingSenderId: "327718577440",
+    appId: "1:327718577440:web:c1b4717066a8434d30a345"
+};
+const SOLO_WALLET = { app: null, auth: null, db: null, user: null, ready: null, unsub: null, balance: null, welcomed: new Set(), longTimer: null };
+
+function ensureSoloWallet() {
+    if (SOLO_WALLET.ready) return SOLO_WALLET.ready;
+    SOLO_WALLET.ready = new Promise(resolve => {
+        try {
+            SOLO_WALLET.app = firebase.apps.find(a => a.name === 'soloWalletApp') || firebase.initializeApp(soloWalletConfig, 'soloWalletApp');
+            SOLO_WALLET.auth = SOLO_WALLET.app.auth();
+            try { SOLO_WALLET.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {}); } catch (_) {}
+            let first = true;
+            SOLO_WALLET.auth.onAuthStateChanged(u => {
+                SOLO_WALLET.user = u || null;
+                if (first) { first = false; resolve(SOLO_WALLET.user); }
+                soloWalletSync();
+            });
+        } catch (e) { console.warn('[지갑] 초기화 실패', e); SOLO_WALLET.auth = null; resolve(null); }
+    });
+    return SOLO_WALLET.ready;
+}
+function soloWalletDbRef() {
+    if (!SOLO_WALLET.db) SOLO_WALLET.db = SOLO_WALLET.app.firestore();
+    return SOLO_WALLET.db;
+}
+// 사장 계정으로 연결돼 있고, 둘러보기(데모)가 아닐 때만 true
+function soloWalletIsOwnerLinked() {
+    return !!(SOLO_WALLET.user && ownerUid && SOLO_WALLET.user.uid === ownerUid && !isStaffDemoMode && currentUser);
+}
+function soloWalletChipVisible() {
+    return !!(currentUser && currentUser.role === 'admin' && !isStaffDemoMode && ownerUid);
+}
+
+// 브리프 §2 walletApply: 원장 있으면 끝(멱등) → 지갑 읽기 → (한도) → 지갑·원장·daily 갱신, 트랜잭션 하나
+async function walletApply({ logId, amount, reason, refId, source = 'staff', limitKey = null, limit = 0 }) {
+    if (isStaffDemoMode) return { applied: false, why: 'demo' };
+    if (!soloWalletIsOwnerLinked()) return { applied: false, why: 'not-linked' };
+    const fdb = soloWalletDbRef();
+    const uid = SOLO_WALLET.user.uid;
+    const base = fdb.collection('users').doc(uid);
+    const walletRef = base.collection('wallet').doc('main');
+    const dailyRef = base.collection('wallet').doc('daily');
+    const logRef = base.collection('wallet_log').doc(String(logId).replace(/\//g, '_'));
+    const today = getKstDateKey();
+    const amt = Math.trunc(Number(amount) || 0);
+    const ts = firebase.firestore.FieldValue.serverTimestamp();
+    return fdb.runTransaction(async tx => {
+        const logSnap = await tx.get(logRef);
+        if (logSnap.exists) return { applied: false, why: 'duplicate' };
+        const wSnap = await tx.get(walletRef);
+        const w = wSnap.exists ? (wSnap.data() || {}) : {};
+        const balance = Math.trunc(Number(w.balance) || 0);
+        let counts = {};
+        const useLimit = amt > 0 && limitKey && limit > 0;
+        if (useLimit) {
+            const dSnap = await tx.get(dailyRef);
+            const d = dSnap.exists ? (dSnap.data() || {}) : {};
+            counts = (d.date === today && d.counts && typeof d.counts === 'object') ? { ...d.counts } : {};
+            if ((Number(counts[limitKey]) || 0) >= limit) return { applied: false, why: 'daily-limit' };
+        }
+        if (amt < 0 && balance + amt < 0) throw new Error('잔액 부족');
+        tx.set(walletRef, {
+            balance: balance + amt,
+            lifetimeEarned: (Number(w.lifetimeEarned) || 0) + (amt > 0 ? amt : 0),
+            lifetimeSpent: (Number(w.lifetimeSpent) || 0) + (amt < 0 ? -amt : 0),
+            schemaVersion: 1,
+            updatedAt: ts
+        }, { merge: true });
+        tx.set(logRef, { amount: amt, reason, source, refId: String(refId), date: today, createdAt: ts });
+        if (useLimit) {
+            counts[limitKey] = (Number(counts[limitKey]) || 0) + 1;
+            tx.set(dailyRef, { date: today, counts });
+        }
+        return { applied: true };
+    });
+}
+
+// 출근 기록 저장 성공 후: staff:clock_in:{오늘} +5 (하루 1건). 연결 없음·다른 계정이면 조용히 끝
+function soloWalletCreditClockIn() {
+    try {
+        if (isStaffDemoMode || !currentUser || !ownerUid) return;
+        ensureSoloWallet().then(() => {
+            if (!soloWalletIsOwnerLinked()) return;
+            const day = getKstDateKey();
+            return walletApply({ logId: `staff:clock_in:${day}`, amount: 5, reason: 'clock_in', refId: day, source: 'staff', limitKey: 'clock_in', limit: 1 });
+        }).catch(e => console.warn('[지갑] 출근 적립 실패(출근 기록은 저장됨)', e));
+    } catch (e) { console.warn('[지갑] 출근 적립 실패(출근 기록은 저장됨)', e); }
+}
+// 로그인 후 1회(계정당, 가계부·코스모 팡과 공용 logId)
+function soloWalletWelcome() {
+    if (!soloWalletIsOwnerLinked() || !currentUser || currentUser.role !== 'admin') return;
+    const uid = SOLO_WALLET.user.uid;
+    if (SOLO_WALLET.welcomed.has(uid)) return;
+    SOLO_WALLET.welcomed.add(uid);
+    walletApply({ logId: 'welcome:v1', amount: 50, reason: 'welcome', refId: 'v1', source: 'staff' })
+        .catch(e => console.warn('[지갑] 첫 로그인 적립 실패', e));
+}
+
+function soloWalletStopListen() {
+    if (SOLO_WALLET.unsub) { try { SOLO_WALLET.unsub(); } catch (_) {} }
+    SOLO_WALLET.unsub = null; SOLO_WALLET.balance = null;
+}
+// 상태에 맞춰 칩·구독을 맞춤
+function soloWalletSync() {
+    const $ = id => document.getElementById(id);
+    const x = $('soloWalletUnlinkX');
+    const show = (el, on) => { if (!el) return; el.classList.toggle('hidden', !on); el.classList.toggle('inline-flex', !!on); };
+    if (!soloWalletChipVisible()) {
+        show($('soloWalletChipWrap'), false); show($('soloWalletChipWrapM'), false); soloWalletStopListen(); closeSoloWalletInfo();
+        return;
+    }
+    const linked = soloWalletIsOwnerLinked();
+    ['', 'M'].forEach(k => { show($('soloWalletChipWrap' + k), true); show($('soloWalletChip' + k), linked); show($('soloWalletConnectBtn' + k), !linked); });
+    show(x, linked);   // 작은 ✕(상단 칩 옆). 폰용 칩은 길게 누르기·안내창 [연결 해제]
+    if (linked && !SOLO_WALLET.unsub) {
+        try {
+            const ref = soloWalletDbRef().collection('users').doc(SOLO_WALLET.user.uid).collection('wallet').doc('main');
+            SOLO_WALLET.unsub = ref.onSnapshot(snap => {
+                const b = snap.exists ? Math.trunc(Number((snap.data() || {}).balance) || 0) : 0;
+                SOLO_WALLET.balance = b;
+                const t = b.toLocaleString();
+                ['soloWalletBalance', 'soloWalletBalanceM'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = (id === 'soloWalletBalance' ? ' ' : '') + t; });
+                const el2 = document.getElementById('soloWalletInfoBalance'); if (el2) el2.textContent = t;
+            }, err => { console.warn('[지갑] 잔액 구독 실패', err); });
+        } catch (e) { console.warn('[지갑] 잔액 구독 실패', e); }
+        soloWalletWelcome();
+    }
+    if (!linked) soloWalletStopListen();
+}
+function soloWalletConnect() {
+    if (!soloWalletChipVisible()) return;
+    ensureSoloWallet();
+    if (!SOLO_WALLET.auth) { alert('크레딧 지갑에 연결하지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.'); return; }
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const email = (auth && auth.currentUser && auth.currentUser.email) || '';
+    if (email) provider.setCustomParameters({ login_hint: email });
+    SOLO_WALLET.auth.signInWithPopup(provider).then(() => {
+        if (SOLO_WALLET.user && ownerUid && SOLO_WALLET.user.uid !== ownerUid) {
+            alert('지금 근태관리에 로그인한 사장님 계정과 다른 계정이 연결됐어요. 같은 구글 계정으로 다시 연결해 주세요.');
+        }
+        soloWalletSync();
+    }).catch(e => {
+        const c = (e && e.code) || '';
+        if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request') return;
+        alert(c === 'auth/popup-blocked' ? '팝업이 막혔어요. 팝업을 허용하고 다시 눌러 주세요.' : '크레딧 지갑에 연결하지 못했어요 (' + (c || '알 수 없는 오류') + ')');
+    });
+}
+function soloWalletDisconnect() {
+    closeSoloWalletInfo();
+    if (!SOLO_WALLET.auth || !SOLO_WALLET.user) { soloWalletSync(); return; }
+    if (!confirm('이 기기에서 크레딧 지갑 연결을 해제할까요? (근태관리 로그인은 그대로예요)')) return;
+    soloWalletStopListen();
+    SOLO_WALLET.auth.signOut().catch(() => {}).then(() => soloWalletSync());
+}
+function soloWalletChipClick() {
+    if (SOLO_WALLET.longFired) { SOLO_WALLET.longFired = false; return; }
+    const m = document.getElementById('soloWalletInfoModal');
+    if (!m) return;
+    const acc = document.getElementById('soloWalletInfoAccount');
+    if (acc) acc.textContent = SOLO_WALLET.user && SOLO_WALLET.user.email ? `연결된 계정: ${SOLO_WALLET.user.email}` : '';
+    const b = document.getElementById('soloWalletInfoBalance'); if (b) b.textContent = (SOLO_WALLET.balance || 0).toLocaleString();
+    m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeSoloWalletInfo() {
+    const m = document.getElementById('soloWalletInfoModal');
+    if (m && !m.classList.contains('hidden')) { m.classList.add('hidden'); m.classList.remove('flex'); }
+}
+(function () {
+    // 칩 길게 누르기(0.7초) → 연결 해제 (상단 칩·폰용 칩 둘 다)
+    ['soloWalletChip', 'soloWalletChipM'].forEach(id => { const chip = document.getElementById(id);
+    if (chip) {
+        const start = () => { clearTimeout(SOLO_WALLET.longTimer); SOLO_WALLET.longTimer = setTimeout(() => { SOLO_WALLET.longFired = true; soloWalletDisconnect(); }, 700); };
+        const cancel = () => clearTimeout(SOLO_WALLET.longTimer);
+        chip.addEventListener('pointerdown', start);
+        ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => chip.addEventListener(ev, cancel));
+        chip.addEventListener('contextmenu', e => e.preventDefault());
+    } });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSoloWalletInfo(); });
+    // 화면 전환 지점에 칩 동기화만 덧붙임(기존 동작은 그대로 먼저 실행)
+    const __w31ShowDashboard = showDashboard;
+    showDashboard = function () {
+        const r = __w31ShowDashboard.apply(this, arguments);
+        try {
+            if (soloWalletChipVisible()) ensureSoloWallet().then(soloWalletSync);
+            else soloWalletSync();
+        } catch (e) { console.warn(e); }
+        return r;
+    };
+    const __w31ShowLoginOnly = showLoginOnly;
+    showLoginOnly = function () {
+        const r = __w31ShowLoginOnly.apply(this, arguments);
+        try { soloWalletSync(); } catch (_) {}
+        return r;
+    };
+    const __w31StartDemo = startStaffDemoMode;
+    startStaffDemoMode = function () {
+        const r = __w31StartDemo.apply(this, arguments);
+        try { soloWalletSync(); } catch (_) {}
+        return r;
+    };
+    const __w31ExitDemo = exitStaffDemoMode;
+    exitStaffDemoMode = function () {
+        const r = __w31ExitDemo.apply(this, arguments);
+        try { soloWalletSync(); } catch (_) {}
+        return r;
+    };
+})();
 </script>
 <style id="hide-annual-banner">#laborLawAnnualBanner{display:none !important;}</style>
 </body>
