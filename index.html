@@ -469,6 +469,26 @@
             <!-- 3. ADMIN DASHBOARD -->
             <div id="adminDashboard" class="hidden space-y-4 sm:space-y-6">
                 <div id="laborLawAnnualBanner" class="hidden rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900"><b>노동법 연례 점검이 필요합니다.</b> 노동법·계산 기준 메뉴에서 올해 개정사항과 시행일을 확인해 주세요. <button onclick="switchAdminTab('law')" class="ml-2 underline font-bold">점검하기</button></div>
+                <!-- ADMIN_HOME_V33: 처음 화면 큰 단추 (누르면 그 기능만 보임) -->
+                <div id="adminHomeMenu" class="hidden grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <button type="button" onclick="openAdminView('all')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">📊</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">전체 보기</span><span class="text-[11px] text-gray-500 leading-snug">예전처럼 한 화면에 모두</span></button>
+                    <button type="button" onclick="openAdminView('entry')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">⏱️</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">근무시간 입력</span><span class="text-[11px] text-gray-500 leading-snug">출퇴근 시간 대신 넣기</span></button>
+                    <button type="button" onclick="openAdminView('calendar')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">📅</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">달력 · 급여명세서</span><span class="text-[11px] text-gray-500 leading-snug">직원별 근무 달력·정산</span></button>
+                    <button type="button" onclick="openAdminView('list')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">👥</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">직원 목록 · 급여</span><span class="text-[11px] text-gray-500 leading-snug">등록·계약서·이번 달 급여</span></button>
+                    <button type="button" onclick="openAdminView('leave')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">🏖️</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">연차 · 휴가</span><span class="text-[11px] text-gray-500 leading-snug">신청 승인·남은 휴가</span></button>
+                    <button type="button" onclick="openAdminView('manual')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">✅</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">업무 매뉴얼</span><span class="text-[11px] text-gray-500 leading-snug">알바 체크리스트 고치기</span></button>
+                    <button type="button" onclick="openAdminView('law')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">⚖️</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">노동법 · 계산 기준</span><span class="text-[11px] text-gray-500 leading-snug">적용 기준·법령 링크</span></button>
+                    <a href="https://craftburgers1.github.io/BUSINESS/" target="_blank" rel="noopener noreferrer" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">📒</span><span class="text-sm sm:text-base font-extrabold text-emerald-800 leading-tight">가계부 ↗</span><span class="text-[11px] text-gray-500 leading-snug">새 창으로 열려요</span></a>
+                </div>
+                <!-- ADMIN_HOME_V33: 기능 화면 위쪽 막대 (처음 화면으로 돌아가기) -->
+                <div id="adminHomeBar" class="hidden sticky top-[64px] sm:top-[72px] z-40 bg-slate-900 text-white rounded-xl shadow-md px-3 py-2 items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <button type="button" onclick="goAdminHome()" class="shrink-0 bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs sm:text-sm font-extrabold px-3 py-2 rounded-lg transition">← 처음 화면</button>
+                        <strong id="adminHomeBarTitle" class="text-sm sm:text-base font-bold truncate"></strong>
+                    </div>
+                    <div id="adminHomeBarMonthSlot"></div>
+                </div>
+
                 <!-- Header, Store Code & Month Filter -->
                 <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md space-y-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-3">
@@ -1589,13 +1609,13 @@
                     <h4 class="font-extrabold text-amber-900 text-sm sm:text-base">👔 사장님(관리자)</h4>
                     <ol class="list-decimal pl-5 space-y-1.5">
                         <li><b>로그인</b>: 로그인 화면에서 <b>[관리자(사장님) 접속]</b> → <b>[Google 계정으로 사장님 로그인]</b>. 처음 로그인하면 이용약관·개인정보처리방침 동의 창이 나옵니다.</li>
-                        <li><b>알바생 등록</b>: <b>[알바 현황 및 급여 관리]</b> 탭 → <b>[+ 신규 알바생]</b> → 이름·주소·연락처·기본 시급·정기 근무 요일·출근/퇴근 시간·초기 비밀번호(8자 이상)를 넣고 <b>[등록]</b>. 등록이 끝나면 <b>직원 로그인 코드(숫자 8자리)</b>가 화면에 나옵니다.</li>
+                        <li><b>알바생 등록</b>: 처음 화면의 <b>[👥 직원 목록 · 급여]</b> → <b>[+ 신규 알바생]</b> → 이름·주소·연락처·기본 시급·정기 근무 요일·출근/퇴근 시간·초기 비밀번호(8자 이상)를 넣고 <b>[등록]</b>. 등록이 끝나면 <b>직원 로그인 코드(숫자 8자리)</b>가 화면에 나옵니다.</li>
                         <li><b>직원에게 3가지 전달</b>: ① <b>매장 연결 코드</b> – 대시보드 위 “우리 매장 알바 전용 코드”의 <b>[코드 복사]</b> ② <b>직원 로그인 코드</b> – 알바생 목록에서 확인·<b>[코드 복사]</b> ③ <b>초기 비밀번호</b> – 등록할 때 정한 것을 따로 알려 주세요.</li>
-                        <li><b>출퇴근 기록</b>: 직원이 앱에서 출근·퇴근 시각을 입력해 제출하면 기록이 쌓입니다. 알바생을 선택하면 근무 달력에서 시각을 바로 고칠 수 있고, <b>[계약시간 일괄 입력]</b>으로 계약한 근무요일의 근무를 한 번에 넣을 수 있습니다(오늘까지, 기록 없는 날만).</li>
+                        <li><b>출퇴근 기록</b>: 직원이 앱에서 출근·퇴근 시각을 입력해 제출하면 기록이 쌓입니다. 처음 화면의 <b>[📅 달력 · 급여명세서]</b>에서 알바생을 선택하면 근무 달력에서 시각을 바로 고칠 수 있고, <b>[계약시간 일괄 입력]</b>으로 계약한 근무요일의 근무를 한 번에 넣을 수 있습니다(오늘까지, 기록 없는 날만).</li>
                         <li><b>급여·주휴수당 계산</b>: 알바생 목록의 <b>[기간 정산 / 급여명세서]</b> → 정산 기간 선택 → <b>[정산 / 급여명세서 미리보기]</b>. 출퇴근 기록으로 기본급·주휴수당·가산금이 자동 계산됩니다. 공제 금액은 명세서 화면에서 확인하세요.</li>
                         <li><b>급여명세서 PDF</b>: 명세서 창 아래 <b>[급여명세서 PDF 저장하기]</b>. 휴대폰에서 바로 저장이 안 되면 인쇄 창이 열리니, 거기서 “PDF로 저장”을 고르세요.</li>
                         <li><b>전자근로계약서</b>: 알바생 목록의 <b>[+ 계약서 작성]</b> → 내용 확인 → 사장님 서명 후 저장. 직원이 앱에서 터치 서명하면 “서명 완료”로 바뀝니다. 시급·근무조건이 바뀌면 <b>[시급·근무조건 수정]</b>으로 변경 계약서를 새로 작성합니다.</li>
-                        <li><b>그 밖에</b>: <b>[연차·휴가 관리]</b> 탭에서 휴가 신청 승인, <b>[알바 업무 매뉴얼 관리]</b> 탭에서 직원 체크리스트 편집, <b>[전체 근무기록 백업 (CSV)]</b>으로 기록 내려받기. 직원이 비밀번호를 잊으면 목록의 <b>[초기화]</b>로 새 비밀번호를 정하면 <b>새 로그인 코드</b>가 발급됩니다.</li>
+                        <li><b>그 밖에</b>: 처음 화면의 <b>[🏖️ 연차 · 휴가]</b>에서 휴가 신청 승인, <b>[✅ 업무 매뉴얼]</b>에서 직원 체크리스트 편집, <b>[전체 근무기록 백업 (CSV)]</b>으로 기록 내려받기. 직원이 비밀번호를 잊으면 목록의 <b>[초기화]</b>로 새 비밀번호를 정하면 <b>새 로그인 코드</b>가 발급됩니다.</li>
                     </ol>
                 </section>
                 <section class="rounded-xl border border-blue-200 bg-blue-50/60 p-3 sm:p-4 space-y-2">
@@ -1611,7 +1631,7 @@
                 </section>
                 <section class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 sm:p-4 space-y-2">
                     <h4 class="font-extrabold text-emerald-900 text-sm sm:text-base">📒 가계부 연동</h4>
-                    <p>사장님 화면의 탭 줄 맨 오른쪽 <b>[가계부]</b> 버튼을 누르면 솔로운영 가계부(별도 앱)가 새 창으로 열립니다. 가계부는 따로 로그인합니다.</p>
+                    <p>사장님 처음 화면의 <b>[📒 가계부]</b> 단추을 누르면 솔로운영 가계부(별도 앱)가 새 창으로 열립니다. 가계부는 따로 로그인합니다.</p>
                 </section>
             </div>
             <div class="pt-3 text-right"><button type="button" onclick="closeUserManualModal()" class="px-4 py-2 bg-gray-800 text-white text-xs font-bold rounded-xl">닫기</button></div>
@@ -6144,6 +6164,116 @@ function closeSoloWalletInfo() {
         const r = __w31ExitDemo.apply(this, arguments);
         try { soloWalletSync(); } catch (_) {}
         return r;
+    };
+})();
+
+/* ===== ADMIN_HOME_V33: 사장님 처음 화면(큰 단추) =====
+   기존 카드·탭은 그대로 두고 보이기/숨기기만 합니다. 준비가 안 되면(요소를 못 찾으면) 예전 화면 그대로 둡니다. */
+const ADMIN_VIEWS = {
+    all:      { tab: 'status', title: '📊 전체 보기', month: true },
+    entry:    { tab: 'status', title: '⏱️ 근무시간 입력', month: false },
+    calendar: { tab: 'status', title: '📅 달력 · 급여명세서', month: true },
+    list:     { tab: 'status', title: '👥 직원 목록 · 급여', month: true },
+    leave:    { tab: 'leave',  title: '🏖️ 연차 · 휴가', month: false },
+    manual:   { tab: 'manual', title: '✅ 업무 매뉴얼', month: false },
+    law:      { tab: 'law',    title: '⚖️ 노동법 · 계산 기준', month: false }
+};
+const ADMIN_HOME = { ready: false, monthWrap: null, monthHome: null, monthNext: null };
+
+function initAdminHome() {
+    if (ADMIN_HOME.ready) return true;
+    const dash = document.getElementById('adminDashboard');
+    const status = document.getElementById('adminStatusTabContent');
+    const tabBtn = document.getElementById('adminTabStatusBtn');
+    const picker = document.getElementById('adminMonthPicker');
+    if (!dash || !status || !tabBtn || !picker || !document.getElementById('adminHomeMenu')) return false;
+    const childWith = (parent, id) => Array.from(parent.children).find(c => c.querySelector && c.querySelector('#' + id));
+    const parts = {
+        header: childWith(dash, 'adminStoreCodeText'),
+        snap: childWith(dash, 'adminActiveContractCount'),
+        tabs: tabBtn.parentElement,
+        list: childWith(status, 'adminStaffPayTable'),
+        entry: childWith(status, 'adminWorkStart'),
+        detail: childWith(status, 'staffDetailCard')
+    };
+    if (Object.values(parts).some(v => !v) || new Set(Object.values(parts)).size !== 6) return false;
+    Object.keys(parts).forEach(k => parts[k].setAttribute('data-home-part', k));
+    ADMIN_HOME.monthWrap = picker.parentElement; ADMIN_HOME.monthHome = picker.parentElement.parentElement; ADMIN_HOME.monthNext = picker.parentElement.nextSibling;
+    const D = '#adminDashboard', off = '{display:none !important;}';
+    const css = [
+        `${D}[data-home-view] [data-home-part="tabs"]${off}`,
+        `${D}[data-home-view="home"] > #adminStatusTabContent, ${D}[data-home-view="home"] > #adminManualTabContent, ${D}[data-home-view="home"] > #adminLawTabContent, ${D}[data-home-view="home"] > #adminLeaveTabContent${off}`,
+        `${D}[data-home-view="home"] #adminHomeMenu{display:grid !important;}`,
+        `${D}[data-home-view]:not([data-home-view="home"]) #adminHomeBar{display:flex !important;}`,
+        `${D}[data-home-view]:not([data-home-view="home"]) [data-home-part="header"], ${D}[data-home-view]:not([data-home-view="home"]) [data-home-part="snap"]${off}`,
+        `${D}[data-home-view="entry"] [data-home-part="list"], ${D}[data-home-view="entry"] [data-home-part="detail"]${off}`,
+        `${D}[data-home-view="calendar"] [data-home-part="list"], ${D}[data-home-view="calendar"] [data-home-part="entry"]${off}`,
+        `${D}[data-home-view="list"] [data-home-part="entry"], ${D}[data-home-view="list"] [data-home-part="detail"]${off}`,
+        `@media print { #adminHomeBar, #adminHomeMenu${off} }`
+    ].join('\n');
+    const st = document.createElement('style'); st.id = 'adminHomeV33Style'; st.textContent = css; document.head.appendChild(st);
+    ADMIN_HOME.ready = true;
+    return true;
+}
+function currentAdminView() {
+    const dash = document.getElementById('adminDashboard');
+    return (dash && dash.getAttribute('data-home-view')) || '';
+}
+// view: 'home' 또는 ADMIN_VIEWS 의 이름. fromHistory 가 true 면 브라우저 기록을 새로 쌓지 않음
+function openAdminView(view, fromHistory) {
+    if (!initAdminHome()) return;
+    const dash = document.getElementById('adminDashboard');
+    const info = ADMIN_VIEWS[view];
+    const target = info ? view : 'home';
+    if (info) {
+        try { switchAdminTab(info.tab); } catch (e) { console.error(e); }
+        document.getElementById('adminHomeBarTitle').textContent = info.title;
+    }
+    // 조회 월: 월이 필요한 화면에서는 위쪽 막대로 옮기고, 그 밖에는 원래 자리(머리 카드)로 되돌림
+    const slot = document.getElementById('adminHomeBarMonthSlot'), wrap = ADMIN_HOME.monthWrap;
+    if (wrap) {
+        if (info && info.month) { if (wrap.parentElement !== slot) slot.appendChild(wrap); }
+        else if (wrap.parentElement !== ADMIN_HOME.monthHome) ADMIN_HOME.monthHome.insertBefore(wrap, ADMIN_HOME.monthNext && ADMIN_HOME.monthNext.parentNode === ADMIN_HOME.monthHome ? ADMIN_HOME.monthNext : null);
+    }
+    dash.setAttribute('data-home-view', target);
+    if (!fromHistory && info) {
+        try {
+            if (history.state && history.state.adminView) history.replaceState({ adminView: view }, '');
+            else history.pushState({ adminView: view }, '');
+        } catch (_) {}
+    }
+    try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0, 0); } catch (__) {} }
+}
+function goAdminHome() {
+    let viaHistory = false;
+    try { if (history.state && history.state.adminView) { history.back(); viaHistory = true; } } catch (_) {}
+    if (!viaHistory) openAdminView('home', true);
+}
+window.addEventListener('popstate', function (e) {
+    const dash = document.getElementById('adminDashboard');
+    if (!dash || dash.classList.contains('hidden') || !currentAdminView()) return;
+    const v = e.state && e.state.adminView;
+    openAdminView(ADMIN_VIEWS[v] ? v : 'home', true);
+});
+(function () {
+    // 사장님 로그인·둘러보기 시작 → 처음 화면부터
+    const __h33ShowDashboard = showDashboard;
+    showDashboard = function () {
+        const r = __h33ShowDashboard.apply(this, arguments);
+        try { if (currentUser && currentUser.role === 'admin') openAdminView('home', true); } catch (e) { console.error(e); }
+        return r;
+    };
+    const __h33StartDemo = startStaffDemoMode;
+    startStaffDemoMode = function () {
+        const r = __h33StartDemo.apply(this, arguments);
+        try { openAdminView('home', true); } catch (e) { console.error(e); }
+        return r;
+    };
+    // 직원 목록의 [기간 정산 / 급여명세서] → 달력·급여명세서 화면으로 넘어가서 보여 줌
+    const __h33SelectForSettlement = selectAdminStaffForSettlement;
+    selectAdminStaffForSettlement = function () {
+        try { const v = currentAdminView(); if (v && v !== 'all' && v !== 'calendar') openAdminView('calendar'); } catch (e) { console.error(e); }
+        return __h33SelectForSettlement.apply(this, arguments);
     };
 })();
 </script>
