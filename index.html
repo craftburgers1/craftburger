@@ -223,6 +223,23 @@
 
             <!-- 2. STAFF DASHBOARD -->
             <div id="staffDashboard" class="hidden space-y-4 sm:space-y-6">
+                <!-- STAFF_HOME_V34: 알바생 처음 화면 큰 단추 (누르면 그 기능만 보임) -->
+                <div id="staffHomeMenu" class="hidden grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <button type="button" onclick="openStaffView('manual')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">✅</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">근무 매뉴얼</span><span class="text-[11px] text-gray-500 leading-snug">오늘 할 일 체크리스트</span></button>
+                    <button type="button" onclick="openStaffView('entry')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">⏱️</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">근무시간 입력</span><span class="text-[11px] text-gray-500 leading-snug">출근·퇴근 시간 적기</span></button>
+                    <button type="button" onclick="openStaffView('contract')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">📝</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">계약서 확인</span><span class="text-[11px] text-gray-500 leading-snug">근로계약서 보기·서명</span></button>
+                    <button type="button" onclick="openStaffView('calendar')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">📅</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">달력 확인</span><span class="text-[11px] text-gray-500 leading-snug">근무 달력·내 기록</span></button>
+                    <button type="button" onclick="openStaffView('pay')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">💰</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">내 급여 · 명세서</span><span class="text-[11px] text-gray-500 leading-snug">기간 정산·급여명세서</span></button>
+                    <button type="button" onclick="openStaffView('leave')" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">🏖️</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">휴가 신청</span><span class="text-[11px] text-gray-500 leading-snug">연차 확인·휴가 신청</span></button>
+                    <button type="button" onclick="openStaffArcade()" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">🕹️</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">게임하기</span><span class="text-[11px] text-gray-500 leading-snug">오락실 · 게임 2종</span></button>
+                    <a href="https://craftburgers1.github.io/BUSINESS/?mode=pocket" target="_blank" rel="noopener noreferrer" class="text-left bg-white hover:bg-amber-50 active:bg-amber-100 border border-gray-200 hover:border-amber-300 rounded-2xl shadow-sm p-3.5 sm:p-4 min-h-[88px] flex flex-col justify-center gap-1 transition"><span class="text-2xl leading-none">📒</span><span class="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">용돈기입장 ↗</span><span class="text-[11px] text-gray-500 leading-snug">용돈냥이 · 새 창으로 열려요</span></a>
+                </div>
+                <!-- STAFF_HOME_V34: 기능 화면 위쪽 막대 -->
+                <div id="staffHomeBar" class="hidden sticky top-[64px] sm:top-[72px] z-40 bg-slate-900 text-white rounded-xl shadow-md px-3 py-2 items-center gap-2">
+                    <button type="button" onclick="goStaffHome()" class="shrink-0 bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs sm:text-sm font-extrabold px-3 py-2 rounded-lg transition">← 처음 화면</button>
+                    <strong id="staffHomeBarTitle" class="text-sm sm:text-base font-bold truncate"></strong>
+                </div>
+
                 <!-- Contract Alert Banner -->
                 <div id="staffContractAlert" class="bg-amber-50 border-l-4 border-amber-500 p-3.5 sm:p-4 rounded-r-xl shadow-sm">
                     <div class="flex items-center justify-between flex-wrap gap-2">
@@ -1559,6 +1576,27 @@
                 <div class="grid grid-cols-2 gap-2"><div><label class="block text-[11px] text-gray-500 mb-1">출근</label><input type="time" id="editTermsStartTime" class="w-full border rounded-lg p-2 text-sm"></div><div><label class="block text-[11px] text-gray-500 mb-1">퇴근</label><input type="time" id="editTermsEndTime" class="w-full border rounded-lg p-2 text-sm"></div></div>
             </div>
             <div class="flex justify-end gap-2"><button onclick="closeEditStaffTermsModal()" class="px-4 py-2 bg-gray-100 rounded-lg text-sm font-semibold">취소</button><button onclick="continueStaffTermsChange()" class="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-bold">변경 계약서 작성</button></div>
+        </div>
+    </div>
+
+    <!-- STAFF_HOME_V34: 🕹️ 오락실(게임하기) 모달 -->
+    <div id="staffArcadeModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-3 sm:p-4 z-[70]" onclick="if (event.target === this) closeStaffArcade()" role="dialog" aria-modal="true" aria-labelledby="staffArcadeTitle">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="flex items-start justify-between border-b pb-3">
+                <div><h3 id="staffArcadeTitle" class="text-base font-bold text-gray-900">🕹️ 오락실 — 게임 2종</h3><p class="text-[11px] sm:text-xs text-gray-500 mt-0.5">쉬는 시간에 잠깐! 게임은 새 창에서 열려요.</p></div>
+                <button type="button" onclick="closeStaffArcade()" aria-label="닫기" class="text-gray-400 hover:text-gray-700 text-lg font-bold px-2">&times;</button>
+            </div>
+            <div class="flex-1 overflow-y-auto pt-3 space-y-3">
+                <div class="rounded-xl border border-gray-200 p-3 space-y-2">
+                    <div class="flex items-center gap-3"><span class="text-4xl leading-none">👻</span><div><h4 class="text-sm font-extrabold text-gray-900">진상손님 퇴마사</h4><p class="text-xs text-gray-600 leading-snug mt-0.5">진상손님이 입구로 몰려와요. 직접 탭해서 퇴마하고, 카드로 직원을 배치해 입구를 지켜내세요!</p></div></div>
+                    <a href="https://craftburgers1.github.io/jinsang-exorcist/" target="_blank" rel="noopener noreferrer" class="block w-full text-center py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm font-extrabold transition">▶ 게임 시작</a>
+                </div>
+                <div class="rounded-xl border border-gray-200 p-3 space-y-2">
+                    <div class="flex items-center gap-3"><span class="text-4xl leading-none">🪐</span><div><h4 class="text-sm font-extrabold text-gray-900">코스모 팡 · COSMO PANG</h4><p class="text-xs text-gray-600 leading-snug mt-0.5">태양계 행성의 공전이 중력을 바꾸는 우주 블록 퍼즐이에요. 블록을 끌어 줄을 맞히고, 행성을 끌어 중력을 바꿔 보세요!</p></div></div>
+                    <a href="https://craftburgers1.github.io/cosmo-pang/" target="_blank" rel="noopener noreferrer" class="block w-full text-center py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm font-extrabold transition">▶ 게임 시작</a>
+                </div>
+            </div>
+            <div class="pt-3 text-right"><button type="button" onclick="closeStaffArcade()" class="px-4 py-2 bg-gray-800 text-white text-xs font-bold rounded-xl">닫기</button></div>
         </div>
     </div>
 
@@ -6274,6 +6312,108 @@ window.addEventListener('popstate', function (e) {
     selectAdminStaffForSettlement = function () {
         try { const v = currentAdminView(); if (v && v !== 'all' && v !== 'calendar') openAdminView('calendar'); } catch (e) { console.error(e); }
         return __h33SelectForSettlement.apply(this, arguments);
+    };
+})();
+
+/* ===== STAFF_HOME_V34: 알바생 처음 화면(큰 단추) + 오락실 =====
+   기존 카드는 그대로 두고 보이기/숨기기만 합니다. 요소를 못 찾으면 예전 화면 그대로 둡니다. */
+const STAFF_VIEWS = {
+    manual:   { title: '✅ 근무 매뉴얼', show: ['manual'] },
+    entry:    { title: '⏱️ 근무시간 입력', show: ['entry'] },
+    contract: { title: '📝 계약서 확인', show: ['contract'] },
+    calendar: { title: '📅 달력 확인', show: ['calendar', 'history'] },
+    pay:      { title: '💰 내 급여 · 명세서', show: ['pay'] },
+    leave:    { title: '🏖️ 휴가 신청', show: ['leavePanel'] }
+};
+const STAFF_HOME = { ready: false };
+function initStaffHome() {
+    if (STAFF_HOME.ready) return true;
+    const dash = document.getElementById('staffDashboard');
+    if (!dash || !document.getElementById('staffHomeMenu')) return false;
+    const childWith = id => Array.from(dash.children).find(c => c.id === id || (c.querySelector && c.querySelector('#' + id)));
+    const parts = {
+        contract: childWith('staffContractAlert'), pay: childWith('staffNameDisplay'), leaveEntry: childWith('staffLeaveTabPendingBadge'),
+        leavePanel: childWith('staffLeaveTabPanel'), manual: childWith('manualStartList'), calendar: childWith('staffCalendarGrid'),
+        entry: childWith('inputFormCard'), history: childWith('staffAttendanceTable')
+    };
+    if (Object.values(parts).some(v => !v) || new Set(Object.values(parts)).size !== 8) return false;
+    Object.keys(parts).forEach(k => parts[k].setAttribute('data-home-part', k));
+    const D = '#staffDashboard', off = '{display:none !important;}';
+    const css = [
+        `${D}[data-home-view="home"] > [data-home-part]:not([data-home-part="contract"])${off}`,
+        `${D}[data-home-view="home"] #staffHomeMenu{display:grid !important;}`,
+        `${D}[data-home-view]:not([data-home-view="home"]) #staffHomeBar{display:flex !important;}`
+    ].concat(Object.keys(STAFF_VIEWS).map(v =>
+        `${D}[data-home-view="${v}"] > [data-home-part]${STAFF_VIEWS[v].show.map(p => `:not([data-home-part="${p}"])`).join('')}${off}`
+    )).concat([`@media print { #staffHomeBar, #staffHomeMenu${off} }`]).join('\n');
+    const st = document.createElement('style'); st.id = 'staffHomeV34Style'; st.textContent = css; document.head.appendChild(st);
+    STAFF_HOME.ready = true;
+    return true;
+}
+function currentStaffView() {
+    const dash = document.getElementById('staffDashboard');
+    return (dash && dash.getAttribute('data-home-view')) || '';
+}
+function openStaffView(view, fromHistory) {
+    if (!initStaffHome()) return;
+    const dash = document.getElementById('staffDashboard');
+    const info = STAFF_VIEWS[view];
+    dash.setAttribute('data-home-view', info ? view : 'home');
+    if (info) {
+        document.getElementById('staffHomeBarTitle').textContent = info.title;
+        if (view === 'leave') { try { toggleStaffLeaveTab(true); } catch (e) { console.error(e); } }
+        if (!fromHistory) {
+            try {
+                if (history.state && history.state.staffView) history.replaceState({ staffView: view }, '');
+                else history.pushState({ staffView: view }, '');
+            } catch (_) {}
+        }
+    }
+    try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch (_) { try { window.scrollTo(0, 0); } catch (__) {} }
+}
+function goStaffHome() {
+    let viaHistory = false;
+    try { if (history.state && history.state.staffView) { history.back(); viaHistory = true; } } catch (_) {}
+    if (!viaHistory) openStaffView('home', true);
+}
+function openStaffArcade() {
+    const m = document.getElementById('staffArcadeModal'); if (!m) return;
+    m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeStaffArcade() {
+    const m = document.getElementById('staffArcadeModal'); if (!m) return;
+    m.classList.add('hidden'); m.classList.remove('flex');
+}
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeStaffArcade(); });
+window.addEventListener('popstate', function (e) {
+    const dash = document.getElementById('staffDashboard');
+    if (!dash || dash.classList.contains('hidden') || !currentStaffView()) return;
+    const v = e.state && e.state.staffView;
+    openStaffView(STAFF_VIEWS[v] ? v : 'home', true);
+});
+(function () {
+    // 알바생 로그인 → 처음 화면부터
+    const __h34ShowDashboard = showDashboard;
+    showDashboard = function () {
+        const r = __h34ShowDashboard.apply(this, arguments);
+        try { if (currentUser && currentUser.role === 'staff') openStaffView('home', true); } catch (e) { console.error(e); }
+        return r;
+    };
+    // 달력에서 날짜를 누르면 근무시간 입력 화면으로 넘어가서 그 날짜가 채워진 입력칸을 보여 줌
+    const __h34SelectCalendarDate = selectCalendarDate;
+    selectCalendarDate = function () {
+        try { if (currentStaffView() === 'calendar') openStaffView('entry'); } catch (e) { console.error(e); }
+        return __h34SelectCalendarDate.apply(this, arguments);
+    };
+    // 휴가 화면에서 [닫기]를 누르면 빈 화면 대신 처음 화면으로
+    const __h34ToggleLeave = toggleStaffLeaveTab;
+    toggleStaffLeaveTab = function () {
+        const r = __h34ToggleLeave.apply(this, arguments);
+        try {
+            const panel = document.getElementById('staffLeaveTabPanel');
+            if (currentStaffView() === 'leave' && panel && panel.classList.contains('hidden')) goStaffHome();
+        } catch (e) { console.error(e); }
+        return r;
     };
 })();
 </script>
